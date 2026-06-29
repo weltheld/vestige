@@ -36,7 +36,7 @@ function Hero() {
           href="/signup"
           className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
         >
-          Begin a chronicle
+          Join Vestige
         </Link>
         <Link
           href="/signin"
