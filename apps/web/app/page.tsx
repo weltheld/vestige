@@ -9,7 +9,6 @@ export default function Landing() {
       <Hero />
       <Pillars />
       <HowItWorks />
-      <Testimonial />
       <Footer />
     </div>
   );
@@ -221,63 +220,33 @@ function HowItWorks() {
   );
 }
 
-/* ------------------------------------------------------- Testimonial */
-
-function Testimonial() {
-  return (
-    <section className="flex flex-col items-center gap-5 bg-cod-soft px-6 py-20 text-center sm:px-12">
-      <p className="max-w-[760px] font-body text-xl italic leading-[1.6] text-ink sm:text-[22px]">
-        “We used to spend half a week scheduling and the other half forgetting
-        what happened last time. Vestige made that disappear.”
-      </p>
-      <div className="flex items-center gap-2.5">
-        <span className="h-7 w-7 rounded-full border-2 border-gold bg-ink" />
-        <span className="font-display text-[13px] text-ink">Lyra Moonshade</span>
-        <span className="font-body text-xs text-muted">
-          Dungeon Master · Call of the Netherdeep
-        </span>
-      </div>
-    </section>
-  );
-}
-
 /* ------------------------------------------------------------- Footer */
 
 function Footer() {
-  const columns = [
-    { heading: "Product", links: ["Calendar", "Journal", "Campaigns"] },
-    { heading: "Company", links: ["About", "Story", "Contact"] },
-    { heading: "Help", links: ["Guide", "Support", "Privacy"] },
-  ];
   return (
-    <footer className="mt-auto flex flex-col justify-between gap-10 border-t border-hairline bg-surface px-6 py-12 sm:flex-row sm:px-12">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-wine">
-            <Flame size={12} className="text-gold" />
-          </span>
-          <span className="font-display text-sm font-semibold tracking-[0.1em] text-ink">
-            VESTIGE
-          </span>
-        </div>
-        <p className="font-body text-xs text-muted">
-          Plan and remember your D&amp;D campaign.
-        </p>
+    <footer className="mt-auto flex items-center justify-between gap-6 border-t border-hairline bg-surface px-6 py-10 sm:px-12">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-wine">
+          <Flame size={12} className="text-gold" />
+        </span>
+        <span className="font-display text-sm font-semibold tracking-[0.1em] text-ink">
+          VESTIGE
+        </span>
       </div>
-      <div className="flex gap-8 sm:gap-12">
-        {columns.map((col) => (
-          <div key={col.heading} className="flex flex-col gap-2">
-            <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-              {col.heading}
-            </p>
-            {col.links.map((l) => (
-              <span key={l} className="font-body text-xs text-ink-soft">
-                {l}
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
+      <nav className="flex gap-6">
+        <Link
+          href="/imprint"
+          className="font-body text-xs text-ink-soft underline-offset-4 hover:text-wine hover:underline"
+        >
+          Impressum
+        </Link>
+        <Link
+          href="/datenschutz"
+          className="font-body text-xs text-ink-soft underline-offset-4 hover:text-wine hover:underline"
+        >
+          Datenschutz
+        </Link>
+      </nav>
     </footer>
   );
 }
