@@ -10,7 +10,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "@tanstack/react-query": "^5.62.0",
+    "@vestige/db": "workspace:*",
+    "@vestige/domain": "workspace:*",
     "@vestige/ui": "workspace:*",
+    "date-fns": "4.1.0",
+    "lucide-react": "0.469.0",
     "next": "^15.5.19",
     "react": "19.0.0",
     "react-dom": "19.0.0"

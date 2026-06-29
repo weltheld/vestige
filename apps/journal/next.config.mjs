@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@vestige/ui"],
+  transpilePackages: ["@vestige/ui", "@vestige/db", "@vestige/domain"],
   images: {
     remotePatterns: [
       {
