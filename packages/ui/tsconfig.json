@@ -1,0 +1,7 @@
+{
+  "extends": "@vestige/config/tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["react", "node"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

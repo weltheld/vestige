@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --parchment: #EDE4D3;
+  --surface: #F6EFE0;
+  --ink: #2B2118;
+  --ink-soft: #5A4A38;
+  --hairline: #D8C8AC;
+  --wine: #6B2230;
+  --gold: #B68A2E;
+  --gold-soft: #D9B45A;
+  --vote-yes: #3E5C44;
+  --vote-maybe: #B68A2E;
+  --vote-no: #9A4A3A;
+  --dm-gold: #7A5A12;
+}
+
+html, body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Real parchment + tavern textures exported from the Pencil design. */
+.bg-parchment-texture {
+  background-color: var(--parchment);
+  background-image: url("/images/bg-parchment.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.bg-tavern-texture {
+  background-color: #1c130c;
+  background-image: url("/images/bg-tavern.png");
+  background-size: cover;
+  background-position: center;
+}
+
+/* Per-group background scenes (the owner picks one in Poll Settings).
+   Kept as calm, flat solid tints so the page stays easy to read while the
+   picker still visibly changes the backdrop. */
+.bg-scene-tavern {
+  background-color: #E7DFCE;
+}
+.bg-scene-parchment {
+  background-color: var(--parchment);
+}
+.bg-scene-wine {
+  background-color: #ECDDDB;
+}
+.bg-scene-forest {
+  background-color: #E0E7DD;
+}
+
+/* Stamp / wax-seal look for buttons */
+.btn-wax {
+  background: linear-gradient(180deg, var(--wine), #4a1620);
+  color: #F3E4C3;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 4px 10px rgba(43, 33, 24, 0.25);
+}
+.btn-wax:hover { filter: brightness(1.08); }
+.btn-wax:active { transform: translateY(1px); }
+
+/* Hairline divider */
+.hairline {
+  background: var(--hairline);
+  height: 1px;
+}
+
+/* Focus ring tuned to gold */
+*:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Letter-pressed small caps style used for labels like "THE PARTY ·" */
+.small-caps {
+  font-family: var(--font-display), serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--ink-soft);
+}

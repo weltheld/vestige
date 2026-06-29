@@ -1,0 +1,55 @@
+/* Vestige design tokens — sourced from the Pencil design (vestgige.pen).
+   Apps import this once in their root layout:  import "@vestige/ui/tokens.css";
+   The Tailwind colour names that reference these vars live in
+   @vestige/config/tailwind-preset. */
+
+:root {
+  --parchment: #f4ecd8;
+  --surface: #faf6ee;
+  --ink: #2b2118;
+  --ink-soft: #5a4a38;
+  --muted: #9e8e78;
+  --hairline: #d8c8ac;
+  --wine: #6e1423;
+  --gold: #b08d57;
+  --gold-soft: #d9b45a;
+  --cod-soft: #f9f1dc;
+  /* Vote tints (used by the Calendar module) */
+  --vote-yes: #3e5c44;
+  --vote-maybe: #b08d57;
+  --vote-no: #9a4a3a;
+  --dm-gold: #7a5a12;
+}
+
+html,
+body {
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: var(--font-body), Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Primary action — solid wine stamp */
+.btn-wax {
+  background: var(--wine);
+  color: #ffffff;
+}
+.btn-wax:hover {
+  filter: brightness(1.08);
+}
+.btn-wax:active {
+  transform: translateY(1px);
+}
+
+/* Hairline divider */
+.hairline {
+  background: var(--hairline);
+  height: 1px;
+}
+
+/* Focus ring tuned to gold */
+*:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}

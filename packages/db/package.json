@@ -1,0 +1,23 @@
+{
+  "name": "@vestige/db",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "server-only": "^0.0.1"
+  },
+  "peerDependencies": {
+    "next": "^15.5.19"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "next": "^15.5.19",
+    "typescript": "5.7.2"
+  }
+}
