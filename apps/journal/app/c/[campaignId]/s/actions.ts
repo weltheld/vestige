@@ -120,6 +120,31 @@ export async function removeCharacter(
   revalidatePath(`/c/${campaignId}/s/${sessionId}`);
 }
 
+export async function postComment(
+  campaignId: string,
+  sessionId: string,
+  sectionAnchor: string | null,
+  body: string,
+  parentCommentId: string | null = null,
+) {
+  const { supabase, userId } = await uid();
+  const { error } = await supabase.from("journal_comments").insert({
+    session_id: sessionId,
+    section_anchor: sectionAnchor,
+    body,
+    author_id: userId,
+    parent_comment_id: parentCommentId,
+  });
+  if (error) throw error;
+  await supabase.from("journal_session_revisions").insert({
+    session_id: sessionId,
+    author_id: userId,
+    action: "commented",
+    after_value: { section_anchor: sectionAnchor, body },
+  });
+  revalidatePath(`/c/${campaignId}/s/${sessionId}`);
+}
+
 export async function addAnnotation(
   campaignId: string,
   sessionId: string,

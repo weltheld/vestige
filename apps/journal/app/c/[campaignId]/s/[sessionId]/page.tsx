@@ -3,11 +3,14 @@ import { format, parseISO } from "date-fns";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember } from "@/lib/data";
 import { getSessionDetail } from "@/lib/session-detail";
+import { getComments, getRevisions } from "@/lib/session-threads";
 import { appHref } from "@/lib/links";
 import { SessionHero } from "@/components/SessionHero";
 import { SessionSidebar } from "@/components/session/SessionSidebar";
 import { SessionTabs } from "@/components/session/SessionTabs";
 import { NotesBody } from "@/components/session/NotesBody";
+import { Comments } from "@/components/session/Comments";
+import { ChangeLog } from "@/components/session/ChangeLog";
 
 export default async function SessionDetailPage({
   params,
@@ -24,6 +27,10 @@ export default async function SessionDetailPage({
 
   const session = await getSessionDetail(supabase, campaignId, sessionId);
   if (!session) notFound();
+  const [comments, revisions] = await Promise.all([
+    getComments(supabase, sessionId),
+    getRevisions(supabase, sessionId),
+  ]);
 
   const num = String(session.number).padStart(2, "0");
   const subtitle = `${campaign.name} · ${session.date ? format(parseISO(session.date), "MMMM d, yyyy") : "Undated"}`;
@@ -50,6 +57,8 @@ export default async function SessionDetailPage({
             commentCount={session.commentCount}
             revisionCount={session.revisionCount}
             recap={<NotesBody session={session} campaignId={campaignId} />}
+            comments={<Comments comments={comments} campaignId={campaignId} sessionId={sessionId} />}
+            changelog={<ChangeLog revisions={revisions} />}
           />
         </div>
       </div>

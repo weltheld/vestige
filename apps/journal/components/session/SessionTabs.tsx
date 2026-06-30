@@ -6,10 +6,14 @@ type Tab = "recap" | "comments" | "changelog";
 
 export function SessionTabs({
   recap,
+  comments,
+  changelog,
   commentCount,
   revisionCount,
 }: {
   recap: React.ReactNode;
+  comments: React.ReactNode;
+  changelog: React.ReactNode;
   commentCount: number;
   revisionCount: number;
 }) {
@@ -45,18 +49,8 @@ export function SessionTabs({
       </div>
 
       {tab === "recap" && recap}
-      {tab === "comments" && <TabStub label="Comments" milestone={7} />}
-      {tab === "changelog" && <TabStub label="Change Log" milestone={7} />}
-    </div>
-  );
-}
-
-function TabStub({ label, milestone }: { label: string; milestone: number }) {
-  return (
-    <div className="pt-10 text-center">
-      <p className="font-body text-sm italic text-muted">
-        {label} — built in Milestone {milestone}.
-      </p>
+      {tab === "comments" && comments}
+      {tab === "changelog" && changelog}
     </div>
   );
 }
