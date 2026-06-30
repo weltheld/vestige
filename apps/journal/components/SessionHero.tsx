@@ -1,4 +1,5 @@
 import { format, parseISO } from "date-fns";
+import { HeroMenu } from "./session/HeroMenu";
 
 type Props = {
   title: string;
@@ -9,11 +10,13 @@ type Props = {
   /** Party / character portrait URLs (PCs get a gold ring). */
   avatars?: string[];
   extraCount?: number;
+  /** When provided, renders the "⋯" menu (settings / switch campaign). */
+  menu?: { settingsHref: string; switchHref: string };
 };
 
 /** The Journal hero band — cover image + dark gradient + avatar group +
  *  pipe-prefixed title + subtitle. Shared by the session list and detail. */
-export function SessionHero({ title, prefix, coverUrl, subtitle, avatars = [], extraCount = 0 }: Props) {
+export function SessionHero({ title, prefix, coverUrl, subtitle, avatars = [], extraCount = 0, menu }: Props) {
   return (
     <section className="relative h-[220px] w-full overflow-hidden rounded-xl bg-ink">
       {coverUrl && (
@@ -24,6 +27,12 @@ export function SessionHero({ title, prefix, coverUrl, subtitle, avatars = [], e
         className="absolute inset-0"
         style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.69))" }}
       />
+
+      {menu && (
+        <div className="absolute right-4 top-4 z-10">
+          <HeroMenu settingsHref={menu.settingsHref} switchHref={menu.switchHref} />
+        </div>
+      )}
 
       {/* Avatar group */}
       {(avatars.length > 0 || extraCount > 0) && (
