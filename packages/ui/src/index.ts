@@ -5,6 +5,7 @@ export {
   type VestigeHeaderUser,
   type VestigeHeaderCampaign,
 } from "./components/VestigeHeader";
+export { CampaignSelector, type HeaderCampaign } from "./components/CampaignSelector";
 export { PageTitle } from "./components/PageTitle";
 export { HeroBand } from "./components/HeroBand";
 export { SidebarCard } from "./components/SidebarCard";

@@ -7,6 +7,7 @@
     "./tokens.css": "./src/styles/tokens.css"
   },
   "dependencies": {
+    "@radix-ui/react-dropdown-menu": "^2.1.4",
     "@vestige/db": "workspace:*",
     "lucide-react": "0.469.0"
   },
