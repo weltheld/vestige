@@ -2,9 +2,9 @@ import { Quote } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { SessionDetail, Annotation } from "@/lib/session-detail";
 import { NOTE_SECTIONS, blocksFor, excerpt } from "@/lib/notes";
-import { AnnotationBadge, AddAnnotationButton } from "./AnnotationControls";
+import { AnnotationBadge, AnnotationAdder } from "./AnnotationControls";
 
-export function NotesBody({ session }: { session: SessionDetail }) {
+export function NotesBody({ session, campaignId }: { session: SessionDetail; campaignId: string }) {
   const text: Record<string, string | null> = {
     summary: session.summary,
     player_characters: session.playerCharacters,
@@ -45,6 +45,8 @@ export function NotesBody({ session }: { session: SessionDetail }) {
                     anchor={b.anchor}
                     text={b.text}
                     annotations={session.annotationsByAnchor[b.anchor] ?? []}
+                    campaignId={campaignId}
+                    sessionId={session.id}
                   />
                 ))
               )}
@@ -60,10 +62,14 @@ function AnnotatedParagraph({
   anchor,
   text,
   annotations,
+  campaignId,
+  sessionId,
 }: {
   anchor: string;
   text: string;
   annotations: Annotation[];
+  campaignId: string;
+  sessionId: string;
 }) {
   const has = annotations.length > 0;
   const first = annotations[0];
@@ -81,7 +87,14 @@ function AnnotatedParagraph({
       </div>
 
       {has && <AnnotationBadge anchor={anchor} count={annotations.length} />}
-      {!has && <AddAnnotationButton anchor={anchor} />}
+      {!has && (
+        <AnnotationAdder
+          campaignId={campaignId}
+          sessionId={sessionId}
+          anchor={anchor}
+          excerpt={excerpt(text, 60)}
+        />
+      )}
 
       {first && (
         <aside className="absolute left-[calc(100%+24px)] top-0 hidden w-[220px] flex-col gap-2 rounded-xl bg-cod-soft p-3.5 xl:flex">

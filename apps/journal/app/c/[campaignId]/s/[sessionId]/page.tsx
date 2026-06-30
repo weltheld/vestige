@@ -49,7 +49,7 @@ export default async function SessionDetailPage({
           <SessionTabs
             commentCount={session.commentCount}
             revisionCount={session.revisionCount}
-            recap={<NotesBody session={session} />}
+            recap={<NotesBody session={session} campaignId={campaignId} />}
           />
         </div>
       </div>

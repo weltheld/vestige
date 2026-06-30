@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cinzel, Lora } from "next/font/google";
 import "@vestige/ui/tokens.css";
+import "react-day-picker/style.css";
 import "./globals.css";
 
 const display = Cinzel({

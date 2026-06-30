@@ -1,18 +1,41 @@
+import { notFound, redirect } from "next/navigation";
+import { getServerSupabase } from "@vestige/db/server";
+import { getViewer, getCampaignIfMember } from "@/lib/data";
+import { getSessionDetail } from "@/lib/session-detail";
+import { appHref } from "@/lib/links";
+import { EditSessionClient } from "@/components/session/EditSessionClient";
+
 export default async function EditSessionPage({
   params,
 }: {
   params: Promise<{ campaignId: string; sessionId: string }>;
 }) {
   const { campaignId, sessionId } = await params;
+  const supabase = await getServerSupabase();
+  const viewer = await getViewer(supabase);
+  if (!viewer) redirect(appHref());
+  const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
+  if (!campaign) redirect(appHref());
+
+  const s = await getSessionDetail(supabase, campaignId, sessionId);
+  if (!s) notFound();
+
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-12 py-10">
-      <p className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-        Milestone 6 · stub
-      </p>
-      <h1 className="mt-2 font-display text-2xl text-ink">Edit session</h1>
-      <p className="mt-1 font-body text-sm italic text-muted">
-        /c/{campaignId}/s/{sessionId}/edit
-      </p>
-    </main>
+    <EditSessionClient
+      campaignId={campaignId}
+      sessionId={sessionId}
+      initial={{
+        title: s.title,
+        date: s.date,
+        summary: s.summary,
+        player_characters: s.playerCharacters,
+        npcs: s.npcs,
+        notes: s.notes,
+        image_url: s.imageUrl,
+      }}
+      characters={s.characters.map((c) => ({ id: c.id, name: c.name, role: c.role }))}
+      chroniclerName={s.authorName}
+      modulesCalendar={s.modulesEnabled.calendar}
+    />
   );
 }
