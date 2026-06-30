@@ -90,6 +90,76 @@ export type CampaignSessionRow = {
   created_at: string;
 };
 
+// ---- Journal module (migration 20260629161452 + 20260629221431) ----------
+export type JournalCharacterRoleDb = "PC" | "NPC";
+export type JournalRevisionActionDb =
+  | "created"
+  | "edited"
+  | "commented"
+  | "annotated"
+  | "image_added"
+  | "character_added";
+
+export type JournalSessionRow = {
+  id: string;
+  campaign_id: string;
+  title: string;
+  date: string | null;
+  summary: string | null;
+  player_characters: string | null;
+  npcs: string | null;
+  notes: string | null;
+  image_url: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  updated_by: string | null;
+};
+
+export type JournalCharacterRow = {
+  id: string;
+  campaign_id: string;
+  name: string;
+  role: JournalCharacterRoleDb;
+  portrait_url: string | null;
+  bio: string | null;
+  created_at: string;
+};
+
+export type JournalSessionCharacterRow = {
+  session_id: string;
+  character_id: string;
+};
+
+export type JournalAnnotationRow = {
+  id: string;
+  session_id: string;
+  anchor: string;
+  body: string;
+  author_id: string;
+  created_at: string;
+};
+
+export type JournalCommentRow = {
+  id: string;
+  session_id: string;
+  section_anchor: string | null;
+  body: string;
+  author_id: string;
+  parent_comment_id: string | null;
+  created_at: string;
+};
+
+export type JournalSessionRevisionRow = {
+  id: string;
+  session_id: string;
+  author_id: string;
+  action: JournalRevisionActionDb;
+  before_value: unknown | null;
+  after_value: unknown | null;
+  created_at: string;
+};
+
 type Rel<
   Name extends string,
   Cols extends string[],
@@ -266,6 +336,101 @@ export type Database = {
         };
         Relationships: [
           Rel<"campaign_sessions_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+        ];
+      };
+      journal_sessions: {
+        Row: JournalSessionRow;
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          title: string;
+          date?: string | null;
+          summary?: string | null;
+          player_characters?: string | null;
+          npcs?: string | null;
+          notes?: string | null;
+          image_url?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: Partial<JournalSessionRow>;
+        Relationships: [
+          Rel<"journal_sessions_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+        ];
+      };
+      journal_characters: {
+        Row: JournalCharacterRow;
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          name: string;
+          role: JournalCharacterRoleDb;
+          portrait_url?: string | null;
+          bio?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<JournalCharacterRow>;
+        Relationships: [
+          Rel<"journal_characters_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+        ];
+      };
+      journal_session_characters: {
+        Row: JournalSessionCharacterRow;
+        Insert: { session_id: string; character_id: string };
+        Update: Partial<JournalSessionCharacterRow>;
+        Relationships: [
+          Rel<"journal_session_characters_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
+          Rel<"journal_session_characters_character_id_fkey", ["character_id"], "journal_characters", ["id"], false>,
+        ];
+      };
+      journal_annotations: {
+        Row: JournalAnnotationRow;
+        Insert: {
+          id?: string;
+          session_id: string;
+          anchor: string;
+          body: string;
+          author_id: string;
+          created_at?: string;
+        };
+        Update: Partial<JournalAnnotationRow>;
+        Relationships: [
+          Rel<"journal_annotations_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
+        ];
+      };
+      journal_comments: {
+        Row: JournalCommentRow;
+        Insert: {
+          id?: string;
+          session_id: string;
+          section_anchor?: string | null;
+          body: string;
+          author_id: string;
+          parent_comment_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<JournalCommentRow>;
+        Relationships: [
+          Rel<"journal_comments_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
+          Rel<"journal_comments_parent_comment_id_fkey", ["parent_comment_id"], "journal_comments", ["id"], false>,
+        ];
+      };
+      journal_session_revisions: {
+        Row: JournalSessionRevisionRow;
+        Insert: {
+          id?: string;
+          session_id: string;
+          author_id: string;
+          action: JournalRevisionActionDb;
+          before_value?: unknown | null;
+          after_value?: unknown | null;
+          created_at?: string;
+        };
+        Update: Partial<JournalSessionRevisionRow>;
+        Relationships: [
+          Rel<"journal_session_revisions_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
         ];
       };
     };
