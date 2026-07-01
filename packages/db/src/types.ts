@@ -147,6 +147,8 @@ export type JournalCommentRow = {
   body: string;
   author_id: string;
   parent_comment_id: string | null;
+  /** Attached image (additive, journal-images bucket). */
+  image_url: string | null;
   created_at: string;
 };
 
@@ -409,6 +411,7 @@ export type Database = {
           body: string;
           author_id: string;
           parent_comment_id?: string | null;
+          image_url?: string | null;
           created_at?: string;
         };
         Update: Partial<JournalCommentRow>;

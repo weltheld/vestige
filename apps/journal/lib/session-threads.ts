@@ -9,6 +9,7 @@ export type Comment = {
   id: string;
   sectionAnchor: string | null;
   body: string;
+  imageUrl: string | null;
   authorName: string;
   authorAvatar: string | null;
   createdAt: string;
@@ -42,7 +43,7 @@ async function authorMap(supabase: SB, ids: string[]) {
 export async function getComments(supabase: SB, sessionId: string): Promise<Comment[]> {
   const { data } = await supabase
     .from("journal_comments")
-    .select("id, section_anchor, body, author_id, parent_comment_id, created_at")
+    .select("id, section_anchor, body, image_url, author_id, parent_comment_id, created_at")
     .eq("session_id", sessionId)
     .order("created_at", { ascending: true });
   const rows = data ?? [];
@@ -51,6 +52,7 @@ export async function getComments(supabase: SB, sessionId: string): Promise<Comm
     id: r.id,
     sectionAnchor: r.section_anchor,
     body: r.body,
+    imageUrl: r.image_url,
     authorName: name(authors.get(r.author_id)),
     authorAvatar: authors.get(r.author_id)?.avatar_url ?? null,
     createdAt: r.created_at,

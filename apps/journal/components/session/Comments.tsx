@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { postComment } from "@/app/c/[campaignId]/s/actions";
+import { pickImageFile, uploadJournalImage } from "@/lib/upload";
 import type { Comment } from "@/lib/session-threads";
 
 const SECTIONS: { key: string; label: string }[] = [
@@ -60,9 +61,14 @@ export function Comments({
   const groupKeys =
     section === "all" ? [...groups.keys()] : [section as string | null];
 
-  async function post(sectionAnchor: string | null, body: string, parent: string | null = null) {
-    if (!body.trim()) return;
-    await postComment(campaignId, sessionId, sectionAnchor, body.trim(), parent);
+  async function post(
+    sectionAnchor: string | null,
+    body: string,
+    imageUrl: string | null,
+    parent: string | null = null,
+  ) {
+    if (!body.trim() && !imageUrl) return;
+    await postComment(campaignId, sessionId, sectionAnchor, body.trim(), parent, imageUrl);
     setReplyTo(null);
     router.refresh();
   }
@@ -123,7 +129,11 @@ export function Comments({
                   ))}
                   {replyTo === c.id && (
                     <div className="ml-[46px]">
-                      <Composer onPost={(body) => post(c.sectionAnchor, body, c.id)} placeholder="Write a reply…" />
+                      <Composer
+                        campaignId={campaignId}
+                        onPost={(body, imageUrl) => post(c.sectionAnchor, body, imageUrl, c.id)}
+                        placeholder="Write a reply…"
+                      />
                     </div>
                   )}
                 </div>
@@ -131,7 +141,8 @@ export function Comments({
 
               <div className="h-px bg-hairline" />
               <Composer
-                onPost={(body) => post(key, body)}
+                campaignId={campaignId}
+                onPost={(body, imageUrl) => post(key, body, imageUrl)}
                 placeholder="Add to the conversation…"
               />
             </div>
@@ -141,7 +152,8 @@ export function Comments({
           <div className="rounded-xl bg-[#faf5e6] p-[22px]">
             <p className="pb-3 font-body text-[13px] italic text-muted">No comments yet on this section.</p>
             <Composer
-              onPost={(body) => post(section === "all" ? null : section, body)}
+              campaignId={campaignId}
+              onPost={(body, imageUrl) => post(section === "all" ? null : section, body, imageUrl)}
               placeholder="Add to the conversation…"
             />
           </div>
@@ -160,41 +172,90 @@ function CommentRow({ c, size }: { c: Comment; size: number }) {
           <span className="font-display text-[13px] text-ink">{c.authorName}</span>
           <span className="font-body text-[11px] text-muted">{format(parseISO(c.createdAt), "MMM d, h:mmaaa")}</span>
         </div>
-        <p className="font-body text-[14px] leading-[1.65] text-ink">{c.body}</p>
+        {c.body && <p className="font-body text-[14px] leading-[1.65] text-ink">{c.body}</p>}
+        {c.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={c.imageUrl}
+            alt=""
+            className="mt-1 max-h-[120px] max-w-[200px] rounded-lg object-cover"
+          />
+        )}
       </div>
     </div>
   );
 }
 
-function Composer({ onPost, placeholder }: { onPost: (body: string) => void; placeholder: string }) {
+function Composer({
+  campaignId,
+  onPost,
+  placeholder,
+}: {
+  campaignId: string;
+  onPost: (body: string, imageUrl: string | null) => void;
+  placeholder: string;
+}) {
   const [body, setBody] = useState("");
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function attach() {
+    const file = await pickImageFile();
+    if (!file) return;
+    setUploading(true);
+    try {
+      setPendingImage(await uploadJournalImage(campaignId, file));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function submit() {
+    onPost(body, pendingImage);
+    setBody("");
+    setPendingImage(null);
+  }
+
   return (
-    <div className="flex items-center gap-3">
-      <input
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            onPost(body);
-            setBody("");
-          }
-        }}
-        placeholder={placeholder}
-        className="h-9 flex-1 border-b border-hairline bg-transparent font-body text-[13px] italic text-ink outline-none placeholder:text-muted"
-      />
-      <button type="button" aria-label="Attach image" className="flex h-9 w-9 items-center justify-center text-muted">
-        <ImagePlus size={16} />
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onPost(body);
-          setBody("");
-        }}
-        className="rounded-lg bg-wine px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white"
-      >
-        Post
-      </button>
+    <div className="flex flex-col gap-2">
+      {pendingImage && (
+        <div className="relative w-fit">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={pendingImage} alt="" className="max-h-[100px] max-w-[160px] rounded-lg object-cover" />
+          <button
+            type="button"
+            onClick={() => setPendingImage(null)}
+            className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-white"
+          >
+            <X size={11} />
+          </button>
+        </div>
+      )}
+      <div className="flex items-center gap-3">
+        <input
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+          placeholder={placeholder}
+          className="h-9 flex-1 border-b border-hairline bg-transparent font-body text-[13px] italic text-ink outline-none placeholder:text-muted"
+        />
+        <button
+          type="button"
+          aria-label="Attach image"
+          disabled={uploading}
+          onClick={attach}
+          className="flex h-9 w-9 items-center justify-center text-muted disabled:opacity-50"
+        >
+          <ImagePlus size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          className="rounded-lg bg-wine px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white"
+        >
+          Post
+        </button>
+      </div>
     </div>
   );
 }

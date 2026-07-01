@@ -45,43 +45,68 @@ export function EditSessionClient({
 }: Props) {
   const router = useRouter();
   const [fields, setFields] = useState<SessionInput>(initial);
+  const [localSessionId, setLocalSessionId] = useState(sessionId);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [uploadingCover, setUploadingCover] = useState(false);
   const [savedAgo, setSavedAgo] = useState<string | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const firstRender = useRef(true);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const creating = useRef(false);
+  // 0 => the next autosave always records a revision (baseline for the session).
+  const lastRevisionAt = useRef(0);
 
   const set = (patch: Partial<SessionInput>) => setFields((f) => ({ ...f, ...patch }));
 
-  // Autosave (existing sessions only): debounced 3s draft persist.
+  // Autosave: debounced 3s draft persist. For a brand-new session, the first
+  // autosave creates it (create-on-first-keystroke); after that it's a plain
+  // update. Revisions are throttled to at most one per minute of continuous
+  // editing — every autosave still persists the draft either way.
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
-    if (!sessionId) return;
     if (timer.current) clearTimeout(timer.current);
     setSaveState("saving");
     timer.current = setTimeout(async () => {
-      await saveSession(campaignId, sessionId, fields, false);
+      if (!localSessionId) {
+        if (creating.current || !fields.title.trim()) {
+          setSaveState("idle");
+          return;
+        }
+        creating.current = true;
+        const id = await createSession(campaignId, fields);
+        creating.current = false;
+        lastRevisionAt.current = Date.now();
+        setLocalSessionId(id);
+        setSaveState("saved");
+        setSavedAgo("just now");
+        router.replace(journal.editSession(campaignId, id));
+        return;
+      }
+      const recordRevision = Date.now() - lastRevisionAt.current > 60_000;
+      await saveSession(campaignId, localSessionId, fields, recordRevision);
+      if (recordRevision) lastRevisionAt.current = Date.now();
       setSaveState("saved");
       setSavedAgo("just now");
     }, 3000);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [fields, sessionId, campaignId]);
+  }, [fields, localSessionId, campaignId, router]);
 
   async function handleSave() {
     setSaveState("saving");
-    if (sessionId) {
-      await saveSession(campaignId, sessionId, fields, true);
+    if (localSessionId) {
+      await saveSession(campaignId, localSessionId, fields, true);
+      lastRevisionAt.current = Date.now();
       setSaveState("saved");
       setSavedAgo("just now");
-      router.push(journal.session(campaignId, sessionId));
+      router.push(journal.session(campaignId, localSessionId));
     } else {
       const id = await createSession(campaignId, fields);
+      lastRevisionAt.current = Date.now();
       router.push(journal.session(campaignId, id));
     }
   }
@@ -180,11 +205,11 @@ export function EditSessionClient({
                   <span className="font-display text-[13px] text-ink">{c.name}</span>
                   <span className="font-body text-[10px] italic text-muted">{c.role}</span>
                 </span>
-                {sessionId && (
+                {localSessionId && (
                   <button
                     type="button"
                     onClick={async () => {
-                      await removeCharacter(campaignId, sessionId, c.id);
+                      await removeCharacter(campaignId, localSessionId, c.id);
                       router.refresh();
                     }}
                     className="text-muted opacity-0 transition group-hover:opacity-100"
@@ -196,10 +221,10 @@ export function EditSessionClient({
             ))}
             <div className="h-px bg-hairline" />
             <CharacterComposer
-              disabled={!sessionId}
+              disabled={!localSessionId}
               onAdd={async (name, role) => {
-                if (!sessionId) return;
-                await addCharacter(campaignId, sessionId, name, role);
+                if (!localSessionId) return;
+                await addCharacter(campaignId, localSessionId, name, role);
                 router.refresh();
               }}
             />
@@ -295,7 +320,7 @@ export function EditSessionClient({
               <span className="font-body text-[12px] italic text-muted">
                 {saveState === "saving"
                   ? "Saving…"
-                  : sessionId
+                  : localSessionId
                     ? `Autosaved as draft${savedAgo ? ` · ${savedAgo}` : ""}`
                     : "Not saved yet"}
               </span>
@@ -303,7 +328,11 @@ export function EditSessionClient({
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => router.push(sessionId ? journal.session(campaignId, sessionId) : journal.campaign(campaignId))}
+                onClick={() =>
+                  router.push(
+                    localSessionId ? journal.session(campaignId, localSessionId) : journal.campaign(campaignId),
+                  )
+                }
                 className="rounded-lg border border-hairline px-[18px] py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft"
               >
                 Discard

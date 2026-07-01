@@ -126,6 +126,7 @@ export async function postComment(
   sectionAnchor: string | null,
   body: string,
   parentCommentId: string | null = null,
+  imageUrl: string | null = null,
 ) {
   const { supabase, userId } = await uid();
   const { error } = await supabase.from("journal_comments").insert({
@@ -134,6 +135,7 @@ export async function postComment(
     body,
     author_id: userId,
     parent_comment_id: parentCommentId,
+    image_url: imageUrl,
   });
   if (error) throw error;
   await supabase.from("journal_session_revisions").insert({
