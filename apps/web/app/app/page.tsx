@@ -67,7 +67,7 @@ export default async function AppHome() {
             it&rsquo;ll show up here.
           </p>
         ) : (
-          <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
+          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
             <UpcomingRail slots={upcoming} />
             <RecentActivity items={activity} />
           </div>

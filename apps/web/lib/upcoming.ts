@@ -17,6 +17,7 @@ export type UpcomingPlayer = {
 export type UpcomingSlot = {
   campaignId: string;
   campaignName: string;
+  campaignImageUrl: string | null;
   /** "set" = the DM locked in a date; "voted" = the best-voted future date
    *  with no set date yet; "none" = nothing scheduled or voted on. */
   type: "set" | "voted" | "none";
@@ -115,6 +116,6 @@ export async function getUpcomingSlots(
           })
         : [];
 
-    return { campaignId: c.id, campaignName: c.name, type, date, players };
+    return { campaignId: c.id, campaignName: c.name, campaignImageUrl: c.imageUrl, type, date, players };
   });
 }

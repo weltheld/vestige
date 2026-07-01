@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { DayPicker } from "react-day-picker";
 import { format, parseISO } from "date-fns";
-import { Pencil, ChevronDown, ImagePlus, Info, X, Check, CalendarDays } from "lucide-react";
+import { Pencil, ChevronDown, ImagePlus, Info, X, Check, CalendarDays, Trash2 } from "lucide-react";
 import { NOTE_SECTIONS } from "@/lib/notes";
 import { journal } from "@/lib/links";
 import {
@@ -13,6 +13,7 @@ import {
   saveSession,
   addCharacter,
   removeCharacter,
+  deleteSession,
   type SessionInput,
 } from "@/app/c/[campaignId]/s/actions";
 import { SectionEditor } from "./SectionEditor";
@@ -56,6 +57,8 @@ export function EditSessionClient({
   const [savedAgo, setSavedAgo] = useState<string | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 });
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const dateButtonRef = useRef<HTMLButtonElement>(null);
   const firstRender = useRef(true);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -324,15 +327,26 @@ export function EditSessionClient({
 
           {/* Save bar */}
           <div className="mt-10 flex max-w-[640px] items-center justify-between border-t border-hairline py-4">
-            <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold-soft" />
-              <span className="font-body text-[12px] italic text-muted">
-                {saveState === "saving"
-                  ? "Saving…"
-                  : localSessionId
-                    ? `Autosaved as draft${savedAgo ? ` · ${savedAgo}` : ""}`
-                    : "Not saved yet"}
-              </span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-gold-soft" />
+                <span className="font-body text-[12px] italic text-muted">
+                  {saveState === "saving"
+                    ? "Saving…"
+                    : localSessionId
+                      ? `Autosaved as draft${savedAgo ? ` · ${savedAgo}` : ""}`
+                      : "Not saved yet"}
+                </span>
+              </div>
+              {localSessionId && (
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  className="flex items-center gap-1.5 font-body text-[11px] text-wine underline decoration-wine/40 underline-offset-2 hover:decoration-wine"
+                >
+                  <Trash2 size={12} /> Delete session
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -357,6 +371,53 @@ export function EditSessionClient({
           </div>
         </div>
       </div>
+
+      {deleteConfirmOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <button
+              aria-label="Cancel"
+              className="fixed inset-0 bg-ink/50 backdrop-blur-sm"
+              onClick={() => !deleting && setDeleteConfirmOpen(false)}
+            />
+            <div className="relative w-full max-w-[380px] rounded-xl border border-hairline bg-surface p-6 shadow-parchment">
+              <h2 className="font-display text-lg text-ink">Delete this session?</h2>
+              <p className="mt-2 font-body text-[13px] text-ink-soft">
+                &ldquo;{fields.title || "Untitled session"}&rdquo; and its notes, comments, and
+                change history will be permanently deleted. This can&rsquo;t be undone.
+              </p>
+              <div className="mt-5 flex justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => setDeleteConfirmOpen(false)}
+                  className="rounded-lg border border-hairline px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={async () => {
+                    if (!localSessionId) return;
+                    setDeleting(true);
+                    try {
+                      await deleteSession(campaignId, localSessionId);
+                      router.push(journal.campaign(campaignId));
+                    } finally {
+                      setDeleting(false);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 rounded-lg bg-wine px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-60"
+                >
+                  <Trash2 size={13} /> {deleting ? "Deleting…" : "Delete session"}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </main>
   );
 }

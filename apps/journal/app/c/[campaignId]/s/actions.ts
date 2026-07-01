@@ -147,6 +147,19 @@ export async function postComment(
   revalidatePath(`/c/${campaignId}/s/${sessionId}`);
 }
 
+/** Delete a session and everything under it (characters, annotations,
+ *  comments, revisions cascade via FK). RLS: any campaign member. */
+export async function deleteSession(campaignId: string, sessionId: string) {
+  const { supabase } = await uid();
+  const { error } = await supabase
+    .from("journal_sessions")
+    .delete()
+    .eq("id", sessionId)
+    .eq("campaign_id", campaignId);
+  if (error) throw error;
+  revalidatePath(`/c/${campaignId}`);
+}
+
 export async function addAnnotation(
   campaignId: string,
   sessionId: string,
