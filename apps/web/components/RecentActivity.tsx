@@ -7,12 +7,9 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-lg text-ink">Recent activity</h2>
-      <p className="mt-1 font-body text-sm text-ink-soft">
-        What&rsquo;s changed across your campaigns&rsquo; Calendar and Journal.
-      </p>
-      <ul className="mt-4 flex flex-col gap-2">
+    <section className="min-w-0 flex-1">
+      <h2 className="font-display text-xs uppercase tracking-[0.08em] text-muted">Recent activity</h2>
+      <ul className="mt-3 flex flex-col gap-2">
         {items.map((item) => (
           <li key={item.id}>
             <Link

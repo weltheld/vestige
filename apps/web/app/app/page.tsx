@@ -3,8 +3,10 @@ import { getServerSupabase } from "@vestige/db/server";
 import { VestigeHeader } from "@vestige/ui";
 import { getMyCampaigns } from "@/lib/campaigns";
 import { getRecentActivity } from "@/lib/activity";
+import { getUpcomingSlots } from "@/lib/upcoming";
 import { resolveDefaultCampaign } from "@/lib/last-campaign";
 import { RecentActivity } from "@/components/RecentActivity";
+import { UpcomingRail } from "@/components/UpcomingRail";
 
 export default async function AppHome() {
   const supabase = await getServerSupabase();
@@ -27,6 +29,7 @@ export default async function AppHome() {
   const campaigns = await getMyCampaigns(supabase, user.id);
   const defaultCampaign = await resolveDefaultCampaign(supabase, user.id, campaigns);
   const activity = await getRecentActivity(supabase, campaigns);
+  const upcoming = await getUpcomingSlots(supabase, campaigns);
 
   const headerCampaigns = campaigns.map((c) => ({
     id: c.id,
@@ -40,6 +43,8 @@ export default async function AppHome() {
     <>
       <VestigeHeader
         user={{ label, avatarUrl: profile?.avatar_url ?? null }}
+        calendarHref={defaultCampaign?.slug ? `/calendar/g/${defaultCampaign.slug}` : undefined}
+        journalHref={defaultCampaign ? `/journal/c/${defaultCampaign.id}` : undefined}
         currentCampaign={
           defaultCampaign
             ? {
@@ -60,7 +65,10 @@ export default async function AppHome() {
             it&rsquo;ll show up here.
           </p>
         ) : (
-          <RecentActivity items={activity} />
+          <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
+            <UpcomingRail slots={upcoming} />
+            <RecentActivity items={activity} />
+          </div>
         )}
       </main>
     </>

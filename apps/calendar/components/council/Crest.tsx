@@ -22,16 +22,16 @@ export function Crest({ size = 48, className }: CrestProps) {
       width={size}
       height={size}
       role="img"
-      aria-label="Calendar"
+      aria-label="Vestige"
       className={cn(
         "drop-shadow-[0_2px_4px_rgba(43,33,24,0.25)]",
         className,
       )}
     >
-      <circle cx="74" cy="74" r="48" fill="none" stroke="#B68A2E" strokeWidth="4" />
-      <circle cx="74" cy="74" r="37.5" fill="none" stroke="#D8C8AC" strokeWidth="1" />
+      <circle cx="74" cy="74" r="48" fill="none" stroke="var(--gold)" strokeWidth="4" />
+      <circle cx="74" cy="74" r="37.5" fill="none" stroke="var(--hairline)" strokeWidth="1" />
       {SEATS.map((s, i) => (
-        <circle key={i} cx={s.cx} cy={s.cy} r="5" fill="#6B2230" />
+        <circle key={i} cx={s.cx} cy={s.cy} r="5" fill="var(--wine)" />
       ))}
     </svg>
   );

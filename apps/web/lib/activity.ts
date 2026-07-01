@@ -1,7 +1,8 @@
 import "server-only";
 
+import { format, parseISO } from "date-fns";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, JournalRevisionActionDb } from "@vestige/db";
+import type { Database, JournalRevisionActionDb, VoteValueDb } from "@vestige/db";
 import type { CampaignSummary } from "@vestige/domain";
 
 type SB = SupabaseClient<Database>;
@@ -18,6 +19,17 @@ export type ActivityItem = {
 
 function name(p: { first_name: string | null; display_name: string | null } | undefined) {
   return p?.first_name?.trim() || p?.display_name?.trim() || "Someone";
+}
+
+function describeVote(value: VoteValueDb): string {
+  switch (value) {
+    case "yes":
+      return "yes";
+    case "maybe":
+      return "maybe";
+    case "no":
+      return "no";
+  }
 }
 
 function describeRevision(action: JournalRevisionActionDb): string {
@@ -108,9 +120,35 @@ export async function getRecentActivity(
         id: `calendar:${s.campaign_id}:${s.date}`,
         module: "calendar",
         campaignName: nameById.get(s.campaign_id) ?? "Unknown campaign",
-        description: `A session was scheduled for ${s.date}`,
+        description: `A session was scheduled for ${format(parseISO(s.date), "MMM d")}`,
         actorName: null,
         createdAt: s.created_at,
+        href: slug ? `/calendar/g/${slug}` : "/app",
+      });
+    }
+
+    const { data: votes } = await supabase
+      .from("votes")
+      .select("campaign_id, user_id, date, value, updated_at")
+      .in("campaign_id", calendarIds)
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+
+    const voterIds = [...new Set((votes ?? []).map((v) => v.user_id))];
+    const { data: voterProfiles } = voterIds.length
+      ? await supabase.from("profiles").select("id, first_name, display_name").in("id", voterIds)
+      : { data: [] };
+    const voterById = new Map((voterProfiles ?? []).map((p) => [p.id, p]));
+
+    for (const v of votes ?? []) {
+      const slug = slugById.get(v.campaign_id);
+      items.push({
+        id: `vote:${v.campaign_id}:${v.user_id}:${v.date}`,
+        module: "calendar",
+        campaignName: nameById.get(v.campaign_id) ?? "Unknown campaign",
+        description: `voted ${describeVote(v.value)} for ${format(parseISO(v.date), "MMM d")}`,
+        actorName: name(voterById.get(v.user_id)),
+        createdAt: v.updated_at,
         href: slug ? `/calendar/g/${slug}` : "/app",
       });
     }
