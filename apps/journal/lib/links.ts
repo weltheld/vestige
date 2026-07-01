@@ -5,16 +5,24 @@
 // direct hit on its own vercel.app host).
 export const WEB_URL =
   process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3001";
+// Includes the /calendar prefix already (Calendar's own basePath).
+export const CALENDAR_URL =
+  process.env.NEXT_PUBLIC_CALENDAR_URL ?? "http://localhost:3000/calendar";
 
 /** The platform campaign overview (where campaigns are discovered). */
 export const appHref = () => `${WEB_URL}/app`;
 
 /**
  * This campaign's calendar view, in the Calendar module. Calendar routes by
- * slug, not id — pass `campaign.slug` from a HeaderCampaign. Same-origin
- * relative path (Multi-Zones), not a cross-domain link.
+ * slug, not id — pass `campaign.slug` from a HeaderCampaign.
+ *
+ * MUST be an absolute URL, not a relative path: this app (Journal) has its
+ * own basePath ("/journal"), which Next.js auto-prepends to any relative
+ * <Link>/<a> href — so a relative "/calendar/g/slug" here would actually
+ * render as "/journal/calendar/g/slug" and 404. Cross-zone links always need
+ * to be absolute.
  */
-export const calendarCampaignHref = (slug: string) => `/calendar/g/${slug}`;
+export const calendarCampaignHref = (slug: string) => `${CALENDAR_URL}/g/${slug}`;
 
 /** Journal routes (this app). */
 export const journal = {

@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { CalendarDays, ScrollText, LogOut } from "lucide-react";
 import { Crest } from "./Crest";
 import { ProfileDialog } from "./ProfileDialog";
+import { CampaignSwitcher, type SwitcherCampaign } from "./CampaignSwitcher";
 import { signOutAction } from "@/app/auth/actions";
+import { PLATFORM_URL } from "@/lib/basePath";
 
 type Props = {
   firstName: string;
@@ -10,9 +11,10 @@ type Props = {
   characterName: string;
   displayName: string;
   avatarUrl?: string;
-  /** Shows a campaign-name pill (linking back to the platform's campaign
-   *  list) when viewing a specific campaign, e.g. on /g/[slug]. */
-  currentCampaignName?: string;
+  /** Shows the campaign-switcher pill (with a dropdown of the user's other
+   *  campaigns) when viewing a specific campaign, e.g. on /g/[slug]. */
+  campaign?: SwitcherCampaign;
+  campaigns?: SwitcherCampaign[];
 };
 
 /**
@@ -30,13 +32,18 @@ export function PlatformHeader({
   characterName,
   displayName,
   avatarUrl,
-  currentCampaignName,
+  campaign,
+  campaigns = [],
 }: Props) {
   return (
     <header className="border-b border-hairline">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-        <Link
-          href="/app"
+        {/* Cross-zone link to the platform root — MUST be a plain <a> with an
+            absolute URL. This app's own basePath ("/calendar") gets
+            auto-prepended by Next to any relative <Link>/<a> href, which
+            would turn "/app" into the nonexistent "/calendar/app". */}
+        <a
+          href={`${PLATFORM_URL}/app`}
           aria-label="Vestige — home"
           className="flex min-w-0 items-center gap-2.5"
         >
@@ -44,33 +51,25 @@ export function PlatformHeader({
           <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
             Vestige
           </span>
-        </Link>
+        </a>
 
         <nav aria-label="Modules" className="ml-2 hidden items-center gap-1 sm:flex">
           <span className="flex items-center gap-1.5 rounded-lg bg-parchment px-3.5 py-2 font-display text-[13px] font-bold text-wine">
             <CalendarDays size={14} />
             Calendar
           </span>
-          <Link
-            href="/journal"
+          <a
+            href={`${PLATFORM_URL}/journal`}
             className="flex items-center gap-1.5 rounded-lg px-3.5 py-2 font-body text-[13px] text-ink-soft transition hover:text-ink"
           >
             <ScrollText size={14} />
             Journal
-          </Link>
+          </a>
         </nav>
 
         <div className="flex-1" />
 
-        {currentCampaignName && (
-          <Link
-            href="/app"
-            title="View all campaigns"
-            className="hidden max-w-[12rem] truncate rounded-full border border-hairline bg-surface px-3 py-1 font-body text-sm text-ink-soft transition hover:border-dm-gold sm:inline"
-          >
-            {currentCampaignName}
-          </Link>
-        )}
+        {campaign && <CampaignSwitcher current={campaign} campaigns={campaigns} />}
 
         <ProfileDialog
           firstName={firstName}

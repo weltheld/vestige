@@ -32,6 +32,20 @@ export default async function GroupPage({
     .maybeSingle();
   if (!campaign) notFound();
 
+  // All campaigns this user belongs to, for the header's campaign switcher.
+  const { data: myMemberships } = await supabase
+    .from("campaign_members")
+    .select("campaigns(id, slug, name, banner_url)")
+    .eq("user_id", user.id);
+  const switcherCampaigns = (
+    (myMemberships ?? []) as unknown as {
+      campaigns: { id: string; slug: string; name: string; banner_url: string | null } | null;
+    }[]
+  )
+    .map((m) => m.campaigns)
+    .filter((c): c is NonNullable<typeof c> => c !== null)
+    .map((c) => ({ id: c.id, slug: c.slug, name: c.name, imageUrl: c.banner_url }));
+
   // Load members + votes + sessions in parallel; then fetch profiles in one batch.
   const [{ data: membersRows }, { data: votesRows }, { data: sessionRows }] =
     await Promise.all([
@@ -174,6 +188,7 @@ export default async function GroupPage({
       sessionDates={(sessionRows ?? []).map((s) => s.date)}
       crossSessions={crossSessions}
       crossVotes={crossVotes}
+      switcherCampaigns={switcherCampaigns}
       currentUser={{
         id: user.id,
         email: user.email ?? "",

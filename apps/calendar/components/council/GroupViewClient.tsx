@@ -43,6 +43,8 @@ type Props = {
   crossSessions: { date: string; campaignName: string }[];
   /** The user's own votes in OTHER campaigns (for the align overlay). */
   crossVotes: { date: string; value: VoteValue; campaignName: string }[];
+  /** All campaigns this user belongs to, for the header's campaign switcher. */
+  switcherCampaigns: { id: string; slug: string; name: string; imageUrl: string | null }[];
 };
 
 export function GroupViewClient(props: Props) {
@@ -441,7 +443,8 @@ export function GroupViewClient(props: Props) {
           characterName={props.currentUser.characterName}
           displayName={props.currentUser.displayName}
           avatarUrl={props.currentUser.avatarUrl}
-          currentCampaignName={group.name}
+          campaign={{ id: group.id, slug: group.slug, name: group.name, imageUrl: group.bannerUrl ?? null }}
+          campaigns={props.switcherCampaigns}
         />
 
         {/* Banner card — avatars top-left, campaign name bottom-left */}

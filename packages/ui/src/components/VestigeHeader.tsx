@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { CalendarDays, ScrollText, LogOut } from "lucide-react";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
@@ -15,6 +14,16 @@ export type VestigeHeaderUser = {
 export type VestigeHeaderCampaign = { name: string };
 
 export type { HeaderCampaign };
+
+// Web is the primary Multi-Zones domain — the wordmark and profile chip
+// always point there regardless of which app renders this header. MUST be
+// absolute: this component can render inside an app with its own basePath
+// (e.g. Journal's "/journal"), and Next.js auto-prepends that basePath to
+// any relative <Link> href — a relative "/app" would wrongly become
+// "/journal/app" and 404. Cross-zone links always need to be absolute.
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3001";
+// Calendar's own env var already includes its "/calendar" basePath prefix.
+const CALENDAR_URL = process.env.NEXT_PUBLIC_CALENDAR_URL ?? "http://localhost:3000/calendar";
 
 type Props = {
   user: VestigeHeaderUser;
@@ -58,8 +67,8 @@ export function VestigeHeader({
   return (
     <header className="border-b border-hairline">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-        <Link
-          href="/app"
+        <a
+          href={`${WEB_URL}/app`}
           aria-label="Vestige — home"
           className="flex min-w-0 items-center gap-2.5"
         >
@@ -67,7 +76,7 @@ export function VestigeHeader({
           <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
             Vestige
           </span>
-        </Link>
+        </a>
 
         <nav aria-label="Modules" className="ml-2 hidden items-center gap-1 sm:flex">
           <ModuleTab
@@ -111,22 +120,33 @@ export function VestigeHeader({
   );
 }
 
+/**
+ * Matches Council of Days' real ProfileDialog trigger pixel-for-pixel
+ * (Avatar component + button chrome) — but since that component's full
+ * profile-editing modal lives in the Calendar app (not importable from
+ * here), this links out to Calendar's /profile page instead, which edits
+ * the same shared `profiles` row. One canonical place to edit your profile,
+ * reachable identically from any app.
+ */
 function ProfileChip({ user }: { user: VestigeHeaderUser }) {
-  const initials = user.label.trim().charAt(0).toUpperCase() || "?";
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface py-1 pl-1 pr-3 shadow-sm">
-      <span className="flex h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-full bg-parchment ring-1 ring-hairline">
+    <a
+      href={`${CALENDAR_URL}/profile`}
+      title="Edit profile"
+      className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface py-1 pl-1 pr-3 shadow-sm transition hover:bg-parchment"
+    >
+      <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface shadow-sm ring-1 ring-hairline">
         {user.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="font-display text-xs text-ink-soft">{initials}</span>
+          <PlatformCrest size={30} />
         )}
       </span>
       <span className="max-w-[100px] truncate font-body text-sm font-bold text-ink sm:max-w-[160px]">
         {user.label}
       </span>
-    </span>
+    </a>
   );
 }
 
@@ -152,10 +172,12 @@ function ModuleTab({
     </>
   );
   if (href) {
+    // href is always absolute (cross-zone) or already includes the correct
+    // basePath — plain <a> avoids Next re-prepending this app's own basePath.
     return (
-      <Link href={href} aria-current={active ? "page" : undefined} className={className}>
+      <a href={href} aria-current={active ? "page" : undefined} className={className}>
         {content}
-      </Link>
+      </a>
     );
   }
   return (
