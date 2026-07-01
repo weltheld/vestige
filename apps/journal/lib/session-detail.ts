@@ -39,8 +39,6 @@ export type SessionDetail = {
   /** Annotations grouped by their anchor (a paragraph/block id). */
   annotationsByAnchor: Record<string, Annotation[]>;
   annotationCount: number;
-  commentCount: number;
-  revisionCount: number;
   modulesEnabled: { calendar: boolean; journal: boolean };
 };
 
@@ -54,28 +52,30 @@ export async function getSessionDetail(
   campaignId: string,
   sessionId: string,
 ): Promise<SessionDetail | null> {
-  const { data: s } = await supabase
-    .from("journal_sessions")
-    .select(
-      "id, campaign_id, title, date, summary, player_characters, npcs, notes, image_url, created_by, created_at, updated_at, updated_by",
-    )
-    .eq("id", sessionId)
-    .eq("campaign_id", campaignId)
-    .maybeSingle();
+  // First wave — everything that only needs the ids we already have.
+  const [{ data: s }, { data: links }, { data: anns }, { data: campaign }] =
+    await Promise.all([
+      supabase
+        .from("journal_sessions")
+        .select(
+          "id, campaign_id, title, date, summary, player_characters, npcs, notes, image_url, created_by, created_at, updated_at, updated_by",
+        )
+        .eq("id", sessionId)
+        .eq("campaign_id", campaignId)
+        .maybeSingle(),
+      supabase
+        .from("journal_session_characters")
+        .select("character_id, journal_characters(id, name, role, portrait_url, bio)")
+        .eq("session_id", sessionId),
+      supabase
+        .from("journal_annotations")
+        .select("id, anchor, body, author_id, created_at")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true }),
+      supabase.from("campaigns").select("modules_enabled").eq("id", campaignId).maybeSingle(),
+    ]);
   if (!s) return null;
 
-  // Sequence number = sessions in this campaign dated on/before this one.
-  const { count: priorCount } = await supabase
-    .from("journal_sessions")
-    .select("id", { count: "exact", head: true })
-    .eq("campaign_id", campaignId)
-    .lte("date", s.date ?? s.created_at);
-
-  // Characters in this session.
-  const { data: links } = await supabase
-    .from("journal_session_characters")
-    .select("character_id, journal_characters(id, name, role, portrait_url, bio)")
-    .eq("session_id", sessionId);
   type CharRow = {
     id: string;
     name: string;
@@ -94,30 +94,25 @@ export async function getSessionDetail(
       bio: c.bio,
     }));
 
-  // Annotations + their authors.
-  const { data: anns } = await supabase
-    .from("journal_annotations")
-    .select("id, anchor, body, author_id, created_at")
-    .eq("session_id", sessionId)
-    .order("created_at", { ascending: true });
+  // Second wave — both need data from the first (session row / annotation
+  // authors). Comment + revision counts are derived by the page from the
+  // full lists it already loads, so no separate COUNT queries here.
+  const authorIds = new Set<string>([s.created_by]);
+  if (s.updated_by) authorIds.add(s.updated_by);
+  for (const a of anns ?? []) authorIds.add(a.author_id);
 
-  const { count: commentCount } = await supabase
-    .from("journal_comments")
-    .select("id", { count: "exact", head: true })
-    .eq("session_id", sessionId);
-  const { count: revisionCount } = await supabase
-    .from("journal_session_revisions")
-    .select("id", { count: "exact", head: true })
-    .eq("session_id", sessionId);
-
-  // Resolve author names for session + editor + annotation authors.
-  const ids = new Set<string>([s.created_by]);
-  if (s.updated_by) ids.add(s.updated_by);
-  for (const a of anns ?? []) ids.add(a.author_id);
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, first_name, display_name, avatar_url")
-    .in("id", [...ids]);
+  const [{ count: priorCount }, { data: profiles }] = await Promise.all([
+    // Sequence number = sessions in this campaign dated on/before this one.
+    supabase
+      .from("journal_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", campaignId)
+      .lte("date", s.date ?? s.created_at),
+    supabase
+      .from("profiles")
+      .select("id, first_name, display_name, avatar_url")
+      .in("id", [...authorIds]),
+  ]);
   const profById = new Map((profiles ?? []).map((p) => [p.id, p]));
 
   const annotationsByAnchor: Record<string, Annotation[]> = {};
@@ -133,11 +128,6 @@ export async function getSessionDetail(
     });
   }
 
-  const { data: campaign } = await supabase
-    .from("campaigns")
-    .select("modules_enabled")
-    .eq("id", campaignId)
-    .maybeSingle();
   const modulesEnabled = (campaign?.modules_enabled as { calendar: boolean; journal: boolean }) ?? {
     calendar: true,
     journal: true,
@@ -159,8 +149,6 @@ export async function getSessionDetail(
     characters,
     annotationsByAnchor,
     annotationCount: (anns ?? []).length,
-    commentCount: commentCount ?? 0,
-    revisionCount: revisionCount ?? 0,
     modulesEnabled,
   };
 }

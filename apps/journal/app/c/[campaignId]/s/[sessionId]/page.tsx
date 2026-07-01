@@ -55,8 +55,8 @@ export default async function SessionDetailPage({
         <SessionSidebar session={session} campaignId={campaignId} campaignSlug={campaign.slug ?? ""} />
         <div className="min-w-0 flex-1">
           <SessionTabs
-            commentCount={session.commentCount}
-            revisionCount={session.revisionCount}
+            commentCount={comments.length}
+            revisionCount={revisions.length}
             recap={<NotesBody session={session} campaignId={campaignId} />}
             comments={<Comments comments={comments} campaignId={campaignId} sessionId={sessionId} />}
             changelog={<ChangeLog revisions={revisions} />}
