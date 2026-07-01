@@ -12,11 +12,78 @@ type Props = {
   extraCount?: number;
   /** When provided, renders the "⋯" menu (settings / switch campaign). */
   menu?: { settingsHref: string; switchHref: string };
+  /**
+   * "campaign" (default) = the existing full-width banner, for the
+   * campaign-level cover on the session list. "session" = a smaller,
+   * fully-visible 4:3 thumbnail beside the title — used for an individual
+   * session's own cover, which is often a portrait/scene crop that gets
+   * badly cut off by the wide banner treatment.
+   */
+  variant?: "campaign" | "session";
 };
 
-/** The Journal hero band — cover image + dark gradient + avatar group +
- *  pipe-prefixed title + subtitle. Shared by the session list and detail. */
-export function SessionHero({ title, prefix, coverUrl, subtitle, avatars = [], extraCount = 0, menu }: Props) {
+/** The Journal hero band — cover image + avatar group + pipe-prefixed
+ *  title + subtitle. Shared by the session list and detail. */
+export function SessionHero({
+  title,
+  prefix,
+  coverUrl,
+  subtitle,
+  avatars = [],
+  extraCount = 0,
+  menu,
+  variant = "campaign",
+}: Props) {
+  const avatarGroup = (avatars.length > 0 || extraCount > 0) && (
+    <div className="flex">
+      {avatars.slice(0, 5).map((src, i) => (
+        <span
+          key={i}
+          className="-ml-3 first:ml-0 rounded-full ring-2 ring-gold"
+          style={{ boxShadow: "0 0 0 2px #fff inset" }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="" className="h-9 w-9 rounded-full border-2 border-white object-cover" />
+        </span>
+      ))}
+      {extraCount > 0 && (
+        <span className="-ml-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-cod-soft font-display text-[11px] text-ink">
+          +{extraCount}
+        </span>
+      )}
+    </div>
+  );
+
+  if (variant === "session") {
+    return (
+      <section className="relative flex flex-col gap-5 rounded-xl bg-[#faf5e6] p-5 sm:flex-row sm:items-center">
+        <div className="aspect-[4/3] w-full max-w-[220px] shrink-0 overflow-hidden rounded-lg bg-ink">
+          {coverUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={coverUrl} alt="" className="h-full w-full object-contain" />
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          {menu && (
+            <div className="absolute right-4 top-4">
+              <HeroMenu settingsHref={menu.settingsHref} switchHref={menu.switchHref} />
+            </div>
+          )}
+          {avatarGroup && <div className="mb-3">{avatarGroup}</div>}
+          <div className="flex items-center gap-1">
+            <span className="h-8 w-0.5 shrink-0 bg-gold" />
+            <h1 className="font-display text-[28px] font-semibold tracking-[0.04em] text-ink">
+              {prefix && <span className="text-gold-soft">{prefix}</span>}
+              {title}
+            </h1>
+          </div>
+          <p className="mt-1 pl-3 font-body text-[13px] italic text-ink-soft">{subtitle}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative h-[220px] w-full overflow-hidden rounded-xl bg-ink">
       {coverUrl && (
@@ -35,25 +102,7 @@ export function SessionHero({ title, prefix, coverUrl, subtitle, avatars = [], e
       )}
 
       {/* Avatar group */}
-      {(avatars.length > 0 || extraCount > 0) && (
-        <div className="absolute left-6 top-6 flex">
-          {avatars.slice(0, 5).map((src, i) => (
-            <span
-              key={i}
-              className="-ml-3 first:ml-0 rounded-full ring-2 ring-gold"
-              style={{ boxShadow: "0 0 0 2px #fff inset" }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-9 w-9 rounded-full border-2 border-white object-cover" />
-            </span>
-          ))}
-          {extraCount > 0 && (
-            <span className="-ml-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-cod-soft font-display text-[11px] text-ink">
-              +{extraCount}
-            </span>
-          )}
-        </div>
-      )}
+      {avatarGroup && <div className="absolute left-6 top-6">{avatarGroup}</div>}
 
       {/* Title block */}
       <div className="absolute bottom-6 left-6 right-6">

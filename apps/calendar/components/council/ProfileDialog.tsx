@@ -44,7 +44,7 @@ export function ProfileDialog({
                 : "border-hairline bg-surface hover:bg-parchment"
             }`}
           >
-            <Avatar src={avatarUrl} alt={firstName} size={30} />
+            <Avatar src={avatarUrl} alt={firstName} size={22} />
             <span
               className={`max-w-[100px] truncate font-body text-sm font-bold sm:max-w-[160px] ${onBanner ? "text-surface" : "text-ink"}`}
             >

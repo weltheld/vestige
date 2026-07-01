@@ -123,12 +123,12 @@ function ProfileMenu({ user, onSignOut }: { user: VestigeHeaderUser; onSignOut: 
           type="button"
           className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface py-1 pl-1 pr-3 shadow-sm outline-none transition hover:bg-parchment"
         >
-          <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface shadow-sm ring-1 ring-hairline">
+          <span className="relative flex h-[22px] w-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface shadow-sm ring-1 ring-hairline">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <PlatformCrest size={30} />
+              <PlatformCrest size={22} />
             )}
           </span>
           <span className="max-w-[100px] truncate font-body text-sm font-bold text-ink sm:max-w-[160px]">

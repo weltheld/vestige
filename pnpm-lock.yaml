@@ -268,9 +268,15 @@ importers:
       '@types/node':
         specifier: 22.10.2
         version: 22.10.2
+      '@types/react':
+        specifier: 19.0.1
+        version: 19.0.1
       next:
         specifier: ^15.5.19
         version: 15.5.19(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      react:
+        specifier: 19.0.0
+        version: 19.0.0
       typescript:
         specifier: 5.7.2
         version: 5.7.2

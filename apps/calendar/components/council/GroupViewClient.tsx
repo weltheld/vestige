@@ -9,6 +9,7 @@ import { OwnerSettings } from "@/components/council/OwnerSettings";
 import { BestDaySummary } from "@/components/council/BestDaySummary";
 import { QuickFillBar } from "@/components/council/QuickFillBar";
 import { BannerParty } from "@/components/council/BannerParty";
+import { Crest } from "@/components/council/Crest";
 import { CharacterDialog } from "@/components/council/CharacterDialog";
 import type { CalendarDay } from "@/lib/calendar";
 import { buildMonthGrid, isoDate } from "@/lib/calendar";
@@ -447,8 +448,9 @@ export function GroupViewClient(props: Props) {
           campaigns={props.switcherCampaigns}
         />
 
-        {/* Banner card — avatars top-left, campaign name bottom-left */}
-        <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 sm:px-5">
+        {/* Banner card (mobile/tablet) — avatars top-left, campaign name
+            bottom-left, full-width image strip. Unchanged. */}
+        <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 sm:px-5 lg:hidden">
           <div className={cn(
             "relative overflow-hidden rounded-xl shadow-parchment",
             group.bannerUrl ? "h-28 sm:h-36" : "flex items-end pb-3 pt-4 min-h-[56px]",
@@ -490,6 +492,36 @@ export function GroupViewClient(props: Props) {
                 {group.name}
               </h1>
             )}
+          </div>
+        </div>
+
+        {/* Banner card (desktop) — a compact 4:3 thumbnail top-left instead
+            of a full-width strip, so the source photo isn't cropped into an
+            ultra-wide band. Avatars + campaign name sit beside it. */}
+        <div className="mx-auto hidden w-full max-w-[1440px] px-5 pt-4 lg:block">
+          <div className="flex items-start gap-5">
+            <div className="relative aspect-[4/3] w-[200px] shrink-0 overflow-hidden rounded-xl bg-parchment shadow-parchment">
+              {group.bannerUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={group.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center">
+                  <Crest size={56} className="opacity-40" />
+                </span>
+              )}
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col gap-3 pt-1">
+              <BannerParty
+                members={sortedMembers}
+                hasBanner={false}
+                currentUserId={props.currentUser.id}
+                onEditSelf={() => setCharacterOpen(true)}
+              />
+              <h1 className="truncate border-l-2 border-dm-gold pl-3 font-display text-2xl font-bold text-ink">
+                {group.name}
+              </h1>
+            </div>
           </div>
         </div>
 

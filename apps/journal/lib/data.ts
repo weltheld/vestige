@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@vestige/db";
 import type { HeaderCampaign } from "@vestige/ui";
@@ -13,8 +14,14 @@ export type Viewer = {
   avatarUrl: string | null;
 };
 
-/** The signed-in user + their platform profile fields, or null. */
-export async function getViewer(supabase: SB): Promise<Viewer | null> {
+/**
+ * The signed-in user + their platform profile fields, or null.
+ *
+ * Wrapped in `cache()` — the campaign layout and its page both need this,
+ * and without memoization that's two `auth.getUser()` network round trips
+ * plus two profile queries per request instead of one.
+ */
+export const getViewer = cache(async (supabase: SB): Promise<Viewer | null> => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -33,7 +40,7 @@ export async function getViewer(supabase: SB): Promise<Viewer | null> {
     "Adventurer";
 
   return { id: user.id, label, avatarUrl: profile?.avatar_url ?? null };
-}
+});
 
 type MembershipRow = {
   campaigns: { id: string; name: string; banner_url: string | null; slug: string } | null;
@@ -76,29 +83,31 @@ export async function getMyCampaigns(supabase: SB, userId: string): Promise<Head
   }));
 }
 
-/** A single campaign IF the user is a member; null otherwise (used to guard). */
-export async function getCampaignIfMember(
-  supabase: SB,
-  userId: string,
-  campaignId: string,
-): Promise<HeaderCampaign | null> {
-  const { data: membership } = await supabase
-    .from("campaign_members")
-    .select("campaign_id, campaigns(id, name, banner_url, slug)")
-    .eq("user_id", userId)
-    .eq("campaign_id", campaignId)
-    .maybeSingle();
+/**
+ * A single campaign IF the user is a member; null otherwise (used to guard).
+ * Also called from both the campaign layout and its page — `cache()` for
+ * the same reason as `getViewer`.
+ */
+export const getCampaignIfMember = cache(
+  async (supabase: SB, userId: string, campaignId: string): Promise<HeaderCampaign | null> => {
+    const { data: membership } = await supabase
+      .from("campaign_members")
+      .select("campaign_id, campaigns(id, name, banner_url, slug)")
+      .eq("user_id", userId)
+      .eq("campaign_id", campaignId)
+      .maybeSingle();
 
-  const c = (membership as MembershipRow | null)?.campaigns;
-  if (!c) return null;
-  return {
-    id: c.id,
-    name: c.name,
-    imageUrl: c.banner_url,
-    slug: c.slug,
-    href: journal.campaign(c.id),
-  };
-}
+    const c = (membership as MembershipRow | null)?.campaigns;
+    if (!c) return null;
+    return {
+      id: c.id,
+      name: c.name,
+      imageUrl: c.banner_url,
+      slug: c.slug,
+      href: journal.campaign(c.id),
+    };
+  },
+);
 
 export type CampaignPlayer = {
   userId: string;

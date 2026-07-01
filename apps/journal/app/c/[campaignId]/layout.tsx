@@ -17,11 +17,14 @@ export default async function CampaignLayout({
   const viewer = await getViewer(supabase);
   if (!viewer) redirect(appHref());
 
+  // Fetched together — getMyCampaigns doesn't depend on the membership
+  // check, so there's no need to wait for it before starting that query too.
+  const [campaign, campaigns] = await Promise.all([
+    getCampaignIfMember(supabase, viewer.id, campaignId),
+    getMyCampaigns(supabase, viewer.id),
+  ]);
   // Membership guard — non-members go back to the platform shell.
-  const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!campaign) redirect(appHref());
-
-  const campaigns = await getMyCampaigns(supabase, viewer.id);
 
   await supabase
     .from("profiles")

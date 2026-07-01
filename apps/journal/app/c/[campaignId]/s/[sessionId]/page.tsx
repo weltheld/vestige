@@ -42,6 +42,7 @@ export default async function SessionDetailPage({
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-16 pt-6">
       <SessionHero
+        variant="session"
         title={session.title}
         prefix={`Session ${num} · `}
         coverUrl={session.imageUrl ?? campaign.imageUrl}

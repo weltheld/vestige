@@ -52,8 +52,9 @@ type Props = {
   embedded?: boolean;
 };
 
-// Inset banner card: h-40 (160px) at ~1240px usable width on a 1280px screen ≈ 8:1.
-const BANNER_ASPECT = 8;
+// Desktop shows the banner as a compact 4:3 thumbnail (mobile keeps the
+// full-width strip, cropped from this same source via object-cover).
+const BANNER_ASPECT = 4 / 3;
 
 export function OwnerSettings({
   members,
@@ -144,7 +145,7 @@ export function OwnerSettings({
           viewWidth={400}
           outputWidth={1600}
           title="Frame your banner"
-          hint="Drag to move, slide to zoom. Shown as a slim band across the calendar."
+          hint="Drag to move, slide to zoom. Shown as a compact image in your campaign header."
           onCancel={() => {
             setCropFile(null);
             setPendingOriginal(null);

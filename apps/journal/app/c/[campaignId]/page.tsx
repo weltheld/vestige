@@ -21,11 +21,10 @@ export default async function SessionListPage({
   const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!campaign) redirect(appHref());
 
-  const header = await getCampaignHeader(supabase, campaignId, {
-    name: campaign.name,
-    coverUrl: campaign.imageUrl,
-  });
-  const sessions = await getSessions(supabase, campaignId);
+  const [header, sessions] = await Promise.all([
+    getCampaignHeader(supabase, campaignId, { name: campaign.name, coverUrl: campaign.imageUrl }),
+    getSessions(supabase, campaignId),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-16 pt-6">

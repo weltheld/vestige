@@ -17,19 +17,21 @@ export default async function AppHome() {
   // Middleware already guards /app, but guard here too for safety.
   if (!user) redirect("/signin?next=/app");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, avatar_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Independent reads — fetched together instead of as a waterfall.
+  const [{ data: profile }, campaigns] = await Promise.all([
+    supabase.from("profiles").select("display_name, avatar_url").eq("id", user.id).maybeSingle(),
+    getMyCampaigns(supabase, user.id),
+  ]);
 
   const label =
     profile?.display_name?.trim() || user.email?.split("@")[0] || "Adventurer";
 
-  const campaigns = await getMyCampaigns(supabase, user.id);
-  const defaultCampaign = await resolveDefaultCampaign(supabase, user.id, campaigns);
-  const activity = await getRecentActivity(supabase, campaigns);
-  const upcoming = await getUpcomingSlots(supabase, campaigns);
+  // All three only need `campaigns`, not each other.
+  const [defaultCampaign, activity, upcoming] = await Promise.all([
+    resolveDefaultCampaign(supabase, user.id, campaigns),
+    getRecentActivity(supabase, campaigns),
+    getUpcomingSlots(supabase, campaigns),
+  ]);
 
   const headerCampaigns = campaigns.map((c) => ({
     id: c.id,

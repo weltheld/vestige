@@ -16,8 +16,11 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
               href={item.href}
               className="flex items-center gap-3 rounded-xl border border-hairline bg-surface px-4 py-3 transition hover:border-gold"
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-parchment text-gold">
-                {item.module === "journal" ? (
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-parchment text-gold ring-1 ring-hairline">
+                {item.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.avatarUrl} alt="" className="h-full w-full object-cover" />
+                ) : item.module === "journal" ? (
                   <ScrollText size={15} />
                 ) : (
                   <CalendarDays size={15} />

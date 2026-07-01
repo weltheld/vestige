@@ -85,7 +85,6 @@ export function CampaignSwitcher({
                   href={`${PLATFORM_URL}/calendar/g/${c.slug}`}
                   className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 outline-none transition data-[highlighted]:bg-parchment"
                 >
-                  <Thumb campaign={c} size={28} />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate font-display text-[13px] text-ink">{c.name}</span>
                     {c.memberCount != null && (

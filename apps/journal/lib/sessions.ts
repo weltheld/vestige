@@ -78,25 +78,21 @@ export async function getCampaignHeader(
   campaignId: string,
   campaign: { name: string; coverUrl: string | null },
 ): Promise<CampaignHeader> {
-  const { count } = await supabase
-    .from("journal_sessions")
-    .select("id", { count: "exact", head: true })
-    .eq("campaign_id", campaignId);
-
-  const { data: earliest } = await supabase
-    .from("journal_sessions")
-    .select("date")
-    .eq("campaign_id", campaignId)
-    .not("date", "is", null)
-    .order("date", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  const { data: members } = await supabase
-    .from("campaign_members")
-    .select("avatar_url")
-    .eq("campaign_id", campaignId)
-    .limit(6);
+  const [{ count }, { data: earliest }, { data: members }] = await Promise.all([
+    supabase
+      .from("journal_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("campaign_id", campaignId),
+    supabase
+      .from("journal_sessions")
+      .select("date")
+      .eq("campaign_id", campaignId)
+      .not("date", "is", null)
+      .order("date", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("campaign_members").select("avatar_url").eq("campaign_id", campaignId).limit(6),
+  ]);
 
   return {
     name: campaign.name,

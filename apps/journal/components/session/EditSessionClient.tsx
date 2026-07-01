@@ -120,13 +120,9 @@ export function EditSessionClient({
 
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-24 pt-6">
-      {/* Hero edit dressing */}
-      <section className="relative h-[220px] w-full overflow-hidden rounded-xl bg-ink">
-        {fields.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={fields.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        )}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.69))" }} />
+      {/* Hero edit dressing — a 4:3 thumbnail (fully visible, not cropped
+          into an ultra-wide banner) beside the title/date fields. */}
+      <section className="flex flex-col gap-5 sm:flex-row sm:items-start">
         <button
           type="button"
           disabled={uploadingCover}
@@ -141,19 +137,38 @@ export function EditSessionClient({
               setUploadingCover(false);
             }
           }}
-          className="absolute right-4 top-4 flex items-center gap-2 rounded-lg border border-white/50 bg-white/20 px-3.5 py-2 font-display text-[10px] uppercase tracking-[0.08em] text-white disabled:opacity-60"
+          className="group relative aspect-[4/3] w-full max-w-[280px] shrink-0 overflow-hidden rounded-xl bg-ink disabled:opacity-70"
         >
-          <ImagePlus size={12} /> {uploadingCover ? "Uploading…" : "Change image"}
+          {fields.image_url ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={fields.image_url} alt="" className="absolute inset-0 h-full w-full object-contain" />
+              <span className="absolute inset-0 hidden items-center justify-center gap-1.5 bg-black/40 font-body text-[12px] text-white group-hover:flex">
+                <ImagePlus size={13} /> {uploadingCover ? "Uploading…" : "Change image"}
+              </span>
+            </>
+          ) : (
+            <span
+              className="flex h-full w-full flex-col items-center justify-center gap-2"
+              style={{ border: "1.5px dashed var(--gold)", background: "#faf5e6" }}
+            >
+              <ImagePlus size={22} className="text-muted" />
+              <span className="font-body text-[12px] italic text-muted">
+                {uploadingCover ? "Uploading…" : "Add session image"}
+              </span>
+            </span>
+          )}
         </button>
-        <div className="absolute bottom-6 left-6 right-6">
+
+        <div className="flex-1 pt-1">
           <div className="flex items-center gap-2">
             <input
               value={fields.title}
               onChange={(e) => set({ title: e.target.value })}
               placeholder="NEW SESSION TITLE"
-              className="w-full max-w-[640px] border-b border-dashed border-white/50 bg-transparent font-display text-[28px] italic text-white outline-none placeholder:text-white/60"
+              className="w-full border-b border-dashed border-hairline bg-transparent font-display text-[28px] italic text-ink outline-none placeholder:text-muted"
             />
-            <Pencil size={14} className="shrink-0 text-white" />
+            <Pencil size={14} className="shrink-0 text-ink-soft" />
           </div>
           <div className="relative mt-2">
             <button
@@ -164,7 +179,7 @@ export function EditSessionClient({
                 if (rect) setDatePickerPos({ top: rect.bottom + 8, left: rect.left });
                 setDatePickerOpen((o) => !o);
               }}
-              className="flex items-center gap-1.5 rounded-md border border-white/50 bg-white/15 px-2.5 py-1 font-body text-[13px] text-white"
+              className="flex items-center gap-1.5 rounded-md border border-hairline bg-surface px-2.5 py-1 font-body text-[13px] text-ink"
             >
               {fields.date ? format(parseISO(fields.date), "MMMM d, yyyy") : "Pick a date"}
               <ChevronDown size={10} />
@@ -256,48 +271,6 @@ export function EditSessionClient({
             />
           </Card>
 
-          <Card label="Session Image">
-            <button
-              type="button"
-              disabled={uploadingCover}
-              onClick={async () => {
-                const file = await pickImageFile();
-                if (!file) return;
-                setUploadingCover(true);
-                try {
-                  const url = await uploadJournalImage(campaignId, file);
-                  set({ image_url: url });
-                } finally {
-                  setUploadingCover(false);
-                }
-              }}
-              className="group relative flex h-[140px] w-[240px] flex-col items-center justify-center gap-2 overflow-hidden rounded-lg disabled:opacity-70"
-              style={
-                fields.image_url
-                  ? undefined
-                  : { border: "1.5px dashed var(--gold)", background: "#faf5e6" }
-              }
-            >
-              {fields.image_url ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={fields.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  <span className="absolute inset-0 hidden items-center justify-center gap-1.5 bg-black/40 font-body text-[12px] text-white group-hover:flex">
-                    <ImagePlus size={13} /> {uploadingCover ? "Uploading…" : "Edit"}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <ImagePlus size={24} className="text-muted" />
-                  <p className="font-body text-[12px] italic text-muted">
-                    {uploadingCover ? "Uploading…" : "Add session image"}
-                  </p>
-                  <p className="font-body text-[10px] text-muted">Becomes campaign cover if none yet</p>
-                </>
-              )}
-            </button>
-          </Card>
-
           {modulesCalendar && (
             <div className="flex items-center gap-2.5 rounded-[10px] bg-cod-soft px-3.5 py-3">
               <Info size={14} className="shrink-0 text-gold-soft" />
@@ -325,16 +298,26 @@ export function EditSessionClient({
                   <h2 className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-soft">
                     {label}
                   </h2>
-                  <button type="button" className="ml-auto font-body text-[11px] italic text-muted underline">
-                    Add image to this section
-                  </button>
+                  {key !== "player_characters" && (
+                    <button type="button" className="ml-auto font-body text-[11px] italic text-muted underline">
+                      Add image to this section
+                    </button>
+                  )}
                 </div>
-                <SectionEditor
-                  campaignId={campaignId}
-                  value={(fields[key] as string | null) ?? ""}
-                  onChange={(md) => set({ [key]: md } as Partial<SessionInput>)}
-                  placeholder={PLACEHOLDERS[key]!}
-                />
+                {key === "player_characters" ? (
+                  <PresentPlayersEditor
+                    value={fields.player_characters ?? ""}
+                    players={players}
+                    onChange={(md) => set({ player_characters: md })}
+                  />
+                ) : (
+                  <SectionEditor
+                    campaignId={campaignId}
+                    value={(fields[key] as string | null) ?? ""}
+                    onChange={(md) => set({ [key]: md } as Partial<SessionInput>)}
+                    placeholder={PLACEHOLDERS[key]!}
+                  />
+                )}
               </section>
             ))}
           </div>
@@ -375,6 +358,58 @@ export function EditSessionClient({
         </div>
       </div>
     </main>
+  );
+}
+
+/**
+ * Which campaign players were at the table — toggleable chips instead of
+ * freehand text. Selection is stored as a markdown bullet list in the same
+ * `player_characters` text column, so no schema change is needed.
+ */
+function PresentPlayersEditor({
+  value,
+  players,
+  onChange,
+}: {
+  value: string;
+  players: EditPlayer[];
+  onChange: (markdown: string) => void;
+}) {
+  const selected = new Set(
+    players.filter((p) => value.includes(p.characterName)).map((p) => p.userId),
+  );
+
+  function toggle(userId: string) {
+    const next = new Set(selected);
+    if (next.has(userId)) next.delete(userId);
+    else next.add(userId);
+    onChange(players.filter((p) => next.has(p.userId)).map((p) => `- ${p.characterName}`).join("\n"));
+  }
+
+  if (players.length === 0) {
+    return <p className="font-body text-[13px] italic text-muted">No players in this campaign yet.</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2 py-1">
+      {players.map((p) => {
+        const active = selected.has(p.userId);
+        return (
+          <button
+            key={p.userId}
+            type="button"
+            onClick={() => toggle(p.userId)}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-body text-[13px] transition ${
+              active ? "border-gold bg-cod-soft text-ink" : "border-hairline text-ink-soft hover:border-gold"
+            }`}
+          >
+            {active && <Check size={12} className="text-gold" />}
+            {p.characterName}
+            {p.isDm ? " (DM)" : ""}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
