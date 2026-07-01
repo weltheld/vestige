@@ -1,5 +1,5 @@
 /**
- * Council of Days is mounted at /calendar under the Vestige platform's
+ * Calendar is mounted at /calendar under the Vestige platform's
  * domain (Next.js Multi-Zones — see apps/web/next.config.mjs in the vestige
  * monorepo). Next.js automatically prefixes basePath for <Link>, useRouter,
  * and next/navigation's redirect() — but NOT for manually-built URL/string

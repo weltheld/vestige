@@ -123,7 +123,7 @@ export function CampaignWizardClient({
         <header className="flex flex-col items-center text-center gap-2">
           <Crest size={48} />
           <p className="small-caps">
-            Council of Days · signed in as {currentUserEmail}
+            Calendar · signed in as {currentUserEmail}
           </p>
           <h1 className="font-display text-3xl sm:text-4xl text-ink">
             Forge a campaign-poll

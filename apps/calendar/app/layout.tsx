@@ -17,7 +17,7 @@ const body = Alegreya_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Council of Days",
+  title: "Calendar",
   description: "Gather your party. Choose your day.",
 };
 

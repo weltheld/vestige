@@ -17,9 +17,9 @@ type Props = {
 
 /**
  * The unified Vestige platform header — shared visual language across
- * apps/web, apps/journal, and Council of Days (this app). This is the
+ * apps/web, apps/journal, and Calendar (this app). This is the
  * canonical version of the header's design; apps/web and apps/journal
- * consume the shared @vestige/ui component built from it. Council of Days
+ * consume the shared @vestige/ui component built from it. Calendar
  * is a separate deploy (not part of that pnpm workspace), so this is a
  * local port rather than an import — keep it in sync if the shared design
  * changes.

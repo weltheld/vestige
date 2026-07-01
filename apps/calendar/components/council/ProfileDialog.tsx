@@ -56,7 +56,7 @@ export function ProfileDialog({
           />
           <div className="relative w-full max-w-[480px] rounded-xl border border-hairline bg-surface p-8 shadow-parchment sm:p-10">
             <header className="flex flex-col items-center gap-1 text-center">
-              <p className="small-caps">Council of Days</p>
+              <p className="small-caps">Calendar</p>
               <h1 className="font-display text-2xl text-ink">Your profile</h1>
               <p className="font-body text-xs text-ink-soft">
                 Signed in as{" "}

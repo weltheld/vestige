@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AppHeader } from "@/components/council/AppHeader";
+import { PlatformHeader } from "@/components/council/PlatformHeader";
 import { CalendarPanel } from "@/components/council/CalendarPanel";
 import { OwnerSettings } from "@/components/council/OwnerSettings";
 import { BestDaySummary } from "@/components/council/BestDaySummary";
@@ -435,12 +435,13 @@ export function GroupViewClient(props: Props) {
       )}
     >
       <div className="relative flex min-h-screen flex-col">
-        <AppHeader
+        <PlatformHeader
           firstName={firstName}
           email={props.currentUser.email}
           characterName={props.currentUser.characterName}
           displayName={props.currentUser.displayName}
           avatarUrl={props.currentUser.avatarUrl}
+          currentCampaignName={group.name}
         />
 
         {/* Banner card — avatars top-left, campaign name bottom-left */}

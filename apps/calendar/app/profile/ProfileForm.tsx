@@ -21,7 +21,7 @@ export function ProfileForm({
       <div className="w-full max-w-[560px] rounded-xl border border-hairline bg-surface p-8 shadow-parchment sm:p-10">
         <header className="flex flex-col items-center text-center gap-3">
           <Crest size={56} />
-          <p className="small-caps">Council of Days</p>
+          <p className="small-caps">Calendar</p>
           <h1 className="font-display text-3xl text-ink">
             Take your seat at the table
           </h1>

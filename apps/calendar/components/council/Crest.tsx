@@ -22,7 +22,7 @@ export function Crest({ size = 48, className }: CrestProps) {
       width={size}
       height={size}
       role="img"
-      aria-label="Council of Days"
+      aria-label="Calendar"
       className={cn(
         "drop-shadow-[0_2px_4px_rgba(43,33,24,0.25)]",
         className,
