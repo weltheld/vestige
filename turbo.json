@@ -5,7 +5,10 @@
     "NEXT_PUBLIC_SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
-    "NEXT_PUBLIC_SITE_URL"
+    "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_WEB_URL",
+    "NEXT_PUBLIC_CALENDAR_URL",
+    "JOURNAL_ZONE_URL"
   ],
   "globalDependencies": ["tsconfig.base.json"],
   "tasks": {
