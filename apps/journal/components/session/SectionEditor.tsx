@@ -15,12 +15,15 @@ import {
   ImagePlus,
   Link as LinkIcon,
 } from "lucide-react";
+import { pickImageFile, uploadJournalImage } from "@/lib/upload";
 
 export function SectionEditor({
+  campaignId,
   value,
   onChange,
   placeholder,
 }: {
+  campaignId: string;
   value: string;
   onChange: (markdown: string) => void;
   placeholder: string;
@@ -52,14 +55,28 @@ export function SectionEditor({
     <div
       className={`relative border-b ${focused ? "border-hairline" : "border-transparent"} pb-2`}
     >
-      {focused && editor && <Toolbar editor={editor} />}
+      {focused && editor && <Toolbar editor={editor} campaignId={campaignId} />}
       <EditorContent editor={editor} />
     </div>
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
-  const btn = "flex h-7 w-7 items-center justify-center rounded transition hover:bg-cod-soft";
+function Toolbar({ editor, campaignId }: { editor: Editor; campaignId: string }) {
+  const [uploading, setUploading] = useState(false);
+  const btn = "flex h-7 w-7 items-center justify-center rounded transition hover:bg-cod-soft disabled:opacity-50";
+
+  async function insertImage() {
+    const file = await pickImageFile();
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadJournalImage(campaignId, file);
+      editor.chain().focus().setImage({ src: url }).run();
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div
       // keep focus in the editor when clicking toolbar buttons
@@ -79,14 +96,7 @@ function Toolbar({ editor }: { editor: Editor }) {
         <QuoteIcon size={14} className="text-ink-soft" />
       </button>
       <span className="mx-0.5 h-4 w-px bg-hairline" />
-      <button
-        type="button"
-        className={btn}
-        onClick={() => {
-          const url = window.prompt("Image URL");
-          if (url) editor.chain().focus().setImage({ src: url }).run();
-        }}
-      >
+      <button type="button" className={btn} disabled={uploading} onClick={insertImage}>
         <ImagePlus size={14} className="text-ink-soft" />
       </button>
       <button

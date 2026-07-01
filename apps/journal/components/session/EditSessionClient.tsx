@@ -15,6 +15,7 @@ import {
   type SessionInput,
 } from "@/app/c/[campaignId]/s/actions";
 import { SectionEditor } from "./SectionEditor";
+import { pickImageFile, uploadJournalImage } from "@/lib/upload";
 
 type EditCharacter = { id: string; name: string; role: "PC" | "NPC" };
 
@@ -45,6 +46,7 @@ export function EditSessionClient({
   const router = useRouter();
   const [fields, setFields] = useState<SessionInput>(initial);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [savedAgo, setSavedAgo] = useState<string | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const firstRender = useRef(true);
@@ -88,12 +90,28 @@ export function EditSessionClient({
     <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-24 pt-6">
       {/* Hero edit dressing */}
       <section className="relative h-[220px] w-full overflow-hidden rounded-xl bg-ink">
+        {fields.image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={fields.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        )}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.69))" }} />
         <button
           type="button"
-          className="absolute right-4 top-4 flex items-center gap-2 rounded-lg border border-white/50 bg-white/20 px-3.5 py-2 font-display text-[10px] uppercase tracking-[0.08em] text-white"
+          disabled={uploadingCover}
+          onClick={async () => {
+            const file = await pickImageFile();
+            if (!file) return;
+            setUploadingCover(true);
+            try {
+              const url = await uploadJournalImage(campaignId, file);
+              set({ image_url: url });
+            } finally {
+              setUploadingCover(false);
+            }
+          }}
+          className="absolute right-4 top-4 flex items-center gap-2 rounded-lg border border-white/50 bg-white/20 px-3.5 py-2 font-display text-[10px] uppercase tracking-[0.08em] text-white disabled:opacity-60"
         >
-          <ImagePlus size={12} /> Change image
+          <ImagePlus size={12} /> {uploadingCover ? "Uploading…" : "Change image"}
         </button>
         <div className="absolute bottom-6 left-6 right-6">
           <div className="flex items-center gap-2">
@@ -188,11 +206,45 @@ export function EditSessionClient({
           </Card>
 
           <Card label="Session Image">
-            <div className="flex h-[140px] w-[240px] flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-gold bg-[#faf5e6]">
-              <ImagePlus size={24} className="text-muted" />
-              <p className="font-body text-[12px] italic text-muted">Add session image</p>
-              <p className="font-body text-[10px] text-muted">Becomes campaign cover if none yet</p>
-            </div>
+            <button
+              type="button"
+              disabled={uploadingCover}
+              onClick={async () => {
+                const file = await pickImageFile();
+                if (!file) return;
+                setUploadingCover(true);
+                try {
+                  const url = await uploadJournalImage(campaignId, file);
+                  set({ image_url: url });
+                } finally {
+                  setUploadingCover(false);
+                }
+              }}
+              className="group relative flex h-[140px] w-[240px] flex-col items-center justify-center gap-2 overflow-hidden rounded-lg disabled:opacity-70"
+              style={
+                fields.image_url
+                  ? undefined
+                  : { border: "1.5px dashed var(--gold)", background: "#faf5e6" }
+              }
+            >
+              {fields.image_url ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={fields.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <span className="absolute inset-0 hidden items-center justify-center gap-1.5 bg-black/40 font-body text-[12px] text-white group-hover:flex">
+                    <ImagePlus size={13} /> {uploadingCover ? "Uploading…" : "Edit"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <ImagePlus size={24} className="text-muted" />
+                  <p className="font-body text-[12px] italic text-muted">
+                    {uploadingCover ? "Uploading…" : "Add session image"}
+                  </p>
+                  <p className="font-body text-[10px] text-muted">Becomes campaign cover if none yet</p>
+                </>
+              )}
+            </button>
           </Card>
 
           {modulesCalendar && (
@@ -227,6 +279,7 @@ export function EditSessionClient({
                   </button>
                 </div>
                 <SectionEditor
+                  campaignId={campaignId}
                   value={(fields[key] as string | null) ?? ""}
                   onChange={(md) => set({ [key]: md } as Partial<SessionInput>)}
                   placeholder={PLACEHOLDERS[key]!}

@@ -21,6 +21,13 @@ export async function renameCampaign(campaignId: string, name: string) {
   revalidatePath(`/c/${campaignId}/settings`);
 }
 
+export async function setCampaignCover(campaignId: string, url: string) {
+  const supabase = await sb();
+  const { error } = await supabase.from("campaigns").update({ banner_url: url }).eq("id", campaignId);
+  if (error) throw error;
+  revalidatePath(`/c/${campaignId}/settings`);
+}
+
 export async function setMemberDm(campaignId: string, userId: string, isDm: boolean) {
   const supabase = await sb();
   const { error } = await supabase

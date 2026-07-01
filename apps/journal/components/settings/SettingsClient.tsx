@@ -9,12 +9,14 @@ import type { CampaignSettings } from "@/lib/campaign-settings";
 import { journal } from "@/lib/links";
 import {
   renameCampaign,
+  setCampaignCover,
   setMemberDm,
   removeMember,
   inviteMembers,
   setModules,
   deleteCampaign,
 } from "@/app/c/[campaignId]/settings/actions";
+import { pickImageFile, uploadCampaignBanner } from "@/lib/upload";
 
 export function SettingsClient({ settings }: { settings: CampaignSettings }) {
   const router = useRouter();
@@ -22,6 +24,8 @@ export function SettingsClient({ settings }: { settings: CampaignSettings }) {
   const [name, setName] = useState(settings.name);
   const [modules, setLocalModules] = useState(settings.modulesEnabled);
   const [invites, setInvites] = useState("");
+  const [coverUrl, setCoverUrl] = useState(settings.coverUrl);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const refresh = () => router.refresh();
 
   async function toggleModule(key: "calendar" | "journal") {
@@ -80,15 +84,33 @@ export function SettingsClient({ settings }: { settings: CampaignSettings }) {
 
         <Divider />
         <Section label="Campaign Cover">
-          <div className="group relative h-[100px] w-[140px] overflow-hidden rounded-lg bg-cod-soft">
-            {settings.coverUrl && (
+          <button
+            type="button"
+            disabled={!isCreator || uploadingCover}
+            onClick={async () => {
+              const file = await pickImageFile();
+              if (!file) return;
+              setUploadingCover(true);
+              try {
+                const url = await uploadCampaignBanner(id, file);
+                await setCampaignCover(id, url);
+                setCoverUrl(url);
+              } finally {
+                setUploadingCover(false);
+              }
+            }}
+            className="group relative h-[100px] w-[140px] overflow-hidden rounded-lg bg-cod-soft disabled:cursor-default"
+          >
+            {coverUrl && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={settings.coverUrl} alt="" className="h-full w-full object-cover" />
+              <img src={coverUrl} alt="" className="h-full w-full object-cover" />
             )}
-            <div className="absolute inset-0 hidden items-center justify-center bg-black/40 text-[11px] text-white group-hover:flex">
-              <ImagePlus size={14} className="mr-1" /> Change
-            </div>
-          </div>
+            {isCreator && (
+              <div className="absolute inset-0 hidden items-center justify-center bg-black/40 text-[11px] text-white group-hover:flex">
+                <ImagePlus size={14} className="mr-1" /> {uploadingCover ? "Uploading…" : "Change"}
+              </div>
+            )}
+          </button>
         </Section>
 
         <Divider />
