@@ -10,9 +10,10 @@ import { UpcomingRail } from "@/components/UpcomingRail";
 
 export default async function AppHome() {
   const supabase = await getServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies locally (asymmetric signing key) instead of
+  // calling the Auth server.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ? { id: data.claims.sub, email: data.claims.email } : null;
 
   // Middleware already guards /app, but guard here too for safety.
   if (!user) redirect("/signin?next=/app");

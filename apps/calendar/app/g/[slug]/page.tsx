@@ -18,9 +18,10 @@ export default async function GroupPage({
 }) {
   const { slug } = await params;
   const supabase = await getServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies locally (asymmetric signing key) instead of
+  // calling the Auth server.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ? { id: data.claims.sub, email: data.claims.email } : null;
   if (!user) redirect(`/login?next=/g/${slug}`);
 
   // Load the campaign. RLS blocks non-members, so a missing row means

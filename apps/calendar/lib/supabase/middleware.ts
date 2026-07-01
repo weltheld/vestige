@@ -29,10 +29,13 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // IMPORTANT: don't add code between createServerClient and getUser.
+  // getClaims() verifies the JWT locally against the project's asymmetric
+  // signing key (no network round trip) instead of asking the Auth server —
+  // this runs on every request, so it's the highest-value spot to avoid it.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data,
+  } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const { pathname } = request.nextUrl;
   const needsAuth = PROTECTED_PATHS.some((p) => pathname.startsWith(p));

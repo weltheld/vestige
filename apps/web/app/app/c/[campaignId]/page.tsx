@@ -17,9 +17,10 @@ export default async function CampaignOverview({
   const { campaignId } = await params;
 
   const supabase = await getServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies locally (asymmetric signing key) instead of
+  // calling the Auth server.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ? { id: data.claims.sub, email: data.claims.email } : null;
   if (!user) redirect(`/signin?next=/app/c/${campaignId}`);
 
   // Only resolve campaigns the user actually belongs to (RLS would block

@@ -22,9 +22,11 @@ export type Viewer = {
  * plus two profile queries per request instead of one.
  */
 export const getViewer = cache(async (supabase: SB): Promise<Viewer | null> => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the JWT locally (asymmetric signing key) instead
+  // of calling the Auth server — combined with cache() above, this is the
+  // one auth check per request instead of two network round trips.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ? { id: data.claims.sub, email: data.claims.email } : null;
   if (!user) return null;
 
   const { data: profile } = await supabase
