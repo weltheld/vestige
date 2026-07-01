@@ -63,7 +63,7 @@ export function VestigeHeader({
   }
 
   return (
-    <header className="border-b border-hairline">
+    <header className="border-b border-hairline bg-parchment">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
         <a
           href={`${WEB_URL}/app`}
