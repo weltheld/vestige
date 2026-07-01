@@ -38,7 +38,7 @@ export function ProfileDialog({
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className={`inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 shadow-sm outline-none ${
+            className={`inline-flex h-9 items-center gap-2 rounded-full border pl-1 pr-3 shadow-sm outline-none ${
               onBanner
                 ? "border-white/30 bg-black/25 hover:bg-black/40"
                 : "border-hairline bg-surface hover:bg-parchment"

@@ -13,30 +13,6 @@ export type SwitcherCampaign = {
   memberCount?: number;
 };
 
-function Thumb({ campaign, size }: { campaign: SwitcherCampaign; size: number }) {
-  if (campaign.imageUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={campaign.imageUrl}
-        alt=""
-        width={size}
-        height={size}
-        className="rounded-md object-cover"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-  return (
-    <span
-      className="flex items-center justify-center rounded-md bg-wine font-display text-[11px] text-parchment"
-      style={{ width: size, height: size }}
-    >
-      {campaign.name.trim().charAt(0).toUpperCase()}
-    </span>
-  );
-}
-
 /**
  * The campaign-switch pill + dropdown in the platform header, matching
  * Journal's CampaignSelector (@vestige/ui) design and behaviour exactly —
@@ -57,9 +33,8 @@ export function CampaignSwitcher({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="hidden items-center gap-2 rounded-full border border-hairline bg-surface px-2.5 py-1 outline-none transition hover:border-dm-gold focus-visible:border-dm-gold sm:flex"
+          className="hidden h-9 items-center gap-2 rounded-full border border-hairline bg-surface px-3 outline-none transition hover:border-dm-gold focus-visible:border-dm-gold sm:flex"
         >
-          <Thumb campaign={current} size={22} />
           <span className="max-w-[10rem] truncate font-display text-xs text-ink">
             {current.name}
           </span>

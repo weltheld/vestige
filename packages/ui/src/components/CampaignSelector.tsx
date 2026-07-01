@@ -25,30 +25,6 @@ type Props = {
   manageHref?: string;
 };
 
-function Thumb({ campaign, size }: { campaign: HeaderCampaign; size: number }) {
-  if (campaign.imageUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={campaign.imageUrl}
-        alt=""
-        width={size}
-        height={size}
-        className="rounded-md object-cover"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-  return (
-    <span
-      className="flex items-center justify-center rounded-md bg-wine font-display text-[11px] text-parchment"
-      style={{ width: size, height: size }}
-    >
-      {campaign.name.trim().charAt(0).toUpperCase()}
-    </span>
-  );
-}
-
 /**
  * The campaign-switch pill + dropdown shown in the Vestige header. Lets the
  * user jump between their campaigns from anywhere in a module.
@@ -63,9 +39,8 @@ export function CampaignSelector({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 rounded-full border border-hairline bg-surface px-2.5 py-1 outline-none transition hover:border-gold focus-visible:border-gold"
+          className="flex h-9 items-center gap-2 rounded-full border border-hairline bg-surface px-3 outline-none transition hover:border-gold focus-visible:border-gold"
         >
-          <Thumb campaign={current} size={22} />
           <span className="hidden max-w-[10rem] truncate font-display text-xs text-ink sm:inline">
             {current.name}
           </span>

@@ -10,6 +10,9 @@ type SB = SupabaseClient<Database>;
 export type ActivityItem = {
   id: string;
   module: "journal" | "calendar";
+  /** "playday" = a session was scheduled — rendered with the same wax-seal
+   *  medallion the DM stamps onto that date in Calendar. */
+  variant?: "playday";
   campaignName: string;
   description: string;
   actorName: string | null;
@@ -146,6 +149,7 @@ async function getCalendarActivity(
       items.push({
         id: `calendar:${s.campaign_id}:${s.date}`,
         module: "calendar",
+        variant: "playday",
         campaignName: nameById.get(s.campaign_id) ?? "Unknown campaign",
         description: `A session was scheduled for ${format(parseISO(s.date), "MMM d")}`,
         actorName: null,
@@ -155,30 +159,31 @@ async function getCalendarActivity(
       });
     }
 
-    // Group by (campaign, voter, month-voted-for) — one log line per person
-    // per session-planning round instead of one per individual vote.
+    // Group by (campaign, voter, day-cast) — one log line per person per
+    // sitting at the poll, instead of one per individual vote.
     type VoteGroup = {
       campaignId: string;
       userId: string;
-      month: string;
       count: number;
       latestUpdatedAt: string;
+      months: Set<string>;
     };
     const voteGroups = new Map<string, VoteGroup>();
     for (const v of votes ?? []) {
-      const month = v.date.slice(0, 7);
-      const key = `${v.campaign_id}:${v.user_id}:${month}`;
+      const castDay = v.updated_at.slice(0, 10);
+      const key = `${v.campaign_id}:${v.user_id}:${castDay}`;
       const g = voteGroups.get(key);
       if (g) {
         g.count += 1;
+        g.months.add(v.date.slice(0, 7));
         if (v.updated_at > g.latestUpdatedAt) g.latestUpdatedAt = v.updated_at;
       } else {
         voteGroups.set(key, {
           campaignId: v.campaign_id,
           userId: v.user_id,
-          month,
           count: 1,
           latestUpdatedAt: v.updated_at,
+          months: new Set([v.date.slice(0, 7)]),
         });
       }
     }
@@ -199,16 +204,17 @@ async function getCalendarActivity(
       (voterMembers ?? []).map((m) => [`${m.campaign_id}:${m.user_id}`, m] as const),
     );
 
-    for (const g of voteGroups.values()) {
+    for (const [key, g] of voteGroups) {
       const slug = slugById.get(g.campaignId);
       const profile = voterById.get(g.userId);
       const member = memberByKey.get(`${g.campaignId}:${g.userId}`);
-      const monthLabel = format(parseISO(`${g.month}-01`), "MMMM");
+      const monthSuffix =
+        g.months.size === 1 ? ` for ${format(parseISO(`${[...g.months][0]}-01`), "MMMM")}` : "";
       items.push({
-        id: `votes:${g.campaignId}:${g.userId}:${g.month}`,
+        id: `votes:${key}`,
         module: "calendar",
         campaignName: nameById.get(g.campaignId) ?? "Unknown campaign",
-        description: `placed ${g.count} vote${g.count === 1 ? "" : "s"} for ${monthLabel}`,
+        description: `placed ${g.count} vote${g.count === 1 ? "" : "s"}${monthSuffix}`,
         actorName: member?.character_name || name(profile),
         avatarUrl: member?.avatar_url || profile?.avatar_url || null,
         createdAt: g.latestUpdatedAt,

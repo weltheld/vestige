@@ -121,7 +121,7 @@ function ProfileMenu({ user, onSignOut }: { user: VestigeHeaderUser; onSignOut: 
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface py-1 pl-1 pr-3 shadow-sm outline-none transition hover:bg-parchment"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-hairline bg-surface pl-1 pr-3 shadow-sm outline-none transition hover:bg-parchment"
         >
           <span className="relative flex h-[22px] w-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface shadow-sm ring-1 ring-hairline">
             {user.avatarUrl ? (
