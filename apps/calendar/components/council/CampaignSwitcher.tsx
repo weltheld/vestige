@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Check, Settings2 } from "lucide-react";
 import { PLATFORM_URL } from "@/lib/basePath";
@@ -102,22 +103,13 @@ export function CampaignSwitcher({
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
 
           <DropdownMenu.Item asChild>
-            <a
-              href={`${PLATFORM_URL}/calendar/g/${current.slug}/invite`}
+            <Link
+              href={`/g/${current.slug}/invite`}
               className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
             >
               <Settings2 size={13} className="text-ink-soft" />
               Manage this campaign
-            </a>
-          </DropdownMenu.Item>
-          <DropdownMenu.Item asChild>
-            <a
-              href={`${PLATFORM_URL}/app`}
-              className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-            >
-              View all campaigns
-              <span aria-hidden>→</span>
-            </a>
+            </Link>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

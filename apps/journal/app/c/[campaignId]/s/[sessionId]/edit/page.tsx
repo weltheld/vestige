@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
-import { getViewer, getCampaignIfMember } from "@/lib/data";
+import { getViewer, getCampaignIfMember, getCampaignPlayers } from "@/lib/data";
 import { getSessionDetail } from "@/lib/session-detail";
 import { appHref } from "@/lib/links";
 import { EditSessionClient } from "@/components/session/EditSessionClient";
@@ -19,11 +19,13 @@ export default async function EditSessionPage({
 
   const s = await getSessionDetail(supabase, campaignId, sessionId);
   if (!s) notFound();
+  const players = await getCampaignPlayers(supabase, campaignId);
 
   return (
     <EditSessionClient
       campaignId={campaignId}
       sessionId={sessionId}
+      players={players}
       initial={{
         title: s.title,
         date: s.date,

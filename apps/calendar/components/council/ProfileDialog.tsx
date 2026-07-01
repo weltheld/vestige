@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDown, Pencil, LogOut } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { ProfileEditor } from "./ProfileEditor";
+import { signOutAction } from "@/app/auth/actions";
 
 type Props = {
   firstName: string;
@@ -14,9 +17,9 @@ type Props = {
 };
 
 /**
- * Account chip in the header that opens the profile editor as an overlay
- * "layer" (same surface design as the invite screen) instead of navigating
- * to a separate page.
+ * Account chip in the header — opens a dropdown with "Edit profile" (the
+ * overlay "layer" editor, same surface design as the invite screen) and
+ * "Sign out", so both account actions live behind one control.
  */
 export function ProfileDialog({
   firstName,
@@ -31,21 +34,49 @@ export function ProfileDialog({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title="Edit profile"
-        className={`inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 shadow-sm ${
-          onBanner
-            ? "border-white/30 bg-black/25 hover:bg-black/40"
-            : "border-hairline bg-surface hover:bg-parchment"
-        }`}
-      >
-        <Avatar src={avatarUrl} alt={firstName} size={30} />
-        <span className={`max-w-[100px] truncate font-body text-sm font-bold sm:max-w-[160px] ${onBanner ? "text-surface" : "text-ink"}`}>
-          {firstName}
-        </span>
-      </button>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            className={`inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 shadow-sm outline-none ${
+              onBanner
+                ? "border-white/30 bg-black/25 hover:bg-black/40"
+                : "border-hairline bg-surface hover:bg-parchment"
+            }`}
+          >
+            <Avatar src={avatarUrl} alt={firstName} size={30} />
+            <span
+              className={`max-w-[100px] truncate font-body text-sm font-bold sm:max-w-[160px] ${onBanner ? "text-surface" : "text-ink"}`}
+            >
+              {firstName}
+            </span>
+            <ChevronDown size={12} className={onBanner ? "text-surface" : "text-ink-soft"} />
+          </button>
+        </DropdownMenu.Trigger>
+
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content
+            align="end"
+            sideOffset={8}
+            className="z-50 w-56 rounded-xl border border-hairline bg-surface p-2 shadow-parchment"
+          >
+            <DropdownMenu.Item
+              onSelect={() => setOpen(true)}
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+            >
+              <Pencil size={13} className="text-ink-soft" />
+              Edit profile
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onSelect={() => signOutAction()}
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+            >
+              <LogOut size={13} className="text-ink-soft" />
+              Sign out
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8">

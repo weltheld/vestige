@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { DayPicker } from "react-day-picker";
 import { format, parseISO } from "date-fns";
@@ -19,6 +20,8 @@ import { pickImageFile, uploadJournalImage } from "@/lib/upload";
 
 type EditCharacter = { id: string; name: string; role: "PC" | "NPC" };
 
+type EditPlayer = { userId: string; characterName: string; isDm: boolean };
+
 type Props = {
   campaignId: string;
   sessionId: string | null;
@@ -26,6 +29,7 @@ type Props = {
   characters: EditCharacter[];
   chroniclerName: string;
   modulesCalendar: boolean;
+  players: EditPlayer[];
 };
 
 const PLACEHOLDERS: Record<string, string> = {
@@ -42,6 +46,7 @@ export function EditSessionClient({
   characters,
   chroniclerName,
   modulesCalendar,
+  players,
 }: Props) {
   const router = useRouter();
   const [fields, setFields] = useState<SessionInput>(initial);
@@ -50,6 +55,8 @@ export function EditSessionClient({
   const [uploadingCover, setUploadingCover] = useState(false);
   const [savedAgo, setSavedAgo] = useState<string | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 });
+  const dateButtonRef = useRef<HTMLButtonElement>(null);
   const firstRender = useRef(true);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const creating = useRef(false);
@@ -150,25 +157,43 @@ export function EditSessionClient({
           </div>
           <div className="relative mt-2">
             <button
+              ref={dateButtonRef}
               type="button"
-              onClick={() => setDatePickerOpen((o) => !o)}
+              onClick={() => {
+                const rect = dateButtonRef.current?.getBoundingClientRect();
+                if (rect) setDatePickerPos({ top: rect.bottom + 8, left: rect.left });
+                setDatePickerOpen((o) => !o);
+              }}
               className="flex items-center gap-1.5 rounded-md border border-white/50 bg-white/15 px-2.5 py-1 font-body text-[13px] text-white"
             >
               {fields.date ? format(parseISO(fields.date), "MMMM d, yyyy") : "Pick a date"}
               <ChevronDown size={10} />
             </button>
-            {datePickerOpen && (
-              <div className="absolute left-0 top-9 z-20 rounded-xl border border-hairline bg-surface p-2 shadow-lg">
-                <DayPicker
-                  mode="single"
-                  selected={fields.date ? parseISO(fields.date) : undefined}
-                  onSelect={(d) => {
-                    set({ date: d ? format(d, "yyyy-MM-dd") : null });
-                    setDatePickerOpen(false);
-                  }}
-                />
-              </div>
-            )}
+            {datePickerOpen &&
+              typeof document !== "undefined" &&
+              createPortal(
+                <>
+                  <button
+                    aria-label="Close date picker"
+                    className="fixed inset-0 z-40"
+                    onClick={() => setDatePickerOpen(false)}
+                  />
+                  <div
+                    className="fixed z-50 rounded-xl border border-hairline bg-surface p-2 shadow-lg"
+                    style={{ top: datePickerPos.top, left: datePickerPos.left }}
+                  >
+                    <DayPicker
+                      mode="single"
+                      selected={fields.date ? parseISO(fields.date) : undefined}
+                      onSelect={(d) => {
+                        set({ date: d ? format(d, "yyyy-MM-dd") : null });
+                        setDatePickerOpen(false);
+                      }}
+                    />
+                  </div>
+                </>,
+                document.body,
+              )}
           </div>
         </div>
       </section>
@@ -222,6 +247,7 @@ export function EditSessionClient({
             <div className="h-px bg-hairline" />
             <CharacterComposer
               disabled={!localSessionId}
+              players={players.filter((p) => !characters.some((c) => c.name === p.characterName))}
               onAdd={async (name, role) => {
                 if (!localSessionId) return;
                 await addCharacter(campaignId, localSessionId, name, role);
@@ -365,30 +391,62 @@ function Card({ label, children }: { label: string; children: React.ReactNode })
 
 function CharacterComposer({
   disabled,
+  players,
   onAdd,
 }: {
   disabled: boolean;
+  players: EditPlayer[];
   onAdd: (name: string, role: "PC" | "NPC") => void;
 }) {
-  const [name, setName] = useState("");
+  const [playerChoice, setPlayerChoice] = useState("");
+  const [npcName, setNpcName] = useState("");
   const [role, setRole] = useState<"PC" | "NPC">("PC");
-  const submit = () => {
-    if (!name.trim()) return;
-    onAdd(name.trim(), role);
-    setName("");
+
+  const submitNpc = () => {
+    if (!npcName.trim()) return;
+    onAdd(npcName.trim(), "NPC");
+    setNpcName("");
   };
+
   return (
     <div className="flex items-center gap-2.5 py-1">
       <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-dashed border-gold text-gold">+</span>
       <div className="flex flex-1 flex-col gap-1.5">
-        <input
-          value={name}
-          disabled={disabled}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submit()}
-          placeholder={disabled ? "Save the session first" : "Character name…"}
-          className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none placeholder:text-muted disabled:opacity-50"
-        />
+        {role === "PC" ? (
+          <select
+            value={playerChoice}
+            disabled={disabled || players.length === 0}
+            onChange={(e) => {
+              const characterName = e.target.value;
+              setPlayerChoice("");
+              if (characterName) onAdd(characterName, "PC");
+            }}
+            className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none disabled:opacity-50"
+          >
+            <option value="" disabled>
+              {disabled
+                ? "Save the session first"
+                : players.length === 0
+                  ? "No players left to add"
+                  : "Choose a player…"}
+            </option>
+            {players.map((p) => (
+              <option key={p.userId} value={p.characterName}>
+                {p.characterName}
+                {p.isDm ? " (DM)" : ""}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            value={npcName}
+            disabled={disabled}
+            onChange={(e) => setNpcName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submitNpc()}
+            placeholder={disabled ? "Save the session first" : "NPC name…"}
+            className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none placeholder:text-muted disabled:opacity-50"
+          />
+        )}
         <div className="flex gap-1.5">
           {(["PC", "NPC"] as const).map((r) => (
             <button

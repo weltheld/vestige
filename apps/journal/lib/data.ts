@@ -99,3 +99,43 @@ export async function getCampaignIfMember(
     href: journal.campaign(c.id),
   };
 }
+
+export type CampaignPlayer = {
+  userId: string;
+  characterName: string;
+  isDm: boolean;
+};
+
+/**
+ * The campaign's actual players, for picking a PC by name instead of typing
+ * one freehand — same per-campaign character identity Calendar already
+ * shows (campaign_members.character_name, falling back to the profile).
+ */
+export async function getCampaignPlayers(
+  supabase: SB,
+  campaignId: string,
+): Promise<CampaignPlayer[]> {
+  const { data: members } = await supabase
+    .from("campaign_members")
+    .select("user_id, is_dm, character_name")
+    .eq("campaign_id", campaignId);
+  if (!members?.length) return [];
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, character_name, display_name")
+    .in(
+      "id",
+      members.map((m) => m.user_id),
+    );
+  const profileById = new Map((profiles ?? []).map((p) => [p.id, p] as const));
+
+  return members.map((m) => {
+    const p = profileById.get(m.user_id);
+    return {
+      userId: m.user_id,
+      characterName: m.character_name || p?.character_name || p?.display_name || "Adventurer",
+      isDm: m.is_dm,
+    };
+  });
+}

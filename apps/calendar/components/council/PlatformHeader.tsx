@@ -1,8 +1,7 @@
-import { CalendarDays, ScrollText, LogOut } from "lucide-react";
+import { CalendarDays, ScrollText } from "lucide-react";
 import { Crest } from "./Crest";
 import { ProfileDialog } from "./ProfileDialog";
 import { CampaignSwitcher, type SwitcherCampaign } from "./CampaignSwitcher";
-import { signOutAction } from "@/app/auth/actions";
 import { PLATFORM_URL } from "@/lib/basePath";
 
 type Props = {
@@ -78,17 +77,6 @@ export function PlatformHeader({
           displayName={displayName}
           avatarUrl={avatarUrl}
         />
-
-        <form action={signOutAction}>
-          <button
-            type="submit"
-            aria-label="Sign out"
-            title="Sign out"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-surface text-ink-soft shadow-sm hover:bg-parchment hover:text-ink"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </form>
       </div>
     </header>
   );

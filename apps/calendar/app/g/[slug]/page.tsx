@@ -32,6 +32,11 @@ export default async function GroupPage({
     .maybeSingle();
   if (!campaign) notFound();
 
+  await supabase
+    .from("profiles")
+    .update({ last_campaign_id: campaign.id })
+    .eq("id", user.id);
+
   // All campaigns this user belongs to, for the header's campaign switcher.
   const { data: myMemberships } = await supabase
     .from("campaign_members")

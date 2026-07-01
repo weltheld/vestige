@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
-import { getViewer, getCampaignIfMember } from "@/lib/data";
+import { getViewer, getCampaignIfMember, getCampaignPlayers } from "@/lib/data";
 import { appHref } from "@/lib/links";
 import { EditSessionClient } from "@/components/session/EditSessionClient";
 
@@ -22,11 +22,13 @@ export default async function NewSessionPage({
     .eq("id", campaignId)
     .maybeSingle();
   const calendar = (c?.modules_enabled as { calendar?: boolean })?.calendar ?? true;
+  const players = await getCampaignPlayers(supabase, campaignId);
 
   return (
     <EditSessionClient
       campaignId={campaignId}
       sessionId={null}
+      players={players}
       initial={{ title: "", date: null, summary: "", player_characters: "", npcs: "", notes: "" }}
       characters={[]}
       chroniclerName={viewer.label}

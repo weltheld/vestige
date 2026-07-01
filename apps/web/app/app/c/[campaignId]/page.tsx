@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
 import { getMyCampaigns } from "@/lib/campaigns";
+import { touchLastCampaign } from "@/lib/last-campaign";
 
 /**
  * Both modules are mounted under this same origin via Next.js Multi-Zones
@@ -26,6 +27,8 @@ export default async function CampaignOverview({
   const campaigns = await getMyCampaigns(supabase, user.id);
   const campaign = campaigns.find((c) => c.id === campaignId);
   if (!campaign) notFound();
+
+  await touchLastCampaign(supabase, user.id, campaign.id);
 
   // Calendar by default when both modules are enabled.
   if (campaign.modulesEnabled.calendar) {

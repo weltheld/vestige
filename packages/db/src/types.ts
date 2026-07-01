@@ -28,6 +28,8 @@ export type ProfileRow = {
   /** Global first name (additive, M7). NULL on rows predating the column. */
   first_name: string | null;
   avatar_url: string | null;
+  /** The campaign this user most recently visited, across any module. */
+  last_campaign_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -188,6 +190,7 @@ export type Database = {
           display_name?: string;
           first_name?: string | null;
           avatar_url?: string | null;
+          last_campaign_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -198,10 +201,13 @@ export type Database = {
           display_name?: string;
           first_name?: string | null;
           avatar_url?: string | null;
+          last_campaign_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          Rel<"profiles_last_campaign_id_fkey", ["last_campaign_id"], "campaigns", ["id"], false>,
+        ];
       };
       campaigns: {
         Row: CampaignRow;

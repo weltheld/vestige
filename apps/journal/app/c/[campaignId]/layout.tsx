@@ -23,6 +23,11 @@ export default async function CampaignLayout({
 
   const campaigns = await getMyCampaigns(supabase, viewer.id);
 
+  await supabase
+    .from("profiles")
+    .update({ last_campaign_id: campaign.id })
+    .eq("id", viewer.id);
+
   return (
     <div className="flex min-h-screen flex-col bg-parchment">
       <VestigeHeader
@@ -33,7 +38,6 @@ export default async function CampaignLayout({
         journalHref={journal.campaign(campaignId)}
         calendarHref={campaign.slug ? calendarCampaignHref(campaign.slug) : undefined}
         manageHref={journal.settings(campaignId)}
-        viewAllHref={appHref()}
       />
       {children}
     </div>

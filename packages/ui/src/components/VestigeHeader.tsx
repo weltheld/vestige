@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarDays, ScrollText, LogOut } from "lucide-react";
+import { CalendarDays, ScrollText, LogOut, Pencil, ChevronDown } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
 import { CampaignSelector, type HeaderCampaign } from "./CampaignSelector";
@@ -38,8 +39,6 @@ type Props = {
   journalHref?: string;
   /** "Manage this campaign" target in the selector dropdown. */
   manageHref?: string;
-  /** "View all campaigns" target in the selector dropdown. */
-  viewAllHref?: string;
 };
 
 /**
@@ -57,7 +56,6 @@ export function VestigeHeader({
   calendarHref,
   journalHref,
   manageHref,
-  viewAllHref,
 }: Props) {
   async function signOut() {
     await getBrowserSupabase().auth.signOut();
@@ -100,21 +98,10 @@ export function VestigeHeader({
             current={currentCampaign}
             campaigns={campaigns.length ? campaigns : [currentCampaign]}
             manageHref={manageHref}
-            viewAllHref={viewAllHref}
           />
         )}
 
-        <ProfileChip user={user} />
-
-        <button
-          type="button"
-          onClick={signOut}
-          aria-label="Sign out"
-          title="Sign out"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-surface text-ink-soft shadow-sm transition hover:bg-parchment hover:text-ink"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
+        <ProfileMenu user={user} onSignOut={signOut} />
       </div>
     </header>
   );
@@ -122,31 +109,60 @@ export function VestigeHeader({
 
 /**
  * Matches Council of Days' real ProfileDialog trigger pixel-for-pixel
- * (Avatar component + button chrome) — but since that component's full
- * profile-editing modal lives in the Calendar app (not importable from
- * here), this links out to Calendar's /profile page instead, which edits
- * the same shared `profiles` row. One canonical place to edit your profile,
+ * (Avatar component + button chrome), combined with sign-out in one
+ * dropdown. "Edit profile" links to Calendar's /profile page (that
+ * component's full editor isn't importable from here), which edits the
+ * same shared `profiles` row — one canonical place to edit your profile,
  * reachable identically from any app.
  */
-function ProfileChip({ user }: { user: VestigeHeaderUser }) {
+function ProfileMenu({ user, onSignOut }: { user: VestigeHeaderUser; onSignOut: () => void }) {
   return (
-    <a
-      href={`${CALENDAR_URL}/profile`}
-      title="Edit profile"
-      className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface py-1 pl-1 pr-3 shadow-sm transition hover:bg-parchment"
-    >
-      <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface shadow-sm ring-1 ring-hairline">
-        {user.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <PlatformCrest size={30} />
-        )}
-      </span>
-      <span className="max-w-[100px] truncate font-body text-sm font-bold text-ink sm:max-w-[160px]">
-        {user.label}
-      </span>
-    </a>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface py-1 pl-1 pr-3 shadow-sm outline-none transition hover:bg-parchment"
+        >
+          <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface shadow-sm ring-1 ring-hairline">
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <PlatformCrest size={30} />
+            )}
+          </span>
+          <span className="max-w-[100px] truncate font-body text-sm font-bold text-ink sm:max-w-[160px]">
+            {user.label}
+          </span>
+          <ChevronDown size={12} className="text-muted" />
+        </button>
+      </DropdownMenu.Trigger>
+
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={8}
+          className="z-50 w-56 rounded-xl border border-hairline bg-surface p-2 shadow-[0_8px_32px_-8px_rgba(43,33,24,0.25)]"
+        >
+          <DropdownMenu.Item asChild>
+            <a
+              href={`${CALENDAR_URL}/profile`}
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+            >
+              <Pencil size={13} className="text-muted" />
+              Edit profile
+            </a>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            onSelect={onSignOut}
+            className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+          >
+            <LogOut size={13} className="text-muted" />
+            Sign out
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 

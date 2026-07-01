@@ -21,8 +21,6 @@ export type HeaderCampaign = {
 type Props = {
   current: HeaderCampaign;
   campaigns: HeaderCampaign[];
-  /** Where "View all campaigns →" points (the apps/web overview). */
-  viewAllHref?: string;
   /** Optional "Manage this campaign" link (campaign settings). */
   manageHref?: string;
 };
@@ -58,7 +56,6 @@ function Thumb({ campaign, size }: { campaign: HeaderCampaign; size: number }) {
 export function CampaignSelector({
   current,
   campaigns,
-  viewAllHref = "/app",
   manageHref,
 }: Props) {
   return (
@@ -126,15 +123,6 @@ export function CampaignSelector({
               </Link>
             </DropdownMenu.Item>
           )}
-          <DropdownMenu.Item asChild>
-            <Link
-              href={viewAllHref}
-              className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
-            >
-              View all campaigns
-              <span aria-hidden>→</span>
-            </Link>
-          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
