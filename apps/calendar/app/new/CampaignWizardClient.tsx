@@ -17,6 +17,7 @@ import { Crest } from "@/components/council/Crest";
 import { TextField } from "@/components/council/TextField";
 import { WaxButton } from "@/components/council/WaxButton";
 import { cn } from "@/lib/utils";
+import { withBasePath } from "@/lib/basePath";
 import {
   createCampaignAction,
   inviteByEmailAction,
@@ -53,7 +54,7 @@ export function CampaignWizardClient({
 
   const isCreated = !!created;
   const signUpLink = created
-    ? `${typeof window === "undefined" ? "" : window.location.origin}/login?next=/g/${created.slug}`
+    ? `${typeof window === "undefined" ? "" : window.location.origin}${withBasePath(`/login?next=/g/${created.slug}`)}`
     : "Create campaign to generate link";
 
   function onCreate(e: React.FormEvent) {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { CalendarDays, ScrollText, LogOut } from "lucide-react";
 import { getBrowserSupabase } from "@vestige/db/client";
-import { Sigil } from "./Sigil";
+import { PlatformCrest } from "./PlatformCrest";
 import { CampaignSelector, type HeaderCampaign } from "./CampaignSelector";
 
 export type VestigeHeaderUser = {
@@ -34,8 +34,11 @@ type Props = {
 };
 
 /**
- * The global Vestige header: sigil + wordmark + module switcher + campaign
- * selector + user capsule + sign-out. Shared across apps/web and the modules.
+ * The unified Vestige platform header — shared by apps/web, apps/journal, and
+ * apps/calendar (Council of Days). Built on Council of Days' own AppHeader
+ * structure (crest + wordmark, plain hairline border, profile chip, sign-out)
+ * with the platform-level additions: a module switcher with an active state
+ * per app, and the cross-campaign selector.
  */
 export function VestigeHeader({
   user,
@@ -52,14 +55,18 @@ export function VestigeHeader({
     window.location.assign("/");
   }
 
-  const initials = user.label.trim().charAt(0).toUpperCase() || "?";
-
   return (
-    <header className="w-full border-b border-hairline bg-surface">
-      <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-4 px-4 sm:px-12">
-        <Link href="/app" className="flex shrink-0 items-center gap-2.5">
-          <Sigil size={28} />
-          <span className="font-display text-xl tracking-[0.22em] text-wine">VESTIGE</span>
+    <header className="border-b border-hairline">
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
+        <Link
+          href="/app"
+          aria-label="Vestige — home"
+          className="flex min-w-0 items-center gap-2.5"
+        >
+          <PlatformCrest size={38} />
+          <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
+            Vestige
+          </span>
         </Link>
 
         <nav aria-label="Modules" className="ml-2 hidden items-center gap-1 sm:flex">
@@ -88,28 +95,38 @@ export function VestigeHeader({
           />
         )}
 
-        <span className="flex items-center gap-2 rounded-full border border-hairline bg-surface px-2 py-1">
-          <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-wine text-xs font-semibold text-parchment">
-            {user.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              initials
-            )}
-          </span>
-          <span className="hidden font-body text-[13px] text-ink sm:inline">{user.label}</span>
-        </span>
+        <ProfileChip user={user} />
 
         <button
           type="button"
           onClick={signOut}
           aria-label="Sign out"
-          className="flex h-8 w-8 items-center justify-center rounded-full text-ink-soft transition hover:bg-cod-soft hover:text-wine"
+          title="Sign out"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-surface text-ink-soft shadow-sm transition hover:bg-parchment hover:text-ink"
         >
-          <LogOut size={16} />
+          <LogOut className="h-4 w-4" />
         </button>
       </div>
     </header>
+  );
+}
+
+function ProfileChip({ user }: { user: VestigeHeaderUser }) {
+  const initials = user.label.trim().charAt(0).toUpperCase() || "?";
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface py-1 pl-1 pr-3 shadow-sm">
+      <span className="flex h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-full bg-parchment ring-1 ring-hairline">
+        {user.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="font-display text-xs text-ink-soft">{initials}</span>
+        )}
+      </span>
+      <span className="max-w-[100px] truncate font-body text-sm font-bold text-ink sm:max-w-[160px]">
+        {user.label}
+      </span>
+    </span>
   );
 }
 
@@ -126,7 +143,7 @@ function ModuleTab({
 }) {
   const className = [
     "flex items-center gap-1.5 rounded-lg px-3.5 py-2 font-body text-[13px] transition",
-    active ? "bg-[#f7f0dc] font-display font-semibold text-wine" : "text-ink-soft hover:text-ink",
+    active ? "bg-parchment font-display font-bold text-wine" : "text-ink-soft hover:text-ink",
   ].join(" ");
   const content = (
     <>

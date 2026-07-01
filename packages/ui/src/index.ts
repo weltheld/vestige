@@ -1,4 +1,5 @@
 export { Sigil } from "./components/Sigil";
+export { PlatformCrest } from "./components/PlatformCrest";
 export { PublicHeader } from "./components/PublicHeader";
 export {
   VestigeHeader,

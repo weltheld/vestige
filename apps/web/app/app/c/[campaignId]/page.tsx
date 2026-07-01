@@ -3,14 +3,11 @@ import { getServerSupabase } from "@vestige/db/server";
 import { getMyCampaigns } from "@/lib/campaigns";
 
 /**
- * The Calendar module (Council of Days) is a separate app/domain — cross-origin
- * redirect. The Journal module is mounted at /journal under this same origin
- * (Next.js Multi-Zones, see next.config.mjs), so it's a same-origin relative
- * redirect — that's what keeps the Supabase auth session shared between them.
+ * Both modules are mounted under this same origin via Next.js Multi-Zones
+ * (see next.config.mjs) — Calendar at /calendar, Journal at /journal — so
+ * both redirects below are same-origin and relative. That's what keeps the
+ * Supabase auth session shared across the whole platform.
  */
-const CALENDAR_BASE =
-  process.env.NEXT_PUBLIC_CALENDAR_URL ?? "http://localhost:3000";
-
 export default async function CampaignOverview({
   params,
 }: {
@@ -32,7 +29,7 @@ export default async function CampaignOverview({
 
   // Calendar by default when both modules are enabled.
   if (campaign.modulesEnabled.calendar) {
-    redirect(`${CALENDAR_BASE}/g/${campaign.slug}`);
+    redirect(`/calendar/g/${campaign.slug}`);
   }
   if (campaign.modulesEnabled.journal) {
     redirect(`/journal/c/${campaign.id}`);

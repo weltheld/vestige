@@ -5,7 +5,7 @@ import {
   getServerSupabase,
   getServiceRoleSupabase,
 } from "@/lib/supabase/server";
-import { AppHeader } from "@/components/council/AppHeader";
+import { PlatformHeader } from "@/components/council/PlatformHeader";
 import { Avatar } from "@/components/council/Avatar";
 import { PendingInvites } from "@/components/council/PendingInvites";
 import { cn } from "@/lib/utils";
@@ -135,7 +135,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-parchment">
-      <AppHeader
+      <PlatformHeader
         firstName={displayFirst}
         email={profile?.email ?? user.email ?? ""}
         characterName={profile?.character_name ?? ""}

@@ -6,6 +6,7 @@ import { Crest } from "@/components/council/Crest";
 import { TextField } from "@/components/council/TextField";
 import { WaxButton } from "@/components/council/WaxButton";
 import { getBrowserSupabase } from "@/lib/supabase/client";
+import { withBasePath } from "@/lib/basePath";
 
 export default function LoginPage() {
   return (
@@ -44,7 +45,7 @@ function LoginInner() {
     try {
       const supabase = getBrowserSupabase();
       const origin = window.location.origin;
-      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const redirectTo = `${origin}${withBasePath("/auth/callback")}?next=${encodeURIComponent(next)}`;
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
         options: {

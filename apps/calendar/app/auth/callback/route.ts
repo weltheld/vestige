@@ -3,6 +3,7 @@ import {
   getServerSupabase,
   getServiceRoleSupabase,
 } from "@/lib/supabase/server";
+import { withBasePath } from "@/lib/basePath";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next") ?? "/profile";
 
   if (!code) {
-    const url = new URL("/login", origin);
+    const url = new URL(withBasePath("/login"), origin);
     url.searchParams.set("error", "missing_code");
     return NextResponse.redirect(url);
   }
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    const url = new URL("/login", origin);
+    const url = new URL(withBasePath("/login"), origin);
     url.searchParams.set("error", "exchange_failed");
     url.searchParams.set("message", error.message);
     return NextResponse.redirect(url);
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
   }
 
   const target = await resolveDestination(supabase, next);
-  return NextResponse.redirect(new URL(target, origin));
+  return NextResponse.redirect(new URL(withBasePath(target), origin));
 }
 
 /**

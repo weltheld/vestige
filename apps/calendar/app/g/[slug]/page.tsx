@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { GroupViewClient } from "@/components/council/GroupViewClient";
+import { PlatformHeader } from "@/components/council/PlatformHeader";
 import type {
   BackgroundScene,
   Group,
@@ -164,23 +165,33 @@ export default async function GroupPage({
   const myProfile = profileById.get(user.id);
 
   return (
-    <GroupViewClient
-      group={group}
-      members={members.map((m) => ({
-        ...m,
-        user: users.find((u) => u.id === m.userId)!,
-      }))}
-      votes={votes}
-      sessionDates={(sessionRows ?? []).map((s) => s.date)}
-      crossSessions={crossSessions}
-      crossVotes={crossVotes}
-      currentUser={{
-        id: user.id,
-        email: user.email ?? "",
-        displayName: myProfile?.display_name ?? "",
-        characterName: myProfile?.character_name ?? "",
-        avatarUrl: myProfile?.avatar_url ?? undefined,
-      }}
-    />
+    <>
+      <PlatformHeader
+        firstName={(myProfile?.display_name ?? "").split(" ")[0] || "Adventurer"}
+        email={myProfile?.email ?? user.email ?? ""}
+        characterName={myProfile?.character_name ?? ""}
+        displayName={myProfile?.display_name ?? ""}
+        avatarUrl={myProfile?.avatar_url ?? undefined}
+        currentCampaignName={group.name}
+      />
+      <GroupViewClient
+        group={group}
+        members={members.map((m) => ({
+          ...m,
+          user: users.find((u) => u.id === m.userId)!,
+        }))}
+        votes={votes}
+        sessionDates={(sessionRows ?? []).map((s) => s.date)}
+        crossSessions={crossSessions}
+        crossVotes={crossVotes}
+        currentUser={{
+          id: user.id,
+          email: user.email ?? "",
+          displayName: myProfile?.display_name ?? "",
+          characterName: myProfile?.character_name ?? "",
+          avatarUrl: myProfile?.avatar_url ?? undefined,
+        }}
+      />
+    </>
   );
 }

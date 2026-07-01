@@ -9,6 +9,7 @@ import { WaxButton } from "@/components/council/WaxButton";
 import { Avatar } from "@/components/council/Avatar";
 import type { BackgroundScene } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { withBasePath } from "@/lib/basePath";
 import {
   addExistingMemberAction,
   cancelInviteAction,
@@ -64,7 +65,7 @@ export function InvitePageClient({
 
   const inviteLink = useMemo(() => {
     if (typeof window === "undefined") return "";
-    return `${window.location.origin}/login?next=/g/${slug}`;
+    return `${window.location.origin}${withBasePath(`/login?next=/g/${slug}`)}`;
   }, [slug]);
 
   function onSend(e: React.FormEvent) {

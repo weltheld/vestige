@@ -45,9 +45,11 @@ function Avatar({ url, name, size, ring }: { url: string | null; name: string; s
 export function SessionSidebar({
   session,
   campaignId,
+  campaignSlug,
 }: {
   session: SessionDetail;
   campaignId: string;
+  campaignSlug: string;
 }) {
   const dateLabel = session.date ? format(parseISO(session.date), "MMMM d, yyyy") : "Undated";
   const edited = formatDistanceToNow(parseISO(session.updatedAt), { addSuffix: true });
@@ -129,7 +131,7 @@ export function SessionSidebar({
             </span>
           </div>
           <Link
-            href={calendarCampaignHref(campaignId)}
+            href={calendarCampaignHref(campaignSlug)}
             className="font-body text-[12px] text-ink-soft underline underline-offset-2"
           >
             Open in Calendar →

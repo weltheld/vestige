@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
 import { VestigeHeader, PageTitle } from "@vestige/ui";
 import { getMyCampaigns } from "@/lib/campaigns";
+import { getRecentActivity } from "@/lib/activity";
 import { CampaignList } from "@/components/CampaignList";
+import { RecentActivity } from "@/components/RecentActivity";
 
 export default async function AppHome() {
   const supabase = await getServerSupabase();
@@ -23,6 +25,7 @@ export default async function AppHome() {
     profile?.display_name?.trim() || user.email?.split("@")[0] || "Adventurer";
 
   const campaigns = await getMyCampaigns(supabase, user.id);
+  const activity = await getRecentActivity(supabase, campaigns);
 
   return (
     <>
@@ -33,6 +36,7 @@ export default async function AppHome() {
           subtitle="Choose a campaign to open its calendar or journal."
         />
         <CampaignList campaigns={campaigns} />
+        <RecentActivity items={activity} />
       </main>
     </>
   );

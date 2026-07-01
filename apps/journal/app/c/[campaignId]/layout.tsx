@@ -31,7 +31,7 @@ export default async function CampaignLayout({
         currentCampaign={campaign}
         campaigns={campaigns}
         journalHref={journal.campaign(campaignId)}
-        calendarHref={calendarCampaignHref(campaignId)}
+        calendarHref={campaign.slug ? calendarCampaignHref(campaign.slug) : undefined}
         manageHref={journal.settings(campaignId)}
         viewAllHref={appHref()}
       />

@@ -11,6 +11,9 @@ export type HeaderCampaign = {
   /** Switch-to href (precomputed server-side; functions can't cross to a
    *  client component). */
   href?: string;
+  /** The Calendar module routes by slug, not id — carried here so the header
+   *  can build a correct cross-module link without a second query. */
+  slug?: string;
   sessionCount?: number;
   memberCount?: number;
 };

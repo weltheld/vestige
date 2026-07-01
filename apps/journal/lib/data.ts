@@ -36,14 +36,14 @@ export async function getViewer(supabase: SB): Promise<Viewer | null> {
 }
 
 type MembershipRow = {
-  campaigns: { id: string; name: string; banner_url: string | null } | null;
+  campaigns: { id: string; name: string; banner_url: string | null; slug: string } | null;
 };
 
 /** Campaigns the user belongs to, shaped for the header selector. */
 export async function getMyCampaigns(supabase: SB, userId: string): Promise<HeaderCampaign[]> {
   const { data, error } = await supabase
     .from("campaign_members")
-    .select("campaigns(id, name, banner_url)")
+    .select("campaigns(id, name, banner_url, slug)")
     .eq("user_id", userId)
     .order("joined_at", { ascending: false });
   if (error) throw error;
@@ -70,6 +70,7 @@ export async function getMyCampaigns(supabase: SB, userId: string): Promise<Head
     id: c.id,
     name: c.name,
     imageUrl: c.banner_url,
+    slug: c.slug,
     href: journal.campaign(c.id),
     memberCount: memberCounts.get(c.id) ?? undefined,
   }));
@@ -83,12 +84,18 @@ export async function getCampaignIfMember(
 ): Promise<HeaderCampaign | null> {
   const { data: membership } = await supabase
     .from("campaign_members")
-    .select("campaign_id, campaigns(id, name, banner_url)")
+    .select("campaign_id, campaigns(id, name, banner_url, slug)")
     .eq("user_id", userId)
     .eq("campaign_id", campaignId)
     .maybeSingle();
 
   const c = (membership as MembershipRow | null)?.campaigns;
   if (!c) return null;
-  return { id: c.id, name: c.name, imageUrl: c.banner_url, href: journal.campaign(c.id) };
+  return {
+    id: c.id,
+    name: c.name,
+    imageUrl: c.banner_url,
+    slug: c.slug,
+    href: journal.campaign(c.id),
+  };
 }
