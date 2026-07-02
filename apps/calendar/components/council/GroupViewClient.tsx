@@ -9,7 +9,6 @@ import { CalendarPanel } from "@/components/council/CalendarPanel";
 import { OwnerSettings, Switch } from "@/components/council/OwnerSettings";
 import { QuickFillBar } from "@/components/council/QuickFillBar";
 import { BannerParty } from "@/components/council/BannerParty";
-import { CampaignSwitcher } from "@/components/council/CampaignSwitcher";
 import { CharacterDialog } from "@/components/council/CharacterDialog";
 import type { CalendarDay } from "@/lib/calendar";
 import { buildMonthGrid, isoDate } from "@/lib/calendar";
@@ -521,22 +520,6 @@ export function GroupViewClient(props: Props) {
 
           {/* Calendar column */}
           <div className="flex flex-col">
-            {/* Mobile/tablet: campaign switcher + party, moved out of the
-                header (which only has room for icons at this width), shown
-                above the month selector instead. */}
-            <div className="flex items-center gap-3 px-4 pt-4 sm:px-5 lg:hidden">
-              <CampaignSwitcher
-                current={{ id: group.id, slug: group.slug, name: group.name, imageUrl: group.bannerUrl ?? null }}
-                campaigns={props.switcherCampaigns}
-              />
-              <BannerParty
-                members={sortedMembers}
-                hasBanner={false}
-                currentUserId={props.currentUser.id}
-                onEditSelf={() => setCharacterOpen(true)}
-              />
-            </div>
-
             {/* Mobile: quick fill directly below the month selector */}
             <div className="lg:hidden">
               <CalendarPanel

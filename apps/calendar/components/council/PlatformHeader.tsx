@@ -106,6 +106,8 @@ export function PlatformHeader({
           characterName={characterName}
           displayName={displayName}
           avatarUrl={avatarUrl}
+          campaign={campaign}
+          campaigns={campaigns}
           onOpenPollSettings={onOpenPollSettings}
         />
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ScrollText, LogOut, Pencil, ChevronDown } from "lucide-react";
+import { CalendarDays, ScrollText, LogOut, Pencil, ChevronDown, Check, Settings2 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
@@ -110,15 +110,25 @@ export function VestigeHeader({
 
         <div className="flex-1" />
 
+        {/* Campaign switcher pill — desktop only. On mobile/tablet it moves
+            into the profile menu below to save header width. */}
         {currentCampaign && (
-          <CampaignSelector
-            current={currentCampaign}
-            campaigns={campaigns.length ? campaigns : [currentCampaign]}
-            manageHref={manageHref}
-          />
+          <div className="hidden lg:block">
+            <CampaignSelector
+              current={currentCampaign}
+              campaigns={campaigns.length ? campaigns : [currentCampaign]}
+              manageHref={manageHref}
+            />
+          </div>
         )}
 
-        <ProfileMenu user={user} onSignOut={signOut} />
+        <ProfileMenu
+          user={user}
+          onSignOut={signOut}
+          currentCampaign={currentCampaign}
+          campaigns={campaigns.length ? campaigns : currentCampaign ? [currentCampaign] : []}
+          manageHref={manageHref}
+        />
       </div>
     </header>
   );
@@ -132,7 +142,19 @@ export function VestigeHeader({
  * same shared `profiles` row — one canonical place to edit your profile,
  * reachable identically from any app.
  */
-function ProfileMenu({ user, onSignOut }: { user: VestigeHeaderUser; onSignOut: () => void }) {
+function ProfileMenu({
+  user,
+  onSignOut,
+  currentCampaign,
+  campaigns,
+  manageHref,
+}: {
+  user: VestigeHeaderUser;
+  onSignOut: () => void;
+  currentCampaign?: HeaderCampaign | null;
+  campaigns: HeaderCampaign[];
+  manageHref?: string;
+}) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -161,6 +183,43 @@ function ProfileMenu({ user, onSignOut }: { user: VestigeHeaderUser; onSignOut: 
           sideOffset={8}
           className="z-50 w-56 rounded-xl border border-hairline bg-surface p-2 shadow-[0_8px_32px_-8px_rgba(43,33,24,0.25)]"
         >
+          {/* Campaign switcher — mobile/tablet only; desktop has the pill in
+              the header instead. */}
+          {currentCampaign && (
+            <div className="lg:hidden">
+              <DropdownMenu.Label className="px-2 py-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                Switch campaign
+              </DropdownMenu.Label>
+              {campaigns.map((c) => {
+                const active = c.id === currentCampaign.id;
+                return (
+                  <DropdownMenu.Item key={c.id} asChild>
+                    <a
+                      href={c.href ?? "#"}
+                      className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 outline-none transition data-[highlighted]:bg-cod-soft"
+                    >
+                      <span className="min-w-0 flex-1 truncate font-body text-xs text-ink">
+                        {c.name}
+                      </span>
+                      {active && <Check size={13} className="shrink-0 text-gold" />}
+                    </a>
+                  </DropdownMenu.Item>
+                );
+              })}
+              {manageHref && (
+                <DropdownMenu.Item asChild>
+                  <a
+                    href={manageHref}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+                  >
+                    <Settings2 size={13} className="text-muted" />
+                    Manage this campaign
+                  </a>
+                </DropdownMenu.Item>
+              )}
+              <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
+            </div>
+          )}
           <DropdownMenu.Item asChild>
             <a
               href={`${CALENDAR_URL}/profile`}
