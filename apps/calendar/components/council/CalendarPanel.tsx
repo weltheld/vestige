@@ -119,7 +119,7 @@ export function CalendarPanel({
   return (
     <section className="flex h-full flex-col gap-3 p-4 sm:p-5">
       {/* Desktop header: month nav (poll settings now lives in the sidebar). */}
-      <div className="hidden flex-wrap items-center gap-x-4 gap-y-2 sm:flex">
+      <div className="hidden flex-wrap items-center gap-x-4 gap-y-2 lg:flex">
         <button
           aria-label="Previous month"
           onClick={() => go(-1)}
@@ -137,9 +137,9 @@ export function CalendarPanel({
         </button>
       </div>
 
-      {/* Mobile header: arrows pinned to the screen edges with the month
-          centered between them (poll settings now lives in the profile menu). */}
-      <div className="sm:hidden">
+      {/* Mobile/tablet header: arrows pinned to the screen edges with the
+          month centered between them (poll settings lives in the profile menu). */}
+      <div className="lg:hidden">
         <div className="flex items-center justify-between">
           <button
             aria-label="Previous month"
