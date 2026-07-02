@@ -26,6 +26,9 @@ type Props = {
   conflictCampaigns?: string[];
   /** The user's votes in OTHER campaigns (only when the align overlay is on). */
   alignVotes?: { value: VoteValue; campaignName: string }[];
+  /** Whether to show the yes/maybe/no tallies and per-member tooltip breakdown.
+   *  When false, only the viewer's own vote (via the tile's tint) is visible. */
+  showVotes?: boolean;
 };
 
 export function nextVoteValue(current: VoteValue | undefined): VoteValue | null {
@@ -49,6 +52,7 @@ export function DayCell({
   onToggleSession,
   conflictCampaigns,
   alignVotes,
+  showVotes = true,
 }: Props) {
   const hasConflict = !!conflictCampaigns?.length;
   const hasAlign = !!alignVotes?.length;
@@ -191,19 +195,19 @@ export function DayCell({
           isSession && "pr-7",
         )}
       >
-        {yesCount > 0 && (
+        {showVotes && yesCount > 0 && (
           <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-display text-[10px] font-bold leading-none" style={{background:"#c8d8c0",color:"#1e3a28"}}>
             <Check className="h-2.5 w-2.5" strokeWidth={3} />
             {yesCount}
           </span>
         )}
-        {maybeCount > 0 && (
+        {showVotes && maybeCount > 0 && (
           <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-display text-[10px] font-bold leading-none" style={{background:"#e8d8a8",color:"#5a4010"}}>
             <Minus className="h-2.5 w-2.5" strokeWidth={3} />
             {maybeCount}
           </span>
         )}
-        {noCount > 0 && (
+        {showVotes && noCount > 0 && (
           <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-display text-[10px] font-bold leading-none" style={{background:"#e8c0c0",color:"#5a1820"}}>
             <X className="h-2.5 w-2.5" strokeWidth={3} />
             {noCount}
@@ -249,7 +253,7 @@ export function DayCell({
 
       {day.inCurrentMonth &&
         cursor &&
-        (hasConflict || hasAlign || (isViableWeekday && tooltipRows.length > 0)) && (
+        (hasConflict || hasAlign || (showVotes && isViableWeekday && tooltipRows.length > 0)) && (
           <div
             className="pointer-events-none fixed z-50 w-max max-w-[220px] rounded-md border border-hairline bg-surface px-3 py-2 text-left shadow-parchment"
             style={{ left: cursor.x + 14, top: cursor.y + 14 }}
@@ -295,7 +299,7 @@ export function DayCell({
               </div>
             )}
 
-            {isViableWeekday && tooltipRows.length > 0 && (
+            {showVotes && isViableWeekday && tooltipRows.length > 0 && (
               <div
                 className={cn(
                   (hasConflict || hasAlign) && "border-t border-hairline pt-1",

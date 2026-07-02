@@ -42,6 +42,9 @@ type Props = {
   alignByDate?: Map<string, { value: VoteValue; campaignName: string }[]>;
   /** Whether the align overlay is active. */
   showAlign?: boolean;
+  /** Whether to show yes/maybe/no tallies and the per-member tooltip
+   *  breakdown on each day (default true). */
+  showVotes?: boolean;
 };
 
 export function CalendarPanel({
@@ -63,6 +66,7 @@ export function CalendarPanel({
   conflictByDate,
   alignByDate,
   showAlign,
+  showVotes = true,
 }: Props) {
   const start = initialMonth ?? defaultMonth();
   const [{ year, monthIndex }, setMonth] = useState(start);
@@ -171,6 +175,7 @@ export function CalendarPanel({
             onToggleSession={onToggleSession}
             conflictCampaigns={conflictByDate?.get(d.iso)}
             alignVotes={showAlign ? alignByDate?.get(d.iso) : undefined}
+            showVotes={showVotes}
             onCycle={(iso) => {
               const current = (monthVotes[iso] ?? []).find(
                 (v) => v.userId === myUserId,

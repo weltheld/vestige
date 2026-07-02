@@ -69,6 +69,7 @@ export function GroupViewClient(props: Props) {
   // Cross-campaign overlays. Conflicts (other campaigns' play-dates) are
   // always shown; the align overlay (my yes/maybe elsewhere) is toggled.
   const [showAlign, setShowAlign] = useState(false);
+  const [showVotes, setShowVotes] = useState(true);
   const conflictByDate = useMemo(() => {
     const m = new Map<string, string[]>();
     for (const s of props.crossSessions) {
@@ -562,6 +563,7 @@ export function GroupViewClient(props: Props) {
                 yesCount={leadingYesCount}
                 memberCount={members.length}
               />
+              <VotesToggle active={showVotes} onToggle={() => setShowVotes((v) => !v)} />
               {alignCampaignCount > 0 && (
                 <AlignToggle
                   active={showAlign}
@@ -592,6 +594,7 @@ export function GroupViewClient(props: Props) {
                 conflictByDate={conflictByDate}
                 alignByDate={alignByDate}
                 showAlign={showAlign}
+                showVotes={showVotes}
                 belowHeader={
                   <QuickFillBar
                     viableWeekdays={group.viableWeekdays}
@@ -606,6 +609,7 @@ export function GroupViewClient(props: Props) {
                   yesCount={leadingYesCount}
                   memberCount={members.length}
                 />
+                <VotesToggle active={showVotes} onToggle={() => setShowVotes((v) => !v)} />
                 {alignCampaignCount > 0 && (
                   <AlignToggle
                     active={showAlign}
@@ -633,6 +637,7 @@ export function GroupViewClient(props: Props) {
                 conflictByDate={conflictByDate}
                 alignByDate={alignByDate}
                 showAlign={showAlign}
+                showVotes={showVotes}
               />
             </div>
           </div>
@@ -700,6 +705,34 @@ export function GroupViewClient(props: Props) {
 
 function currentUserMatches(myId: string, creatorId: string) {
   return myId === creatorId;
+}
+
+function VotesToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={active}
+      className={cn(
+        "flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left shadow-sm transition",
+        active
+          ? "border-dm-gold/70 bg-dm-gold/10 text-ink"
+          : "border-hairline bg-surface text-ink-soft hover:bg-parchment hover:text-ink",
+      )}
+    >
+      {active ? (
+        <Eye className="mt-0.5 h-4 w-4 shrink-0 text-dm-gold" />
+      ) : (
+        <EyeOff className="mt-0.5 h-4 w-4 shrink-0" />
+      )}
+      <span className="flex-1">
+        <span className="block font-body text-xs font-bold">Show party votes</span>
+        <span className="block text-[10px] leading-snug text-ink-soft">
+          {active ? "Everyone's votes are visible" : "Only your own vote is shown"}
+        </span>
+      </span>
+    </button>
+  );
 }
 
 function AlignToggle({

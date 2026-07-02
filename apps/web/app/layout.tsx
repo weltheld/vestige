@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cinzel, Lora } from "next/font/google";
+import { Cinzel, Alegreya_Sans } from "next/font/google";
 import "@vestige/ui/tokens.css";
 import "./globals.css";
 
@@ -10,9 +10,9 @@ const display = Cinzel({
   display: "swap",
 });
 
-const body = Lora({
+const body = Alegreya_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "700"],
   style: ["normal", "italic"],
   variable: "--font-body",
   display: "swap",
