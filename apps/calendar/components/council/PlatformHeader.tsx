@@ -14,6 +14,9 @@ type Props = {
    *  campaigns) when viewing a specific campaign, e.g. on /g/[slug]. */
   campaign?: SwitcherCampaign;
   campaigns?: SwitcherCampaign[];
+  /** Owner-only. Shown in the profile menu on mobile (desktop has settings
+   *  inline in the sidebar instead). */
+  onOpenPollSettings?: () => void;
 };
 
 /**
@@ -33,6 +36,7 @@ export function PlatformHeader({
   avatarUrl,
   campaign,
   campaigns = [],
+  onOpenPollSettings,
 }: Props) {
   return (
     <header className="border-b border-hairline bg-parchment">
@@ -76,6 +80,7 @@ export function PlatformHeader({
           characterName={characterName}
           displayName={displayName}
           avatarUrl={avatarUrl}
+          onOpenPollSettings={onOpenPollSettings}
         />
       </div>
     </header>

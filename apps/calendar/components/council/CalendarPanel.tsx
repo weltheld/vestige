@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   buildMonthGrid,
   defaultMonth,
@@ -29,7 +29,6 @@ type Props = {
   onMonthChange?: (year: number, monthIndex: number) => void;
   initialMonth?: { year: number; monthIndex: number };
   isCreator?: boolean;
-  onOpenSettings?: () => void;
   /** Optional content rendered directly below the month header (e.g. quick fill on mobile). */
   belowHeader?: React.ReactNode;
   /** ISO dates marked as game sessions. */
@@ -59,7 +58,6 @@ export function CalendarPanel({
   onMonthChange,
   initialMonth,
   isCreator,
-  onOpenSettings,
   belowHeader,
   sessionDates,
   onToggleSession,
@@ -120,7 +118,7 @@ export function CalendarPanel({
 
   return (
     <section className="flex h-full flex-col gap-3 p-4 sm:p-5">
-      {/* Desktop header: grouped nav on the left, poll-settings text button right. */}
+      {/* Desktop header: month nav (poll settings now lives in the sidebar). */}
       <div className="hidden flex-wrap items-center gap-x-4 gap-y-2 sm:flex">
         <button
           aria-label="Previous month"
@@ -137,34 +135,11 @@ export function CalendarPanel({
         >
           <ChevronRight className="h-4 w-4" />
         </button>
-        <div className="flex-1" />
-        {isCreator && onOpenSettings && (
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-surface px-3 py-1.5 text-xs font-body font-bold text-ink-soft shadow-sm hover:bg-parchment hover:text-ink"
-          >
-            <Settings2 className="h-3.5 w-3.5" />
-            Poll settings
-          </button>
-        )}
       </div>
 
-      {/* Mobile header: poll-settings icon (owner) on its own line, then arrows
-          pinned to the screen edges with the month centered between them. */}
+      {/* Mobile header: arrows pinned to the screen edges with the month
+          centered between them (poll settings now lives in the profile menu). */}
       <div className="sm:hidden">
-        {isCreator && onOpenSettings && (
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              aria-label="Poll settings"
-              onClick={onOpenSettings}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface text-ink-soft shadow-sm hover:bg-parchment hover:text-ink"
-            >
-              <Settings2 className="h-4 w-4" />
-            </button>
-          </div>
-        )}
         <div className="flex items-center justify-between">
           <button
             aria-label="Previous month"

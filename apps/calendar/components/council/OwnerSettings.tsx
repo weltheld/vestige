@@ -47,8 +47,11 @@ type Props = {
   onRemoveBanner: () => void;
   onSetMemberDm: (userId: string, isDm: boolean) => void;
   onRemoveMember: (userId: string) => void;
-  onClose: () => void;
-  /** If true, no body padding is applied (use when embedded in sheet that already pads). */
+  /** Not needed when embedded (no title/close row is rendered). */
+  onClose?: () => void;
+  /** If true, no body padding or title/close row is rendered — used when
+   *  embedded directly in the desktop sidebar, which supplies its own
+   *  heading and disclosure control. */
   embedded?: boolean;
 };
 
@@ -153,20 +156,24 @@ export function OwnerSettings({
           onConfirm={onCropConfirm}
         />
       )}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="font-display text-xl text-ink">Poll Settings</h2>
-        </div>
-        <button
-          onClick={onClose}
-          className="rounded-md p-1 text-ink-soft hover:bg-parchment hover:text-ink"
-          aria-label="Close settings"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+      {!embedded && (
+        <>
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="font-display text-xl text-ink">Poll Settings</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="rounded-md p-1 text-ink-soft hover:bg-parchment hover:text-ink"
+              aria-label="Close settings"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-      <div className="my-4 h-px bg-hairline" />
+          <div className="my-4 h-px bg-hairline" />
+        </>
+      )}
 
       <section>
         <p className="small-caps">Roles</p>

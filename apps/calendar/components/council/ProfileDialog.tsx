@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Pencil, LogOut } from "lucide-react";
+import { ChevronDown, Pencil, LogOut, Settings2 } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { ProfileEditor } from "./ProfileEditor";
 import { signOutAction } from "@/app/auth/actions";
@@ -14,6 +14,9 @@ type Props = {
   displayName: string;
   avatarUrl?: string;
   variant?: "default" | "banner";
+  /** Owner-only, mobile-only entry point (desktop has settings inline in
+   *  the campaign sidebar). */
+  onOpenPollSettings?: () => void;
 };
 
 /**
@@ -28,6 +31,7 @@ export function ProfileDialog({
   displayName,
   avatarUrl,
   variant = "default",
+  onOpenPollSettings,
 }: Props) {
   const onBanner = variant === "banner";
   const [open, setOpen] = useState(false);
@@ -67,6 +71,15 @@ export function ProfileDialog({
               <Pencil size={13} className="text-ink-soft" />
               Edit profile
             </DropdownMenu.Item>
+            {onOpenPollSettings && (
+              <DropdownMenu.Item
+                onSelect={onOpenPollSettings}
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment lg:hidden"
+              >
+                <Settings2 size={13} className="text-ink-soft" />
+                Poll settings
+              </DropdownMenu.Item>
+            )}
             <DropdownMenu.Item
               onSelect={() => signOutAction()}
               className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
