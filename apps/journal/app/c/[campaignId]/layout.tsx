@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
-import { VestigeHeader } from "@vestige/ui";
+import { VestigeHeader, PlatformFooter } from "@vestige/ui";
 import { getViewer, getMyCampaigns, getCampaignIfMember } from "@/lib/data";
 import { appHref, calendarCampaignHref, journal } from "@/lib/links";
 
@@ -42,7 +42,8 @@ export default async function CampaignLayout({
         calendarHref={campaign.slug ? calendarCampaignHref(campaign.slug) : undefined}
         manageHref={journal.settings(campaignId)}
       />
-      {children}
+      <div className="flex-1">{children}</div>
+      <PlatformFooter />
     </div>
   );
 }

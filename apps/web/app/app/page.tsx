@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
-import { VestigeHeader } from "@vestige/ui";
+import { VestigeHeader, PlatformFooter } from "@vestige/ui";
 import { getMyCampaigns } from "@/lib/campaigns";
 import { getRecentActivity } from "@/lib/activity";
 import { getUpcomingSlots } from "@/lib/upcoming";
@@ -43,7 +43,7 @@ export default async function AppHome() {
   }));
 
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <VestigeHeader
         user={{ label, avatarUrl: profile?.avatar_url ?? null }}
         calendarHref={defaultCampaign?.slug ? `/calendar/g/${defaultCampaign.slug}` : undefined}
@@ -61,7 +61,7 @@ export default async function AppHome() {
         }
         campaigns={headerCampaigns}
       />
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
         {campaigns.length === 0 ? (
           <p className="font-body text-ink-soft">
             You don&rsquo;t have any campaigns yet. Once you&rsquo;re added to one,
@@ -74,6 +74,7 @@ export default async function AppHome() {
           </div>
         )}
       </main>
-    </>
+      <PlatformFooter />
+    </div>
   );
 }

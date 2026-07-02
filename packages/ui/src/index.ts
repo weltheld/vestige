@@ -12,5 +12,6 @@ export { HeroBand } from "./components/HeroBand";
 export { SidebarCard } from "./components/SidebarCard";
 export { Button } from "./components/Button";
 export { PageLoader } from "./components/PageLoader";
+export { PlatformFooter } from "./components/PlatformFooter";
 export { WaxSeal } from "./components/WaxSeal";
 export { Skeleton } from "./components/Skeleton";

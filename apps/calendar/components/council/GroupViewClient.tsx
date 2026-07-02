@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PlatformHeader } from "@/components/council/PlatformHeader";
+import { PlatformFooter } from "@/components/council/PlatformFooter";
 import { CalendarPanel } from "@/components/council/CalendarPanel";
 import { OwnerSettings } from "@/components/council/OwnerSettings";
 import { BestDaySummary } from "@/components/council/BestDaySummary";
@@ -495,14 +496,7 @@ export function GroupViewClient(props: Props) {
           </div>
         </div>
 
-        <main
-          className={cn(
-            "mx-auto flex w-full max-w-[1440px] flex-1 flex-col",
-            settingsOpen
-              ? "lg:grid lg:grid-cols-[280px_1fr_300px]"
-              : "lg:grid lg:grid-cols-[280px_1fr]",
-          )}
-        >
+        <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col lg:grid lg:grid-cols-[280px_1fr]">
           {/* Left sidebar: banner + party, quick fill, best day (desktop only) —
               moving the banner + avatars in here (instead of a full-width row
               above the grid) gives the calendar column more room. */}
@@ -642,29 +636,12 @@ export function GroupViewClient(props: Props) {
             </div>
           </div>
 
-          {settingsOpen && isCreator && (
-            <aside className="hidden border-l border-hairline/70 bg-parchment/30 lg:order-3 lg:block">
-              <OwnerSettings
-                members={members}
-                creatorId={group.creatorId}
-                viableWeekdays={group.viableWeekdays}
-                background={group.background}
-                bannerUrl={group.bannerUrl}
-                bannerOriginalUrl={bannerOriginalUrl}
-                onToggleWeekday={handleToggleWeekday}
-                onChangeBackground={handleChangeBackground}
-                onUploadBanner={handleUploadBanner}
-                onRemoveBanner={handleRemoveBanner}
-                onSetMemberDm={handleSetMemberDm}
-                onRemoveMember={handleRemoveMember}
-                onClose={() => setSettingsOpen(false)}
-              />
-            </aside>
-          )}
         </main>
 
+        <PlatformFooter />
+
         {settingsOpen && isCreator && (
-          <MobileSettingsSheet
+          <SettingsDialog
             onClose={() => setSettingsOpen(false)}
             members={members}
             creatorId={group.creatorId}
@@ -792,7 +769,7 @@ function RefreshOnFocus({ onFocus }: { onFocus: () => void }) {
   return null;
 }
 
-function MobileSettingsSheet({
+function SettingsDialog({
   onClose,
   members,
   creatorId,
@@ -822,34 +799,28 @@ function MobileSettingsSheet({
   onRemoveMember: (userId: string) => void;
 }) {
   return (
-    <div className="fixed inset-0 z-40 lg:hidden">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8">
       <button
         aria-label="Close settings"
         onClick={onClose}
-        className="absolute inset-0 bg-black/30 backdrop-blur-[1px]"
+        className="fixed inset-0 bg-ink/50 backdrop-blur-sm"
       />
-      <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl border-t border-hairline bg-parchment shadow-2xl">
-        <div className="flex justify-center pt-2">
-          <span className="h-1.5 w-10 rounded-full bg-ink-soft/30" />
-        </div>
-        <div className="px-5 pb-6 pt-2">
-          <OwnerSettings
-            members={members}
-            creatorId={creatorId}
-            viableWeekdays={viableWeekdays}
-            background={background}
-            bannerUrl={bannerUrl}
-            bannerOriginalUrl={bannerOriginalUrl}
-            onToggleWeekday={onToggleWeekday}
-            onChangeBackground={onChangeBackground}
-            onUploadBanner={onUploadBanner}
-            onRemoveBanner={onRemoveBanner}
-            onSetMemberDm={onSetMemberDm}
-            onRemoveMember={onRemoveMember}
-            onClose={onClose}
-            embedded
-          />
-        </div>
+      <div className="relative w-full max-w-[560px] rounded-xl border border-hairline bg-surface shadow-parchment">
+        <OwnerSettings
+          members={members}
+          creatorId={creatorId}
+          viableWeekdays={viableWeekdays}
+          background={background}
+          bannerUrl={bannerUrl}
+          bannerOriginalUrl={bannerOriginalUrl}
+          onToggleWeekday={onToggleWeekday}
+          onChangeBackground={onChangeBackground}
+          onUploadBanner={onUploadBanner}
+          onRemoveBanner={onRemoveBanner}
+          onSetMemberDm={onSetMemberDm}
+          onRemoveMember={onRemoveMember}
+          onClose={onClose}
+        />
       </div>
     </div>
   );
