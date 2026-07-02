@@ -56,7 +56,7 @@ export function PlatformHeader({
           </span>
         </a>
 
-        <nav aria-label="Modules" className="ml-2 hidden items-center gap-1 sm:flex">
+        <nav aria-label="Modules" className="ml-2 hidden items-center gap-1 lg:flex">
           <span className="flex items-center gap-1.5 rounded-lg bg-parchment px-3.5 py-2 font-display text-[13px] font-bold text-wine">
             <CalendarDays size={14} />
             Calendar
@@ -70,9 +70,35 @@ export function PlatformHeader({
           </a>
         </nav>
 
+        {/* Icon-only app switcher for mobile/tablet — saves the label width;
+            the full labeled nav above takes over at desktop widths. */}
+        <nav aria-label="Modules" className="ml-2 flex items-center gap-1 lg:hidden">
+          <span
+            aria-label="Calendar"
+            title="Calendar"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-parchment text-wine"
+          >
+            <CalendarDays size={16} />
+          </span>
+          <a
+            href={`${PLATFORM_URL}/journal`}
+            aria-label="Journal"
+            title="Journal"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition hover:text-ink"
+          >
+            <ScrollText size={16} />
+          </a>
+        </nav>
+
         <div className="flex-1" />
 
-        {campaign && <CampaignSwitcher current={campaign} campaigns={campaigns} />}
+        {/* On mobile/tablet this moves above the month selector instead,
+            alongside the party avatars. */}
+        {campaign && (
+          <div className="hidden lg:block">
+            <CampaignSwitcher current={campaign} campaigns={campaigns} />
+          </div>
+        )}
 
         <ProfileDialog
           firstName={firstName}

@@ -76,7 +76,7 @@ export function VestigeHeader({
           </span>
         </a>
 
-        <nav aria-label="Modules" className="ml-2 hidden items-center gap-1 sm:flex">
+        <nav aria-label="Modules" className="ml-2 hidden items-center gap-1 lg:flex">
           <ModuleTab
             icon={<CalendarDays size={14} />}
             label="Calendar"
@@ -85,6 +85,23 @@ export function VestigeHeader({
           />
           <ModuleTab
             icon={<ScrollText size={14} />}
+            label="Journal"
+            active={currentModule === "journal"}
+            href={journalHref}
+          />
+        </nav>
+
+        {/* Icon-only app switcher for mobile/tablet — saves the label width;
+            the full labeled nav above takes over at desktop widths. */}
+        <nav aria-label="Modules" className="ml-2 flex items-center gap-1 lg:hidden">
+          <ModuleIconTab
+            icon={<CalendarDays size={16} />}
+            label="Calendar"
+            active={currentModule === "calendar"}
+            href={calendarHref}
+          />
+          <ModuleIconTab
+            icon={<ScrollText size={16} />}
             label="Journal"
             active={currentModule === "journal"}
             href={journalHref}
@@ -199,6 +216,35 @@ function ModuleTab({
   return (
     <span aria-current={active ? "page" : undefined} className={className}>
       {content}
+    </span>
+  );
+}
+
+function ModuleIconTab({
+  icon,
+  label,
+  active,
+  href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  href?: string;
+}) {
+  const className = [
+    "flex h-9 w-9 items-center justify-center rounded-lg transition",
+    active ? "bg-parchment text-wine" : "text-ink-soft hover:text-ink",
+  ].join(" ");
+  if (href) {
+    return (
+      <a href={href} aria-label={label} title={label} aria-current={active ? "page" : undefined} className={className}>
+        {icon}
+      </a>
+    );
+  }
+  return (
+    <span aria-label={label} title={label} aria-current={active ? "page" : undefined} className={className}>
+      {icon}
     </span>
   );
 }
