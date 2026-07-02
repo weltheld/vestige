@@ -72,9 +72,10 @@ function LoginInner() {
       <div className="w-full max-w-[460px] rounded-xl border border-hairline bg-surface p-8 shadow-parchment sm:p-10">
         <header className="flex flex-col items-center text-center gap-3">
           <Crest size={72} />
-          <h1 className="font-display text-3xl text-ink">Calendar</h1>
-          <p className="font-body text-ink-soft italic max-w-[34ch]">
-            Gather your party. Choose your day.
+          <h1 className="font-display text-3xl text-ink">Vestige</h1>
+          <p className="font-body text-ink-soft italic max-w-[36ch]">
+            One home for your tabletop campaigns &mdash; schedule your sessions
+            and chronicle every adventure your party lives through.
           </p>
         </header>
 
