@@ -195,6 +195,13 @@ export function ImageCropper({
           aria-label="Zoom"
         />
 
+        {busy && (
+          <div className="mt-5">
+            <div className="progress-track h-1.5 w-full" role="progressbar" aria-label="Saving banner" />
+            <p className="mt-2 text-center font-body text-xs text-ink-soft">Saving banner…</p>
+          </div>
+        )}
+
         <div className="mt-5 flex justify-end gap-2">
           <WaxButton variant="outline" onClick={onCancel} disabled={busy}>
             Cancel

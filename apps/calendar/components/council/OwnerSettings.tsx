@@ -207,18 +207,25 @@ export function OwnerSettings({
       <section>
         <p className="small-caps">Campaign Banner</p>
         <div className="mt-2">
+          {/* Preview mirrors the 4:3 crop actually shown in the campaign
+              header, so what you frame is what you get. */}
           {bannerUrl ? (
-            <div className="overflow-hidden rounded-md border border-hairline">
+            <div className="relative aspect-[4/3] w-full max-w-[220px] overflow-hidden rounded-md border border-hairline">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={bannerUrl}
                 alt="Campaign banner"
-                className="h-24 w-full object-cover"
+                className="h-full w-full object-cover"
               />
+              {uploading && (
+                <div className="absolute inset-0 flex items-end bg-ink/30 p-2">
+                  <div className="progress-track h-1.5 w-full" role="progressbar" aria-label="Saving banner" />
+                </div>
+              )}
             </div>
           ) : (
-            <div className="flex h-24 items-center justify-center rounded-md border border-dashed border-hairline bg-surface/60 text-xs text-ink-soft">
-              No banner yet
+            <div className="flex aspect-[4/3] w-full max-w-[220px] items-center justify-center rounded-md border border-dashed border-hairline bg-surface/60 text-xs text-ink-soft">
+              {uploading ? "Saving…" : "No banner yet"}
             </div>
           )}
 
@@ -235,20 +242,22 @@ export function OwnerSettings({
               type="button"
               onClick={() => fileInput.current?.click()}
               disabled={uploading}
-              className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-surface/60 px-3 py-1.5 text-xs font-display tracking-wider uppercase text-ink hover:bg-parchment disabled:opacity-50"
+              title={bannerUrl ? "Replace image" : "Upload image"}
+              aria-label={bannerUrl ? "Replace image" : "Upload image"}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface/60 text-ink hover:bg-parchment disabled:opacity-50"
             >
-              <ImagePlus className="h-3.5 w-3.5" />
-              {uploading ? "Uploading..." : bannerUrl ? "Replace" : "Upload"}
+              <ImagePlus className="h-4 w-4" />
             </button>
             {bannerUrl && (
               <button
                 type="button"
                 onClick={onAdjustCrop}
                 disabled={uploading}
-                className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-surface/60 px-3 py-1.5 text-xs font-display tracking-wider uppercase text-ink hover:bg-parchment disabled:opacity-50"
+                title="Adjust crop"
+                aria-label="Adjust crop"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface/60 text-ink hover:bg-parchment disabled:opacity-50"
               >
-                <Crop className="h-3.5 w-3.5" />
-                Adjust crop
+                <Crop className="h-4 w-4" />
               </button>
             )}
             {bannerUrl && (
@@ -256,10 +265,11 @@ export function OwnerSettings({
                 type="button"
                 onClick={onRemoveBanner}
                 disabled={uploading}
-                className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-surface/60 px-3 py-1.5 text-xs font-display tracking-wider uppercase text-vote-no hover:bg-parchment disabled:opacity-50"
+                title="Remove image"
+                aria-label="Remove image"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface/60 text-vote-no hover:bg-parchment disabled:opacity-50"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                Remove
+                <Trash2 className="h-4 w-4" />
               </button>
             )}
           </div>
@@ -267,8 +277,8 @@ export function OwnerSettings({
             <p className="mt-2 text-xs text-vote-no">{uploadError}</p>
           )}
           <p className="mt-2 text-xs text-ink-soft">
-            Shown across the top of the campaign calendar. Wide images
-            (about 1600&times;400) look best.
+            Shown in your campaign header. Cropped to a 4:3 image — frame it
+            with Upload or Adjust crop.
           </p>
         </div>
       </section>
