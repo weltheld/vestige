@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PlatformHeader } from "@/components/council/PlatformHeader";
 import { PlatformFooter } from "@/components/council/PlatformFooter";
@@ -512,44 +512,14 @@ export function GroupViewClient(props: Props) {
               )}
 
               {isCreator && (
-                <div className="rounded-md border border-hairline/60 bg-surface/60">
-                  <button
-                    type="button"
-                    onClick={() => setSettingsOpen((v) => !v)}
-                    aria-expanded={settingsOpen}
-                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-parchment"
-                  >
-                    <span className="flex items-center gap-1.5 text-sm text-ink">
-                      <Settings2 className="h-3.5 w-3.5 text-ink-soft" />
-                      Poll settings
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 shrink-0 text-ink-soft transition-transform",
-                        settingsOpen && "rotate-180",
-                      )}
-                    />
-                  </button>
-                  {settingsOpen && (
-                    <div className="border-t border-hairline/60 px-3 pb-3 pt-1">
-                      <OwnerSettings
-                        embedded
-                        members={members}
-                        creatorId={group.creatorId}
-                        viableWeekdays={group.viableWeekdays}
-                        background={group.background}
-                        bannerUrl={group.bannerUrl}
-                        bannerOriginalUrl={bannerOriginalUrl}
-                        onToggleWeekday={handleToggleWeekday}
-                        onChangeBackground={handleChangeBackground}
-                        onUploadBanner={handleUploadBanner}
-                        onRemoveBanner={handleRemoveBanner}
-                        onSetMemberDm={handleSetMemberDm}
-                        onRemoveMember={handleRemoveMember}
-                      />
-                    </div>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(true)}
+                  className="flex w-full items-center gap-1.5 rounded-md border border-hairline/60 bg-surface/60 px-3 py-2 text-left text-sm text-ink hover:bg-parchment"
+                >
+                  <Settings2 className="h-3.5 w-3.5 text-ink-soft" />
+                  Poll settings
+                </button>
               )}
             </div>
           </aside>
@@ -620,11 +590,9 @@ export function GroupViewClient(props: Props) {
 
         <PlatformFooter />
 
-        {/* Desktop settings live inline in the sidebar; this dialog is the
-            mobile entry point (triggered from the profile menu). */}
+        {/* Triggered from the sidebar (desktop) or the profile menu (mobile). */}
         {settingsOpen && isCreator && (
           <SettingsDialog
-            mobileOnly
             onClose={() => setSettingsOpen(false)}
             members={members}
             creatorId={group.creatorId}
@@ -723,7 +691,6 @@ function SettingsDialog({
   onRemoveBanner,
   onSetMemberDm,
   onRemoveMember,
-  mobileOnly,
 }: {
   onClose: () => void;
   members: MemberWithUser[];
@@ -738,16 +705,9 @@ function SettingsDialog({
   onRemoveBanner: () => void;
   onSetMemberDm: (userId: string, isDm: boolean) => void;
   onRemoveMember: (userId: string) => void;
-  /** Desktop shows settings inline in the sidebar instead. */
-  mobileOnly?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8",
-        mobileOnly && "lg:hidden",
-      )}
-    >
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8">
       <button
         aria-label="Close settings"
         onClick={onClose}

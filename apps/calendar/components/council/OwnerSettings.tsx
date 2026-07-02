@@ -283,10 +283,6 @@ export function OwnerSettings({
           {uploadError && (
             <p className="mt-2 text-xs text-vote-no">{uploadError}</p>
           )}
-          <p className="mt-2 text-xs text-ink-soft">
-            Shown in your campaign header. Cropped to a 4:3 image — frame it
-            with Upload or Adjust crop.
-          </p>
         </div>
       </section>
 
@@ -315,9 +311,6 @@ export function OwnerSettings({
             );
           })}
         </div>
-        <p className="mt-2 text-xs text-ink-soft">
-          Sets the calm background tint behind every player&apos;s calendar.
-        </p>
       </section>
     </div>
   );
