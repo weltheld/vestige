@@ -78,7 +78,7 @@ function PreviewCard({
 }) {
   const Icon = label === "Calendar" ? Calendar : BookOpen;
   return (
-    <div className="flex flex-col gap-3.5 rounded-2xl border border-hairline bg-[#faf5e6] p-6 text-left">
+    <div className="flex flex-col gap-3.5 rounded-2xl border border-hairline bg-cod-soft p-6 text-left">
       <div className="flex items-center gap-2 text-gold">
         <Icon size={14} />
         <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em]">
@@ -207,7 +207,7 @@ function HowItWorks() {
       </div>
       <div className="grid w-full max-w-[1100px] gap-6 md:grid-cols-3">
         {steps.map(({ n, title, body }) => (
-          <div key={n} className="flex flex-col gap-3.5 rounded-xl bg-[#faf5e6] p-7">
+          <div key={n} className="flex flex-col gap-3.5 rounded-xl bg-cod-soft p-7">
             <span className="font-display text-[44px] font-semibold leading-none text-gold">
               {n}
             </span>

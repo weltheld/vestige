@@ -62,7 +62,7 @@ export function SignUpForm({ next }: { next: string }) {
       <button
         type="button"
         title="You can add a portrait once you're signed in"
-        className="flex h-20 w-20 cursor-default flex-col items-center justify-center gap-1 rounded-full border-[1.5px] border-gold bg-[#faf5e6] text-muted"
+        className="flex h-20 w-20 cursor-default flex-col items-center justify-center gap-1 rounded-full border-[1.5px] border-gold bg-cod-soft text-muted"
       >
         <ImagePlus size={22} />
         <span className="font-body text-[11px] italic">Add portrait</span>
