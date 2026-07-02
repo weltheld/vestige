@@ -79,7 +79,7 @@ function AnnotatedParagraph({
       <div
         className={
           has
-            ? "rounded-[10px] border-l-2 border-gold bg-[#f9f4e6] px-4 py-3"
+            ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3"
             : ""
         }
       >

@@ -50,7 +50,7 @@ export default async function SessionListPage({
       </div>
 
       {sessions.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-xl bg-[#faf5e6] px-6 py-20 text-center">
+        <div className="flex flex-col items-center gap-4 rounded-xl bg-cod-soft px-6 py-20 text-center">
           <BookOpen size={60} className="text-muted" strokeWidth={1.25} />
           <p className="font-body text-[15px] text-ink-soft">No sessions yet</p>
           <Link

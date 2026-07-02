@@ -61,14 +61,14 @@ export function PlatformHeader({
             (larger tap targets) to save width. Calendar is this app, so it's
             always the active segment. */}
         <nav aria-label="Modules" className="ml-2 hidden lg:flex">
-          <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[#E7DBC4] p-[3px]">
+          <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-ink/[0.06] p-[3px]">
             <span className="flex items-center gap-1.5 rounded-lg bg-surface px-3.5 py-1.5 font-display text-[13px] font-bold text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)]">
               <CalendarDays size={14} />
               Calendar
             </span>
             <a
               href={`${PLATFORM_URL}/journal`}
-              className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] text-ink-soft transition hover:bg-white/50 hover:text-ink"
+              className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] text-ink-soft transition hover:bg-ink/10 hover:text-ink"
             >
               <ScrollText size={14} />
               Journal
@@ -77,7 +77,7 @@ export function PlatformHeader({
         </nav>
 
         <nav aria-label="Modules" className="ml-2 flex lg:hidden">
-          <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[#E7DBC4] p-[3px]">
+          <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-ink/[0.06] p-[3px]">
             <span
               aria-label="Calendar"
               title="Calendar"
@@ -89,7 +89,7 @@ export function PlatformHeader({
               href={`${PLATFORM_URL}/journal`}
               aria-label="Journal"
               title="Journal"
-              className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-white/50 hover:text-ink"
+              className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-ink/10 hover:text-ink"
             >
               <ScrollText size={18} />
             </a>

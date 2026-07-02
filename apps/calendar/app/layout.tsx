@@ -25,6 +25,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body className="min-h-screen bg-surface text-ink antialiased">
+        {/* Apply the user's saved theme before paint to avoid a flash. Shared
+            across all zones via same-origin localStorage. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('vestige-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}`,
+          }}
+        />
         {children}
       </body>
     </html>

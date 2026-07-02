@@ -5,6 +5,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
 import { CampaignSelector, type HeaderCampaign } from "./CampaignSelector";
+import { ThemePicker } from "./ThemePicker";
 
 export type VestigeHeaderUser = {
   label: string;
@@ -234,6 +235,15 @@ function ProfileMenu({
               Edit profile
             </a>
           </DropdownMenu.Item>
+          {/* Theme — plain buttons (not menu items) so trying themes doesn't
+              close the menu; the selection applies instantly. */}
+          <div className="mt-1 border-t border-hairline pt-1">
+            <p className="px-2 py-1 font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Theme
+            </p>
+            <ThemePicker />
+          </div>
+          <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
           <DropdownMenu.Item
             onSelect={onSignOut}
             className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
@@ -250,11 +260,13 @@ function ProfileMenu({
 // The segmented-control track that both module tabs sit inside — a slightly
 // darker parchment inset with a hairline, so the raised active segment reads
 // as lifted off it. Shared by the desktop (labelled) and mobile (icon) navs.
+// bg-ink/[0.06] is a theme-agnostic inset wash (subtle on light and dark
+// themes alike) instead of a fixed parchment tint.
 const SEGMENT_TRACK =
-  "inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[#E7DBC4] p-[3px]";
+  "inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-ink/[0.06] p-[3px]";
 // The lifted look of the active segment.
 const SEGMENT_ACTIVE = "bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)]";
-const SEGMENT_INACTIVE = "text-ink-soft hover:bg-white/50 hover:text-ink";
+const SEGMENT_INACTIVE = "text-ink-soft hover:bg-ink/10 hover:text-ink";
 
 function ModuleTab({
   icon,

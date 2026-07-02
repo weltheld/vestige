@@ -94,16 +94,19 @@ export function DayCell({
   // Tinted background derived from user's own vote. Solid (opaque) beige
   // blends so the tile keeps its parchment color and just gains a subtle
   // green/yellow/red tint — never going transparent.
+  // Tints are mixed from the themed vote/surface tokens (not fixed hexes) so
+  // they stay opaque and legible under every theme — a soft tint on the light
+  // themes, a subtle one on the dark themes.
   const bgTint = !day.inCurrentMonth
     ? "bg-transparent"
     : !isViableWeekday
-      ? "bg-[#E7DECB]"
+      ? "bg-[color-mix(in_srgb,var(--ink)_7%,var(--surface))]"
       : myVote === "yes"
-        ? "bg-[#D5D9C4]"
+        ? "bg-[color-mix(in_srgb,var(--vote-yes)_22%,var(--surface))]"
         : myVote === "no"
-          ? "bg-[#E8D2C5]"
+          ? "bg-[color-mix(in_srgb,var(--vote-no)_22%,var(--surface))]"
           : myVote === "maybe"
-            ? "bg-[#EDE0BE]"
+            ? "bg-[color-mix(in_srgb,var(--vote-maybe)_24%,var(--surface))]"
             : "bg-surface";
 
   return (

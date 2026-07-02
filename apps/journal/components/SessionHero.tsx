@@ -56,7 +56,7 @@ export function SessionHero({
 
   if (variant === "session") {
     return (
-      <section className="relative flex flex-col gap-5 rounded-xl bg-[#faf5e6] p-5 sm:flex-row sm:items-center">
+      <section className="relative flex flex-col gap-5 rounded-xl bg-cod-soft p-5 sm:flex-row sm:items-center">
         <div className="aspect-[4/3] w-full max-w-[220px] shrink-0 overflow-hidden rounded-lg bg-ink">
           {coverUrl && (
             // eslint-disable-next-line @next/next/no-img-element

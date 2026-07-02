@@ -56,6 +56,87 @@ html, body {
   background-color: #E0E7DD;
 }
 
+/* ─── Per-user themes ────────────────────────────────────────────────
+   Applied via data-theme on <html> (set by a no-flash inline script in
+   the root layout that reads the choice from localStorage). Each block
+   overrides the design tokens so every token-based element re-skins at
+   once. The default (no data-theme / "parchment") uses the :root values
+   above. Accents are lifted so labels, buttons and the logo stay legible
+   on the darker surfaces. */
+:root[data-theme="midnight"] {
+  --parchment: #13110C;
+  --surface: #1F1A13;
+  --ink: #EEE5D5;
+  --ink-soft: #B6A891;
+  --muted: #8A7C68;
+  --hairline: #3A3125;
+  --wine: #D06176;
+  --gold: #D9B45A;
+  --gold-soft: #E6C877;
+  --cod-soft: #241E16;
+  --vote-yes: #6FBF88;
+  --vote-maybe: #E0B94A;
+  --vote-no: #E07C66;
+  --dm-gold: #D9B45A;
+}
+:root[data-theme="nebula"] {
+  --parchment: #0B0F1E;
+  --surface: #151B33;
+  --ink: #E7ECFF;
+  --ink-soft: #99A6CE;
+  --muted: #6E7BA6;
+  --hairline: #2A3356;
+  --wine: #FF5C8A;
+  --gold: #56D6EA;
+  --gold-soft: #8BE6F2;
+  --cod-soft: #1A2140;
+  --vote-yes: #4FE0A0;
+  --vote-maybe: #E6C34F;
+  --vote-no: #FF6B6B;
+  --dm-gold: #56D6EA;
+}
+:root[data-theme="ember"] {
+  --parchment: #17110E;
+  --surface: #241A15;
+  --ink: #F3E4D1;
+  --ink-soft: #C2AB90;
+  --muted: #8F7A63;
+  --hairline: #402F25;
+  --wine: #E2603A;
+  --gold: #E8A94B;
+  --gold-soft: #F1C877;
+  --cod-soft: #2A1E17;
+  --vote-yes: #8FB56A;
+  --vote-maybe: #E8A94B;
+  --vote-no: #D8503A;
+  --dm-gold: #E8A94B;
+}
+:root[data-theme="slate"] {
+  --parchment: #13161A;
+  --surface: #1D2127;
+  --ink: #E8EDF1;
+  --ink-soft: #A3AFB9;
+  --muted: #79858F;
+  --hairline: #333B43;
+  --wine: #C86B79;
+  --gold: #C9B36E;
+  --gold-soft: #DBC98C;
+  --cod-soft: #232830;
+  --vote-yes: #6FBF88;
+  --vote-maybe: #D8BE63;
+  --vote-no: #D9705F;
+  --dm-gold: #C9B36E;
+}
+
+/* Under a dark theme the per-campaign background tints defer to the theme's
+   own page colour so the calendar page doesn't stay light. */
+:root[data-theme="midnight"] [class*="bg-scene-"],
+:root[data-theme="nebula"] [class*="bg-scene-"],
+:root[data-theme="ember"] [class*="bg-scene-"],
+:root[data-theme="slate"] [class*="bg-scene-"] {
+  background-color: var(--parchment);
+}
+
 /* Stamp / wax-seal look for buttons */
 .btn-wax {
   background: linear-gradient(180deg, var(--wine), #4a1620);

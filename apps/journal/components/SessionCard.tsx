@@ -16,7 +16,7 @@ export function SessionCard({
   return (
     <Link
       href={href}
-      className="flex items-center gap-5 rounded-xl bg-[#faf5e6] px-5 py-4 transition hover:brightness-[0.99]"
+      className="flex items-center gap-5 rounded-xl bg-cod-soft px-5 py-4 transition hover:brightness-[0.99]"
     >
       <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-cod-soft">
         {session.imageUrl ? (

@@ -97,7 +97,7 @@ export function Comments({
           const roots = all.filter((c) => !c.parentCommentId);
           const repliesOf = (id: string) => all.filter((c) => c.parentCommentId === id);
           return (
-            <div key={String(key)} className="flex flex-col gap-4 rounded-xl bg-[#faf5e6] p-[22px]">
+            <div key={String(key)} className="flex flex-col gap-4 rounded-xl bg-cod-soft p-[22px]">
               <div className="flex items-center">
                 <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Discussion on: {sectionLabel(key)}
@@ -149,7 +149,7 @@ export function Comments({
           );
         })}
         {groupKeys.length === 0 && (
-          <div className="rounded-xl bg-[#faf5e6] p-[22px]">
+          <div className="rounded-xl bg-cod-soft p-[22px]">
             <p className="pb-3 font-body text-[13px] italic text-muted">No comments yet on this section.</p>
             <Composer
               campaignId={campaignId}

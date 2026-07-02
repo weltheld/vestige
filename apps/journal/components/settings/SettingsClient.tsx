@@ -271,7 +271,7 @@ function ModuleToggle({
       disabled={disabled}
       onClick={onToggle}
       className={`flex flex-1 items-center gap-3 rounded-xl border p-4 text-left transition ${
-        on ? "border-gold bg-[#faf5e6]" : "border-hairline bg-surface opacity-70"
+        on ? "border-gold bg-cod-soft" : "border-hairline bg-surface opacity-70"
       } disabled:cursor-default`}
     >
       <span className={on ? "text-gold" : "text-muted"}>{icon}</span>

@@ -98,7 +98,7 @@ function DetailCard({ r }: { r: Revision }) {
     if (changed.length === 0) return null;
     const k = changed[0]!;
     return (
-      <div className="flex flex-col gap-2 rounded-[10px] bg-[#faf5e6] px-3.5 py-3">
+      <div className="flex flex-col gap-2 rounded-[10px] bg-cod-soft px-3.5 py-3">
         <Line label="Before" text={str(r.beforeValue[k])} strike />
         <Line label="After" text={str(r.afterValue[k])} />
       </div>
@@ -108,7 +108,7 @@ function DetailCard({ r }: { r: Revision }) {
     const body = str(r.afterValue?.body);
     if (!body) return null;
     return (
-      <div className="rounded-[10px] bg-[#faf5e6] px-3.5 py-3">
+      <div className="rounded-[10px] bg-cod-soft px-3.5 py-3">
         <p className="font-body text-[13px] italic leading-[1.5] text-ink-soft">“{body}”</p>
       </div>
     );

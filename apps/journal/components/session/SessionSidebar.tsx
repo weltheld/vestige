@@ -14,7 +14,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl bg-[#faf5e6] px-5 py-[18px]">
+    <div className="flex flex-col gap-3 rounded-xl bg-cod-soft px-5 py-[18px]">
       <div className="flex items-center">
         <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
           {label}

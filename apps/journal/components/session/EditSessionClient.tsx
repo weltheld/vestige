@@ -153,7 +153,7 @@ export function EditSessionClient({
           ) : (
             <span
               className="flex h-full w-full flex-col items-center justify-center gap-2"
-              style={{ border: "1.5px dashed var(--gold)", background: "#faf5e6" }}
+              style={{ border: "1.5px dashed var(--gold)", background: "var(--cod-soft)" }}
             >
               <ImagePlus size={22} className="text-muted" />
               <span className="font-body text-[12px] italic text-muted">
@@ -476,7 +476,7 @@ function PresentPlayersEditor({
 
 function Card({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl bg-[#faf5e6] px-5 py-[18px]">
+    <div className="flex flex-col gap-3 rounded-xl bg-cod-soft px-5 py-[18px]">
       <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
         {label}
       </span>

@@ -636,7 +636,7 @@ function ToggleRow({
   onToggle: () => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-hairline/60 bg-surface/60 px-3 py-2 hover:bg-parchment">
+    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-hairline/60 bg-surface/60 px-3 py-2">
       <span className="text-sm text-ink">{label}</span>
       <Switch checked={active} onChange={onToggle} />
     </label>
