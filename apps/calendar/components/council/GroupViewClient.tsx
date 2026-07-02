@@ -9,7 +9,6 @@ import { OwnerSettings } from "@/components/council/OwnerSettings";
 import { BestDaySummary } from "@/components/council/BestDaySummary";
 import { QuickFillBar } from "@/components/council/QuickFillBar";
 import { BannerParty } from "@/components/council/BannerParty";
-import { Crest } from "@/components/council/Crest";
 import { CharacterDialog } from "@/components/council/CharacterDialog";
 import type { CalendarDay } from "@/lib/calendar";
 import { buildMonthGrid, isoDate } from "@/lib/calendar";
@@ -495,36 +494,6 @@ export function GroupViewClient(props: Props) {
           </div>
         </div>
 
-        {/* Banner card (desktop) — a compact 4:3 thumbnail top-left instead
-            of a full-width strip, so the source photo isn't cropped into an
-            ultra-wide band. Avatars + campaign name sit beside it. */}
-        <div className="mx-auto hidden w-full max-w-[1440px] px-5 pt-4 lg:block">
-          <div className="flex items-start gap-5">
-            <div className="relative aspect-[4/3] w-[200px] shrink-0 overflow-hidden rounded-xl bg-parchment shadow-parchment">
-              {group.bannerUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={group.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center">
-                  <Crest size={56} className="opacity-40" />
-                </span>
-              )}
-            </div>
-
-            <div className="flex min-w-0 flex-1 flex-col gap-3 pt-1">
-              <BannerParty
-                members={sortedMembers}
-                hasBanner={false}
-                currentUserId={props.currentUser.id}
-                onEditSelf={() => setCharacterOpen(true)}
-              />
-              <h1 className="truncate border-l-2 border-dm-gold pl-3 font-display text-2xl font-bold text-ink">
-                {group.name}
-              </h1>
-            </div>
-          </div>
-        </div>
-
         <main
           className={cn(
             "mx-auto flex w-full max-w-[1440px] flex-1 flex-col",
@@ -533,9 +502,56 @@ export function GroupViewClient(props: Props) {
               : "lg:grid lg:grid-cols-[280px_1fr]",
           )}
         >
-          {/* Left sidebar: quick fill + best day (desktop only) */}
+          {/* Left sidebar: banner + party, quick fill, best day (desktop only) —
+              moving the banner + avatars in here (instead of a full-width row
+              above the grid) gives the calendar column more room. */}
           <aside className="hidden border-r border-hairline/70 lg:block">
             <div className="flex flex-col gap-4 p-5">
+              <div
+                className={cn(
+                  "relative w-full overflow-hidden rounded-xl shadow-parchment",
+                  group.bannerUrl ? "aspect-[4/3]" : "flex items-end pb-3 pt-4 min-h-[140px]",
+                )}
+              >
+                {group.bannerUrl && (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={group.bannerUrl}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    {/* top scrim for avatars */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/5 to-transparent" />
+                    {/* bottom scrim for title */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                  </>
+                )}
+
+                {/* Party avatars — top-left */}
+                <div className="absolute left-3 top-3">
+                  <BannerParty
+                    members={sortedMembers}
+                    hasBanner={!!group.bannerUrl}
+                    currentUserId={props.currentUser.id}
+                    onEditSelf={() => setCharacterOpen(true)}
+                  />
+                </div>
+
+                {/* Campaign name — bottom-left */}
+                {group.bannerUrl ? (
+                  <div className="absolute inset-x-0 bottom-0 px-3 pb-2.5">
+                    <h1 className="truncate border-l-2 border-dm-gold pl-2.5 font-display text-lg font-bold text-surface drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                      {group.name}
+                    </h1>
+                  </div>
+                ) : (
+                  <h1 className="truncate pl-3 font-display text-lg font-bold text-ink">
+                    {group.name}
+                  </h1>
+                )}
+              </div>
+
               <QuickFillBar
                 viableWeekdays={group.viableWeekdays}
                 onApply={handleBulkFillFromSidebar}
