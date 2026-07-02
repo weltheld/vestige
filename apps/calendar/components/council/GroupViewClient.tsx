@@ -7,7 +7,6 @@ import { PlatformHeader } from "@/components/council/PlatformHeader";
 import { PlatformFooter } from "@/components/council/PlatformFooter";
 import { CalendarPanel } from "@/components/council/CalendarPanel";
 import { OwnerSettings, Switch } from "@/components/council/OwnerSettings";
-import { BestDaySummary } from "@/components/council/BestDaySummary";
 import { QuickFillBar } from "@/components/council/QuickFillBar";
 import { BannerParty } from "@/components/council/BannerParty";
 import { CharacterDialog } from "@/components/council/CharacterDialog";
@@ -172,11 +171,6 @@ export function GroupViewClient(props: Props) {
       m.user.characterName || m.user.displayName || m.user.email,
     ]),
   );
-  const leadingVotes = bestDayIso
-    ? votes.filter((v) => v.date === bestDayIso)
-    : [];
-  const leadingYesCount = leadingVotes.filter((v) => v.value === "yes").length;
-
   const handleCycle = useCallback(
     async (date: string, current: VoteValue | undefined) => {
       const next: VoteValue | null =
@@ -490,12 +484,12 @@ export function GroupViewClient(props: Props) {
                 {/* Campaign name — bottom-left */}
                 {group.bannerUrl ? (
                   <div className="absolute inset-x-0 bottom-0 px-3 pb-2.5">
-                    <h1 className="truncate border-l-2 border-dm-gold pl-2.5 font-display text-lg font-bold text-surface drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    <h1 className="border-l-2 border-dm-gold pl-2.5 font-display text-lg font-bold leading-tight text-surface drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
                       {group.name}
                     </h1>
                   </div>
                 ) : (
-                  <h1 className="truncate pl-3 font-display text-lg font-bold text-ink">
+                  <h1 className="pl-3 font-display text-lg font-bold leading-tight text-ink">
                     {group.name}
                   </h1>
                 )}
@@ -506,7 +500,7 @@ export function GroupViewClient(props: Props) {
                 onApply={handleBulkFillFromSidebar}
                 onReset={handleResetFromSidebar}
               />
-              <VotesToggle active={showVotes} onToggle={() => setShowVotes((v) => !v)} />
+              <VotesToggle showVotes={showVotes} onToggle={() => setShowVotes((v) => !v)} />
               {alignCampaignCount > 0 && (
                 <AlignToggle active={showAlign} onToggle={() => setShowAlign((v) => !v)} />
               )}
@@ -553,12 +547,7 @@ export function GroupViewClient(props: Props) {
                 }
               />
               <div className="flex flex-col gap-4 px-4 pb-4 sm:px-5">
-                <BestDaySummary
-                  bestDayIso={bestDayIso}
-                  yesCount={leadingYesCount}
-                  memberCount={members.length}
-                />
-                <VotesToggle active={showVotes} onToggle={() => setShowVotes((v) => !v)} />
+                <VotesToggle showVotes={showVotes} onToggle={() => setShowVotes((v) => !v)} />
                 {alignCampaignCount > 0 && (
                   <AlignToggle active={showAlign} onToggle={() => setShowAlign((v) => !v)} />
                 )}
@@ -654,8 +643,11 @@ function ToggleRow({
   );
 }
 
-function VotesToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
-  return <ToggleRow label="Show party votes" active={active} onToggle={onToggle} />;
+// `showVotes` (true = votes visible) is inverted here since the switch now
+// reads as "Hide party votes" — off by default, matching the previous
+// default of votes being visible.
+function VotesToggle({ showVotes, onToggle }: { showVotes: boolean; onToggle: () => void }) {
+  return <ToggleRow label="Hide party votes" active={!showVotes} onToggle={onToggle} />;
 }
 
 function AlignToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
