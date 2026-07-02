@@ -1,26 +1,23 @@
-import { PlatformCrest, Skeleton } from "@vestige/ui";
+import { Skeleton } from "@vestige/ui";
 
+// Page-level fallback. The campaign layout already renders the real header
+// (with the crest), and while that async layout is still resolving the parent
+// app/loading.tsx — which carries the spinning-logo header — is shown instead.
+// So this stays content-only to avoid stacking a second header under the real
+// one once the layout has rendered.
 export default function Loading() {
   return (
-    <div className="flex min-h-screen flex-col bg-parchment">
-      <header className="border-b border-hairline">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-          <PlatformCrest size={38} className="animate-spin" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="ml-2 h-10 w-[168px] rounded-xl" />
-          <div className="flex-1" />
-          <Skeleton className="h-9 w-40 rounded-full" />
-          <Skeleton className="h-9 w-28 rounded-full" />
-        </div>
-      </header>
-      <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-16 pt-6">
-        <Skeleton className="h-[220px] w-full rounded-xl" />
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-[72px] w-full rounded-xl" />
-          <Skeleton className="h-[72px] w-full rounded-xl" />
-          <Skeleton className="h-[72px] w-full rounded-xl" />
-        </div>
-      </main>
-    </div>
+    <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-16 pt-6">
+      <Skeleton className="h-[220px] w-full rounded-xl" />
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-11 w-36 rounded-lg" />
+      </div>
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-[72px] w-full rounded-xl" />
+        <Skeleton className="h-[72px] w-full rounded-xl" />
+        <Skeleton className="h-[72px] w-full rounded-xl" />
+      </div>
+    </main>
   );
 }
