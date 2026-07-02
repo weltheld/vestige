@@ -5,6 +5,16 @@ const PLATFORM_URL = process.env.PLATFORM_URL ?? "https://vestige-web-pi.vercel.
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@vestige/db"],
+  // Banner uploads send the cropped image AND the original (up to 5MB) to a
+  // Server Action in one FormData payload — well past Next's 1MB default
+  // body limit, which is why "replacing" an image (fresh upload) silently
+  // failed while re-cropping an already-uploaded banner (smaller payload,
+  // no original attached) did not.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "8mb",
+    },
+  },
   // Mounted under the Vestige platform's domain at /calendar (Next.js
   // Multi-Zones), so magic-link sign-in is shared across the whole
   // platform. See lib/basePath.ts for the manual-redirect exceptions.
