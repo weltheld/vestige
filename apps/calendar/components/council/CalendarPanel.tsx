@@ -120,7 +120,8 @@ export function CalendarPanel({
 
   return (
     <section className="flex h-full flex-col gap-3 p-4 sm:p-5">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-x-4">
+      {/* Desktop header: grouped nav on the left, poll-settings text button right. */}
+      <div className="hidden flex-wrap items-center gap-x-4 gap-y-2 sm:flex">
         <button
           aria-label="Previous month"
           onClick={() => go(-1)}
@@ -128,9 +129,7 @@ export function CalendarPanel({
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <h2 className="font-display text-xl sm:text-2xl text-ink">
-          {monthLabel(year, monthIndex)}
-        </h2>
+        <h2 className="font-display text-2xl text-ink">{monthLabel(year, monthIndex)}</h2>
         <button
           aria-label="Next month"
           onClick={() => go(1)}
@@ -149,6 +148,40 @@ export function CalendarPanel({
             Poll settings
           </button>
         )}
+      </div>
+
+      {/* Mobile header: poll-settings icon (owner) on its own line, then arrows
+          pinned to the screen edges with the month centered between them. */}
+      <div className="sm:hidden">
+        {isCreator && onOpenSettings && (
+          <div className="mb-2 flex justify-end">
+            <button
+              type="button"
+              aria-label="Poll settings"
+              onClick={onOpenSettings}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface text-ink-soft shadow-sm hover:bg-parchment hover:text-ink"
+            >
+              <Settings2 className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <button
+            aria-label="Previous month"
+            onClick={() => go(-1)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface shadow-sm hover:bg-parchment"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <h2 className="font-display text-xl text-ink">{monthLabel(year, monthIndex)}</h2>
+          <button
+            aria-label="Next month"
+            onClick={() => go(1)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface shadow-sm hover:bg-parchment"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {belowHeader}

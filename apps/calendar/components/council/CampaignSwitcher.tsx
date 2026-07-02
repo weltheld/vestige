@@ -33,7 +33,7 @@ export function CampaignSwitcher({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="hidden h-9 items-center gap-2 rounded-full border border-hairline bg-surface px-3 outline-none transition hover:border-dm-gold focus-visible:border-dm-gold sm:flex"
+          className="flex h-9 items-center gap-2 rounded-full border border-hairline bg-surface px-3 outline-none transition hover:border-dm-gold focus-visible:border-dm-gold"
         >
           <span className="max-w-[10rem] truncate font-display text-xs text-ink">
             {current.name}

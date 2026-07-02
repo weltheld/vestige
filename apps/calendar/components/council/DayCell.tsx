@@ -117,7 +117,7 @@ export function DayCell({
       onClick={() => interactive && onCycle(day.iso)}
       disabled={!interactive}
       className={cn(
-        "relative flex h-full min-h-[78px] w-full flex-col rounded-md border p-1.5 text-left transition",
+        "relative flex h-full min-h-[70px] w-full flex-col rounded-md border p-1.5 text-left transition lg:min-h-[78px]",
         bgTint,
         day.inCurrentMonth ? "border-hairline/70" : "border-transparent opacity-40",
         !isViableWeekday && day.inCurrentMonth && "cursor-not-allowed",

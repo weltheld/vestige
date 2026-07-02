@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PlatformHeader } from "@/components/council/PlatformHeader";
 import { PlatformFooter } from "@/components/council/PlatformFooter";
 import { CalendarPanel } from "@/components/council/CalendarPanel";
-import { OwnerSettings } from "@/components/council/OwnerSettings";
+import { OwnerSettings, Switch } from "@/components/council/OwnerSettings";
 import { BestDaySummary } from "@/components/council/BestDaySummary";
 import { QuickFillBar } from "@/components/council/QuickFillBar";
 import { BannerParty } from "@/components/council/BannerParty";
@@ -449,53 +448,6 @@ export function GroupViewClient(props: Props) {
           campaigns={props.switcherCampaigns}
         />
 
-        {/* Banner card (mobile/tablet) — avatars top-left, campaign name
-            bottom-left, full-width image strip. Unchanged. */}
-        <div className="mx-auto w-full max-w-[1440px] px-4 pt-4 sm:px-5 lg:hidden">
-          <div className={cn(
-            "relative overflow-hidden rounded-xl shadow-parchment",
-            group.bannerUrl ? "h-28 sm:h-36" : "flex items-end pb-3 pt-4 min-h-[56px]",
-          )}>
-            {group.bannerUrl && (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={group.bannerUrl}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-                {/* top scrim for avatars */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/5 to-transparent" />
-                {/* bottom scrim for title */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-              </>
-            )}
-
-            {/* Party avatars — top-left */}
-            <div className="absolute left-4 top-3 sm:left-5">
-              <BannerParty
-                members={sortedMembers}
-                hasBanner={!!group.bannerUrl}
-                currentUserId={props.currentUser.id}
-                onEditSelf={() => setCharacterOpen(true)}
-              />
-            </div>
-
-            {/* Campaign name — bottom-left */}
-            {group.bannerUrl ? (
-              <div className="absolute inset-x-0 bottom-0 px-4 pb-3 sm:px-5">
-                <h1 className="truncate border-l-2 border-dm-gold pl-3 font-display text-xl font-bold text-surface drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] sm:text-2xl">
-                  {group.name}
-                </h1>
-              </div>
-            ) : (
-              <h1 className="truncate pl-4 font-display text-2xl font-bold text-ink sm:pl-5">
-                {group.name}
-              </h1>
-            )}
-          </div>
-        </div>
-
         <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col lg:grid lg:grid-cols-[280px_1fr]">
           {/* Left sidebar: banner + party, quick fill, best day (desktop only) —
               moving the banner + avatars in here (instead of a full-width row
@@ -552,18 +504,9 @@ export function GroupViewClient(props: Props) {
                 onApply={handleBulkFillFromSidebar}
                 onReset={handleResetFromSidebar}
               />
-              <BestDaySummary
-                bestDayIso={bestDayIso}
-                yesCount={leadingYesCount}
-                memberCount={members.length}
-              />
               <VotesToggle active={showVotes} onToggle={() => setShowVotes((v) => !v)} />
               {alignCampaignCount > 0 && (
-                <AlignToggle
-                  active={showAlign}
-                  count={alignCampaignCount}
-                  onToggle={() => setShowAlign((v) => !v)}
-                />
+                <AlignToggle active={showAlign} onToggle={() => setShowAlign((v) => !v)} />
               )}
             </div>
           </aside>
@@ -605,11 +548,7 @@ export function GroupViewClient(props: Props) {
                 />
                 <VotesToggle active={showVotes} onToggle={() => setShowVotes((v) => !v)} />
                 {alignCampaignCount > 0 && (
-                  <AlignToggle
-                    active={showAlign}
-                    count={alignCampaignCount}
-                    onToggle={() => setShowAlign((v) => !v)}
-                  />
+                  <AlignToggle active={showAlign} onToggle={() => setShowAlign((v) => !v)} />
                 )}
               </div>
             </div>
@@ -684,74 +623,31 @@ function currentUserMatches(myId: string, creatorId: string) {
   return myId === creatorId;
 }
 
-function VotesToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={active}
-      className={cn(
-        "flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left shadow-sm transition",
-        active
-          ? "border-dm-gold/70 bg-dm-gold/10 text-ink"
-          : "border-hairline bg-surface text-ink-soft hover:bg-parchment hover:text-ink",
-      )}
-    >
-      {active ? (
-        <Eye className="mt-0.5 h-4 w-4 shrink-0 text-dm-gold" />
-      ) : (
-        <EyeOff className="mt-0.5 h-4 w-4 shrink-0" />
-      )}
-      <span className="flex-1">
-        <span className="block font-body text-xs font-bold">Show party votes</span>
-        <span className="block text-[10px] leading-snug text-ink-soft">
-          {active ? "Everyone's votes are visible" : "Only your own vote is shown"}
-        </span>
-      </span>
-    </button>
-  );
-}
-
-function AlignToggle({
+// Sidebar toggles reuse the weekday-toggle row design from Poll Settings —
+// a labelled row with the same Switch on the right, no subline.
+function ToggleRow({
+  label,
   active,
-  count,
   onToggle,
 }: {
+  label: string;
   active: boolean;
-  count: number;
   onToggle: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={active}
-      className={cn(
-        "flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left shadow-sm transition",
-        active
-          ? "border-dm-gold/70 bg-dm-gold/10 text-ink"
-          : "border-hairline bg-surface text-ink-soft hover:bg-parchment hover:text-ink",
-      )}
-    >
-      {active ? (
-        <Eye className="mt-0.5 h-4 w-4 shrink-0 text-dm-gold" />
-      ) : (
-        <EyeOff className="mt-0.5 h-4 w-4 shrink-0" />
-      )}
-      <span className="flex-1">
-        <span className="block font-body text-xs font-bold">
-          Align with other campaigns
-        </span>
-        <span className="block text-[10px] leading-snug text-ink-soft">
-          {active
-            ? "Showing your votes from elsewhere"
-            : `Overlay your votes from ${count} other ${
-                count === 1 ? "campaign" : "campaigns"
-              }`}
-        </span>
-      </span>
-    </button>
+    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-hairline/60 bg-surface/60 px-3 py-2 hover:bg-parchment">
+      <span className="text-sm text-ink">{label}</span>
+      <Switch checked={active} onChange={onToggle} />
+    </label>
   );
+}
+
+function VotesToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
+  return <ToggleRow label="Show party votes" active={active} onToggle={onToggle} />;
+}
+
+function AlignToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
+  return <ToggleRow label="Align with other campaigns" active={active} onToggle={onToggle} />;
 }
 
 function RefreshOnFocus({ onFocus }: { onFocus: () => void }) {

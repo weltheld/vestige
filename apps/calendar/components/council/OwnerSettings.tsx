@@ -404,7 +404,7 @@ function MemberRoleRow({
   );
 }
 
-function Switch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+export function Switch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
     <button
       type="button"
