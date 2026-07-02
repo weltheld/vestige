@@ -76,36 +76,41 @@ export function VestigeHeader({
           </span>
         </a>
 
-        <nav aria-label="Modules" className="ml-2 hidden items-center gap-1 lg:flex">
-          <ModuleTab
-            icon={<CalendarDays size={14} />}
-            label="Calendar"
-            active={currentModule === "calendar"}
-            href={calendarHref}
-          />
-          <ModuleTab
-            icon={<ScrollText size={14} />}
-            label="Journal"
-            active={currentModule === "journal"}
-            href={journalHref}
-          />
+        {/* Segmented module switcher — the two modules read as one toggle.
+            Desktop shows labels; mobile/tablet drops to icon-only segments
+            (larger tap targets) to save width. */}
+        <nav aria-label="Modules" className="ml-2 hidden lg:flex">
+          <div className={SEGMENT_TRACK}>
+            <ModuleTab
+              icon={<CalendarDays size={14} />}
+              label="Calendar"
+              active={currentModule === "calendar"}
+              href={calendarHref}
+            />
+            <ModuleTab
+              icon={<ScrollText size={14} />}
+              label="Journal"
+              active={currentModule === "journal"}
+              href={journalHref}
+            />
+          </div>
         </nav>
 
-        {/* Icon-only app switcher for mobile/tablet — saves the label width;
-            the full labeled nav above takes over at desktop widths. */}
-        <nav aria-label="Modules" className="ml-2 flex items-center gap-1 lg:hidden">
-          <ModuleIconTab
-            icon={<CalendarDays size={16} />}
-            label="Calendar"
-            active={currentModule === "calendar"}
-            href={calendarHref}
-          />
-          <ModuleIconTab
-            icon={<ScrollText size={16} />}
-            label="Journal"
-            active={currentModule === "journal"}
-            href={journalHref}
-          />
+        <nav aria-label="Modules" className="ml-2 flex lg:hidden">
+          <div className={SEGMENT_TRACK}>
+            <ModuleIconTab
+              icon={<CalendarDays size={18} />}
+              label="Calendar"
+              active={currentModule === "calendar"}
+              href={calendarHref}
+            />
+            <ModuleIconTab
+              icon={<ScrollText size={18} />}
+              label="Journal"
+              active={currentModule === "journal"}
+              href={journalHref}
+            />
+          </div>
         </nav>
 
         <div className="flex-1" />
@@ -242,6 +247,15 @@ function ProfileMenu({
   );
 }
 
+// The segmented-control track that both module tabs sit inside — a slightly
+// darker parchment inset with a hairline, so the raised active segment reads
+// as lifted off it. Shared by the desktop (labelled) and mobile (icon) navs.
+const SEGMENT_TRACK =
+  "inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[#E7DBC4] p-[3px]";
+// The lifted look of the active segment.
+const SEGMENT_ACTIVE = "bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)]";
+const SEGMENT_INACTIVE = "text-ink-soft hover:bg-white/50 hover:text-ink";
+
 function ModuleTab({
   icon,
   label,
@@ -254,8 +268,8 @@ function ModuleTab({
   href?: string;
 }) {
   const className = [
-    "flex items-center gap-1.5 rounded-lg px-3.5 py-2 font-body text-[13px] transition",
-    active ? "bg-parchment font-display font-bold text-wine" : "text-ink-soft hover:text-ink",
+    "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] transition",
+    active ? `font-display font-bold ${SEGMENT_ACTIVE}` : SEGMENT_INACTIVE,
   ].join(" ");
   const content = (
     <>
@@ -291,8 +305,8 @@ function ModuleIconTab({
   href?: string;
 }) {
   const className = [
-    "flex h-9 w-9 items-center justify-center rounded-lg transition",
-    active ? "bg-parchment text-wine" : "text-ink-soft hover:text-ink",
+    "flex h-9 w-11 items-center justify-center rounded-lg transition",
+    active ? SEGMENT_ACTIVE : SEGMENT_INACTIVE,
   ].join(" ");
   if (href) {
     return (
