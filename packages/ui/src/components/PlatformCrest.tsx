@@ -1,17 +1,9 @@
 /**
- * The Vestige platform crest — same construction as Council of Days' Crest
- * (a gold table ring, a faint inner echo, eight wine seats spaced evenly
- * around it), reused as the base for the unified platform header.
+ * The Vestige mark — a faceted four-point star (compass rose construction:
+ * outer points, inner "waist" points, and the cross + diagonal facet lines
+ * between them), rendered as thin gold linework.
  */
-const SEATS = Array.from({ length: 8 }, (_, i) => {
-  const angle = (-90 + i * 45) * (Math.PI / 180);
-  return {
-    cx: 74 + 50 * Math.cos(angle),
-    cy: 74 + 50 * Math.sin(angle),
-  };
-});
-
-export function PlatformCrest({ size = 38 }: { size?: number }) {
+export function PlatformCrest({ size = 38, className }: { size?: number; className?: string }) {
   return (
     <svg
       viewBox="0 0 148 148"
@@ -19,13 +11,13 @@ export function PlatformCrest({ size = 38 }: { size?: number }) {
       height={size}
       role="img"
       aria-label="Vestige"
-      className="drop-shadow-[0_2px_4px_rgba(43,33,24,0.25)]"
+      className={className}
     >
-      <circle cx="74" cy="74" r="48" fill="none" stroke="var(--gold)" strokeWidth="4" />
-      <circle cx="74" cy="74" r="37.5" fill="none" stroke="var(--hairline)" strokeWidth="1" />
-      {SEATS.map((s, i) => (
-        <circle key={i} cx={s.cx} cy={s.cy} r="5" fill="var(--wine)" />
-      ))}
+      <g fill="none" stroke="var(--gold)" strokeWidth="2.75" strokeLinejoin="round">
+        <path d="M74 8 L88 60 L140 74 L88 88 L74 140 L60 88 L8 74 L60 60 Z" />
+        <path d="M74 8 L74 140 M8 74 L140 74" />
+        <path d="M74 74 L60 60 M74 74 L88 60 M74 74 L88 88 M74 74 L60 88" />
+      </g>
     </svg>
   );
 }

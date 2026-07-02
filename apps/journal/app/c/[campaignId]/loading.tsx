@@ -1,11 +1,11 @@
-import { Skeleton } from "@vestige/ui";
+import { PlatformCrest, Skeleton } from "@vestige/ui";
 
 export default function Loading() {
   return (
     <div className="flex min-h-screen flex-col bg-parchment">
       <header className="border-b border-hairline">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-          <Skeleton className="h-[38px] w-[38px] rounded-full" />
+          <PlatformCrest size={38} className="animate-spin" />
           <Skeleton className="h-5 w-20" />
           <div className="flex-1" />
           <Skeleton className="h-9 w-40 rounded-full" />
