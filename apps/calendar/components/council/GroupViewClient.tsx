@@ -484,7 +484,11 @@ export function GroupViewClient(props: Props) {
                 {/* Campaign name — bottom-left */}
                 {group.bannerUrl ? (
                   <div className="absolute inset-x-0 bottom-0 px-3 pb-2.5">
-                    <h1 className="border-l-2 border-dm-gold pl-2.5 font-display text-lg font-bold leading-tight text-surface drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    {/* Always white over the banner image (never the themed
+                        surface colour, which goes dark and vanishes on dark
+                        photos). Layered shadows keep it legible over any
+                        image — light or dark. */}
+                    <h1 className="border-l-2 border-dm-gold pl-2.5 font-display text-lg font-bold leading-tight text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.95),0_2px_10px_rgba(0,0,0,0.7)]">
                       {group.name}
                     </h1>
                   </div>
