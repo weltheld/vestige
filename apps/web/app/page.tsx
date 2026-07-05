@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Calendar, BookOpen, Users, Flame } from "lucide-react";
+import { Calendar, BookOpen, Users, ArrowRight } from "lucide-react";
 import { PublicHeader } from "@vestige/ui";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export default function Landing() {
   return (
@@ -9,7 +10,7 @@ export default function Landing() {
       <Hero />
       <Pillars />
       <HowItWorks />
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }
@@ -48,6 +49,7 @@ function Hero() {
       <div className="mt-6 grid w-full max-w-[1000px] gap-6 md:grid-cols-2">
         <PreviewCard
           label="Calendar"
+          href="/features/calendar"
           title="Find the next session"
           body="Your party votes whole-day availability. Vestige finds the best date."
         >
@@ -55,6 +57,7 @@ function Hero() {
         </PreviewCard>
         <PreviewCard
           label="Journal"
+          href="/features/journal"
           title="Remember every session"
           body="Capture recaps, characters, NPCs, and annotations. One living book per campaign."
         >
@@ -67,18 +70,23 @@ function Hero() {
 
 function PreviewCard({
   label,
+  href,
   title,
   body,
   children,
 }: {
   label: string;
+  href: string;
   title: string;
   body: string;
   children: React.ReactNode;
 }) {
   const Icon = label === "Calendar" ? Calendar : BookOpen;
   return (
-    <div className="flex flex-col gap-3.5 rounded-2xl border border-hairline bg-cod-soft p-6 text-left">
+    <Link
+      href={href}
+      className="group flex flex-col gap-3.5 rounded-2xl border border-hairline bg-cod-soft p-6 text-left transition hover:border-gold"
+    >
       <div className="flex items-center gap-2 text-gold">
         <Icon size={14} />
         <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em]">
@@ -88,7 +96,11 @@ function PreviewCard({
       <h3 className="font-display text-[22px] font-semibold text-ink">{title}</h3>
       <p className="font-body text-[13px] leading-[1.6] text-ink-soft">{body}</p>
       <div className="mt-1">{children}</div>
-    </div>
+      <span className="mt-2 inline-flex items-center gap-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-wine">
+        Explore {label}
+        <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </Link>
   );
 }
 
@@ -220,33 +232,3 @@ function HowItWorks() {
   );
 }
 
-/* ------------------------------------------------------------- Footer */
-
-function Footer() {
-  return (
-    <footer className="mt-auto flex items-center justify-between gap-6 border-t border-hairline bg-surface px-6 py-10 sm:px-12">
-      <div className="flex items-center gap-2.5">
-        <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-wine">
-          <Flame size={12} className="text-gold" />
-        </span>
-        <span className="font-display text-sm font-semibold tracking-[0.1em] text-ink">
-          VESTIGE
-        </span>
-      </div>
-      <nav className="flex gap-6">
-        <Link
-          href="/imprint"
-          className="font-body text-xs text-ink-soft underline-offset-4 hover:text-wine hover:underline"
-        >
-          Impressum
-        </Link>
-        <Link
-          href="/datenschutz"
-          className="font-body text-xs text-ink-soft underline-offset-4 hover:text-wine hover:underline"
-        >
-          Datenschutz
-        </Link>
-      </nav>
-    </footer>
-  );
-}
