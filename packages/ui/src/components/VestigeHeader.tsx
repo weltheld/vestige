@@ -260,13 +260,17 @@ function ProfileMenu({
 // The segmented-control track that both module tabs sit inside — a slightly
 // darker parchment inset with a hairline, so the raised active segment reads
 // as lifted off it. Shared by the desktop (labelled) and mobile (icon) navs.
-// bg-ink/[0.06] is a theme-agnostic inset wash (subtle on light and dark
-// themes alike) instead of a fixed parchment tint.
+// Uses color-mix as an arbitrary VALUE (not a bg-x/opacity MODIFIER) —
+// Tailwind can't apply an opacity modifier to colors defined as plain
+// var(--x) strings (as ours are), so bg-ink/N-style classes silently
+// compile to no CSS at all. This form mixes directly and is theme-agnostic
+// (subtle on light and dark themes alike) instead of a fixed parchment tint.
 const SEGMENT_TRACK =
-  "inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-ink/[0.06] p-[3px]";
+  "inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[color-mix(in_srgb,var(--ink)_6%,var(--surface))] p-[3px]";
 // The lifted look of the active segment.
 const SEGMENT_ACTIVE = "bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)]";
-const SEGMENT_INACTIVE = "text-ink-soft hover:bg-ink/10 hover:text-ink";
+const SEGMENT_INACTIVE =
+  "text-ink-soft hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-ink";
 
 function ModuleTab({
   icon,

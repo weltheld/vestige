@@ -22,7 +22,7 @@ export function PublicHeader({ current = null }: { current?: "calendar" | "journ
 
         {/* Segmented module switcher — matches the logged-in header's design. */}
         <nav aria-label="Modules" className="ml-2 hidden sm:flex">
-          <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-ink/[0.06] p-[3px]">
+          <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[color-mix(in_srgb,var(--ink)_6%,var(--surface))] p-[3px]">
             <ModuleTab
               href="/features/calendar"
               icon={<CalendarDays size={14} />}
@@ -64,7 +64,7 @@ function ModuleTab({
     "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] transition",
     active
       ? "bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)] font-display font-bold"
-      : "text-ink-soft hover:bg-ink/10 hover:text-ink",
+      : "text-ink-soft hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-ink",
   ].join(" ");
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className={className}>
