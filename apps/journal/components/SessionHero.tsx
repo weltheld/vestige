@@ -1,5 +1,4 @@
 import { format, parseISO } from "date-fns";
-import { HeroMenu } from "./session/HeroMenu";
 
 type Props = {
   title: string;
@@ -10,8 +9,6 @@ type Props = {
   /** Party / character portrait URLs (PCs get a gold ring). */
   avatars?: string[];
   extraCount?: number;
-  /** When provided, renders the "⋯" menu (settings / switch campaign). */
-  menu?: { settingsHref: string; switchHref: string };
   /**
    * "campaign" (default) = the existing full-width banner, for the
    * campaign-level cover on the session list. "session" = a smaller,
@@ -31,7 +28,6 @@ export function SessionHero({
   subtitle,
   avatars = [],
   extraCount = 0,
-  menu,
   variant = "campaign",
 }: Props) {
   const avatarGroup = (avatars.length > 0 || extraCount > 0) && (
@@ -65,11 +61,6 @@ export function SessionHero({
         </div>
 
         <div className="min-w-0 flex-1">
-          {menu && (
-            <div className="absolute right-4 top-4">
-              <HeroMenu settingsHref={menu.settingsHref} switchHref={menu.switchHref} />
-            </div>
-          )}
           {avatarGroup && <div className="mb-3">{avatarGroup}</div>}
           <div className="flex items-center gap-1">
             <span className="h-8 w-0.5 shrink-0 bg-gold" />
@@ -94,12 +85,6 @@ export function SessionHero({
         className="absolute inset-0"
         style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.69))" }}
       />
-
-      {menu && (
-        <div className="absolute right-4 top-4 z-10">
-          <HeroMenu settingsHref={menu.settingsHref} switchHref={menu.switchHref} />
-        </div>
-      )}
 
       {/* Avatar group */}
       {avatarGroup && <div className="absolute left-6 top-6">{avatarGroup}</div>}

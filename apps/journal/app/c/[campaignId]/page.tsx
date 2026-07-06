@@ -34,7 +34,6 @@ export default async function SessionListPage({
         subtitle={startedSubtitle(header.sessionCount, header.startedAt)}
         avatars={header.memberAvatars}
         extraCount={header.memberAvatars.length > 5 ? header.memberAvatars.length - 5 : 0}
-        menu={{ settingsHref: journal.settings(campaignId), switchHref: appHref() }}
       />
 
       <div className="flex items-center justify-between">

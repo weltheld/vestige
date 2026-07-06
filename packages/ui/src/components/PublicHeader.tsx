@@ -1,39 +1,41 @@
 import Link from "next/link";
-import { Flame, Calendar, BookOpen } from "lucide-react";
+import { CalendarDays, ScrollText } from "lucide-react";
+import { PlatformCrest } from "./PlatformCrest";
 
 /**
- * The logged-out Vestige header: sigil + wordmark + module switcher +
- * SIGN IN link. The module tabs link to the public per-module description
- * pages; pass `current` to highlight the one you're on.
+ * The logged-out Vestige header: crest + wordmark + module switcher +
+ * SIGN IN link. Mirrors the logged-in VestigeHeader's segmented-control nav
+ * design (see SEGMENT_TRACK there) so the look is consistent whether or not
+ * you're signed in. The module tabs link to the public per-module
+ * description pages; pass `current` to highlight the one you're on.
  */
 export function PublicHeader({ current = null }: { current?: "calendar" | "journal" | null }) {
   return (
     <header className="flex h-20 w-full items-center justify-between bg-surface px-6 sm:px-12">
       <div className="flex items-center gap-4">
-        {/* Sigil */}
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-wine">
-          <Flame size={18} className="text-gold" />
-        </span>
-        <Link href="/" className="font-display text-[17px] font-semibold tracking-[0.1em] text-ink">
-          VESTIGE
+        <Link href="/" aria-label="Vestige — home" className="flex items-center gap-2.5">
+          <PlatformCrest size={34} />
+          <span className="font-display text-[17px] font-semibold tracking-[0.1em] text-ink">
+            VESTIGE
+          </span>
         </Link>
 
-        <span className="hidden h-[22px] w-px bg-hairline sm:block" />
-
-        {/* Module tabs — link to the per-module description pages. */}
-        <nav aria-label="Modules" className="hidden items-center gap-1 sm:flex">
-          <ModuleLink
-            href="/features/calendar"
-            icon={<Calendar size={14} />}
-            label="Calendar"
-            active={current === "calendar"}
-          />
-          <ModuleLink
-            href="/features/journal"
-            icon={<BookOpen size={14} />}
-            label="Journal"
-            active={current === "journal"}
-          />
+        {/* Segmented module switcher — matches the logged-in header's design. */}
+        <nav aria-label="Modules" className="ml-2 hidden sm:flex">
+          <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-ink/[0.06] p-[3px]">
+            <ModuleTab
+              href="/features/calendar"
+              icon={<CalendarDays size={14} />}
+              label="Calendar"
+              active={current === "calendar"}
+            />
+            <ModuleTab
+              href="/features/journal"
+              icon={<ScrollText size={14} />}
+              label="Journal"
+              active={current === "journal"}
+            />
+          </div>
         </nav>
       </div>
 
@@ -47,7 +49,7 @@ export function PublicHeader({ current = null }: { current?: "calendar" | "journ
   );
 }
 
-function ModuleLink({
+function ModuleTab({
   href,
   icon,
   label,
@@ -58,9 +60,12 @@ function ModuleLink({
   label: string;
   active: boolean;
 }) {
-  const className = active
-    ? "flex items-center gap-2 rounded-lg bg-cod-soft px-3.5 py-2 font-display text-[13px] font-semibold text-wine"
-    : "flex items-center gap-2 rounded-lg px-3.5 py-2 font-body text-[13px] text-ink-soft transition hover:bg-cod-soft hover:text-ink";
+  const className = [
+    "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] transition",
+    active
+      ? "bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)] font-display font-bold"
+      : "text-ink-soft hover:bg-ink/10 hover:text-ink",
+  ].join(" ");
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className={className}>
       {icon}
