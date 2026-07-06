@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { deleteSession } from "@/app/c/[campaignId]/s/actions";
 import { journal } from "@/lib/links";
 
@@ -42,6 +42,14 @@ export function DeleteSessionButton({
               onClick={() => !deleting && setOpen(false)}
             />
             <div className="relative w-full max-w-[380px] rounded-xl border border-hairline bg-surface p-6 shadow-parchment">
+              <button
+                type="button"
+                onClick={() => !deleting && setOpen(false)}
+                aria-label="Close"
+                className="absolute right-3 top-3 rounded-md p-1 text-ink-soft hover:bg-cod-soft hover:text-ink"
+              >
+                <X className="h-5 w-5" />
+              </button>
               <h2 className="font-display text-lg text-ink">Delete this session?</h2>
               <p className="mt-2 font-body text-[13px] text-ink-soft">
                 &ldquo;{title || "Untitled session"}&rdquo; and its notes, comments, and change

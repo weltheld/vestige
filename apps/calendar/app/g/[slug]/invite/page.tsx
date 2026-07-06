@@ -4,6 +4,7 @@ import {
   getServiceRoleSupabase,
 } from "@/lib/supabase/server";
 import { InvitePageClient } from "./InvitePageClient";
+import { cn } from "@/lib/utils";
 
 export default async function InvitePage({
   params,
@@ -125,11 +126,17 @@ export default async function InvitePage({
   }
 
   return (
-    <InvitePageClient
-      slug={campaign.slug}
-      name={campaign.name}
-      background={campaign.background}
-      addableUsers={addableUsers}
+    <div
+      className={cn(
+        "min-h-screen w-full px-4 py-10 sm:px-8",
+        `bg-scene-${campaign.background}`,
+      )}
+    >
+      <div className="mx-auto w-full max-w-[560px] rounded-xl border border-hairline bg-surface p-8 shadow-parchment sm:p-10">
+        <InvitePageClient
+          slug={campaign.slug}
+          name={campaign.name}
+          addableUsers={addableUsers}
       members={(members ?? []).map((m) => {
         const p = profileById.get(m.user_id);
         return {
@@ -151,6 +158,8 @@ export default async function InvitePage({
           status: i.status,
         };
       })}
-    />
+        />
+      </div>
+    </div>
   );
 }

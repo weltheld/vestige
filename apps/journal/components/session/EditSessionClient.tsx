@@ -435,6 +435,14 @@ export function EditSessionClient({
               onClick={() => !deleting && setDeleteConfirmOpen(false)}
             />
             <div className="relative w-full max-w-[380px] rounded-xl border border-hairline bg-surface p-6 shadow-parchment">
+              <button
+                type="button"
+                onClick={() => !deleting && setDeleteConfirmOpen(false)}
+                aria-label="Close"
+                className="absolute right-3 top-3 rounded-md p-1 text-ink-soft hover:bg-cod-soft hover:text-ink"
+              >
+                <X className="h-5 w-5" />
+              </button>
               <h2 className="font-display text-lg text-ink">Delete this session?</h2>
               <p className="mt-2 font-body text-[13px] text-ink-soft">
                 &ldquo;{fields.title || "Untitled session"}&rdquo; and its notes, comments, and

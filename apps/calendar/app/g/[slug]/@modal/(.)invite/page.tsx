@@ -130,7 +130,6 @@ export default async function InvitePage({
       <InvitePageClient
         slug={campaign.slug}
         name={campaign.name}
-        background={campaign.background}
         addableUsers={addableUsers}
         members={(members ?? []).map((m) => {
           const p = profileById.get(m.user_id);

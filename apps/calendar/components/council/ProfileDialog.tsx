@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Pencil, LogOut, Settings2, Check } from "lucide-react";
+import { ChevronDown, Pencil, LogOut, Settings2, Check, X } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { ProfileEditor } from "./ProfileEditor";
 import { signOutAction } from "@/app/auth/actions";
@@ -144,6 +144,14 @@ export function ProfileDialog({
             onClick={() => setOpen(false)}
           />
           <div className="relative w-full max-w-[480px] rounded-xl border border-hairline bg-surface p-8 shadow-parchment sm:p-10">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Close"
+              className="absolute right-4 top-4 rounded-md p-1 text-ink-soft hover:bg-parchment hover:text-ink"
+            >
+              <X className="h-5 w-5" />
+            </button>
             <header className="flex flex-col items-center gap-1 text-center">
               <p className="small-caps">Calendar</p>
               <h1 className="font-display text-2xl text-ink">Your profile</h1>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, RotateCcw, Wand2 } from "lucide-react";
+import { ChevronDown, RotateCcw, Wand2, X } from "lucide-react";
 import type { VoteValue, Weekday } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -135,6 +135,14 @@ export function QuickFillBar({
             onClick={() => setConfirmReset(false)}
           />
           <div className="relative w-full max-w-sm rounded-xl border border-hairline bg-surface p-6 shadow-parchment">
+            <button
+              type="button"
+              onClick={() => setConfirmReset(false)}
+              aria-label="Close"
+              className="absolute right-3 top-3 rounded-md p-1 text-ink-soft hover:bg-parchment hover:text-ink"
+            >
+              <X className="h-5 w-5" />
+            </button>
             <h2 className="text-center font-display text-xl text-ink">
               Reset this month?
             </h2>

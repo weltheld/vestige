@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { X } from "lucide-react";
 import { WaxButton } from "./WaxButton";
 
 type Props = {
@@ -144,6 +145,14 @@ export function ImageCropper({
         onClick={onCancel}
       />
       <div className="relative w-full max-w-md rounded-xl border border-hairline bg-surface p-6 shadow-parchment">
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Close"
+          className="absolute right-3 top-3 rounded-md p-1 text-ink-soft hover:bg-parchment hover:text-ink"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <h2 className="text-center font-display text-xl text-ink">{title}</h2>
         <p className="mt-1 text-center font-body text-xs text-ink-soft">
           {hint}
