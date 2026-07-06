@@ -485,6 +485,8 @@ function Card({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
+const GUEST_SENTINEL = "__guest__";
+
 function CharacterComposer({
   disabled,
   players,
@@ -496,6 +498,8 @@ function CharacterComposer({
 }) {
   const [playerChoice, setPlayerChoice] = useState("");
   const [npcName, setNpcName] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guestMode, setGuestMode] = useState(false);
   const [role, setRole] = useState<"PC" | "NPC">("PC");
 
   const submitNpc = () => {
@@ -504,35 +508,70 @@ function CharacterComposer({
     setNpcName("");
   };
 
+  const submitGuest = () => {
+    if (!guestName.trim()) return;
+    onAdd(guestName.trim(), "PC");
+    setGuestName("");
+  };
+
+  // With no campaign players left to add (all added already, or none joined
+  // yet), fall straight to the guest input — otherwise it'd be stuck behind
+  // a disabled select with no way to reach the guest option.
+  const effectiveGuestMode = guestMode || players.length === 0;
+
   return (
     <div className="flex items-center gap-2.5 py-1">
       <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-dashed border-gold text-gold">+</span>
       <div className="flex flex-1 flex-col gap-1.5">
         {role === "PC" ? (
-          <select
-            value={playerChoice}
-            disabled={disabled || players.length === 0}
-            onChange={(e) => {
-              const characterName = e.target.value;
-              setPlayerChoice("");
-              if (characterName) onAdd(characterName, "PC");
-            }}
-            className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none disabled:opacity-50"
-          >
-            <option value="" disabled>
-              {disabled
-                ? "Save the session first"
-                : players.length === 0
-                  ? "No players left to add"
-                  : "Choose a player…"}
-            </option>
-            {players.map((p) => (
-              <option key={p.userId} value={p.characterName}>
-                {p.characterName}
-                {p.isDm ? " (DM)" : ""}
+          effectiveGuestMode ? (
+            <>
+              <input
+                value={guestName}
+                disabled={disabled}
+                onChange={(e) => setGuestName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitGuest()}
+                placeholder={disabled ? "Save the session first" : "Guest character's name…"}
+                className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none placeholder:text-muted disabled:opacity-50"
+              />
+              {players.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setGuestMode(false)}
+                  className="self-start font-body text-[11px] text-ink-soft underline underline-offset-2"
+                >
+                  ← Choose a campaign player instead
+                </button>
+              )}
+            </>
+          ) : (
+            <select
+              value={playerChoice}
+              disabled={disabled || players.length === 0}
+              onChange={(e) => {
+                const value = e.target.value;
+                setPlayerChoice("");
+                if (value === GUEST_SENTINEL) setGuestMode(true);
+                else if (value) onAdd(value, "PC");
+              }}
+              className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none disabled:opacity-50"
+            >
+              <option value="" disabled>
+                {disabled
+                  ? "Save the session first"
+                  : players.length === 0
+                    ? "No players left to add"
+                    : "Choose a player…"}
               </option>
-            ))}
-          </select>
+              {players.map((p) => (
+                <option key={p.userId} value={p.characterName}>
+                  {p.characterName}
+                  {p.isDm ? " (DM)" : ""}
+                </option>
+              ))}
+              {!disabled && <option value={GUEST_SENTINEL}>+ Add a guest character…</option>}
+            </select>
+          )
         ) : (
           <input
             value={npcName}

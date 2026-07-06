@@ -3,6 +3,7 @@ import { Users, CalendarDays } from "lucide-react";
 import { format, parseISO, formatDistanceToNow } from "date-fns";
 import type { SessionDetail } from "@/lib/session-detail";
 import { calendarCampaignHref, journal } from "@/lib/links";
+import { DeleteSessionButton } from "./DeleteSessionButton";
 
 function Card({
   label,
@@ -72,11 +73,12 @@ export function SessionSidebar({
         </div>
         <div className="h-px bg-hairline" />
         <Link
-          href={journal.session(campaignId, session.id)}
+          href={journal.editSession(campaignId, session.id)}
           className="font-body text-[12px] text-ink-soft underline underline-offset-2"
         >
-          View change log →
+          Edit session →
         </Link>
+        <DeleteSessionButton campaignId={campaignId} sessionId={session.id} title={session.title} />
       </Card>
 
       <Card label="In This Session" icon={<Users size={12} />}>

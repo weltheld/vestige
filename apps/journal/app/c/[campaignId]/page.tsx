@@ -52,12 +52,6 @@ export default async function SessionListPage({
         <div className="flex flex-col items-center gap-4 rounded-xl bg-cod-soft px-6 py-20 text-center">
           <BookOpen size={60} className="text-muted" strokeWidth={1.25} />
           <p className="font-body text-[15px] text-ink-soft">No sessions yet</p>
-          <Link
-            href={journal.newSession(campaignId)}
-            className="rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-          >
-            Record your first session
-          </Link>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
