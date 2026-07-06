@@ -62,13 +62,15 @@ export function PlatformHeader({
             always the active segment. */}
         <nav aria-label="Modules" className="ml-2 hidden lg:flex">
           <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[color-mix(in_srgb,var(--ink)_6%,var(--surface))] p-[3px]">
-            <span className="flex items-center gap-1.5 rounded-lg bg-surface px-3.5 py-1.5 font-display text-[13px] font-bold text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)]">
+            {/* Same font-body as the inactive Journal link — only weight/
+                color/surface change on activation, never the typeface. */}
+            <span className="flex items-center gap-1.5 rounded-lg bg-surface px-3.5 py-1.5 font-body text-[13px] font-medium text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)]">
               <CalendarDays size={14} />
               Calendar
             </span>
             <a
               href={`${PLATFORM_URL}/journal`}
-              className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-ink"
+              className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
             >
               <ScrollText size={14} />
               Journal
@@ -89,7 +91,7 @@ export function PlatformHeader({
               href={`${PLATFORM_URL}/journal`}
               aria-label="Journal"
               title="Journal"
-              className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-ink"
+              className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
             >
               <ScrollText size={18} />
             </a>

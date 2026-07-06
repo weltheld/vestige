@@ -269,8 +269,10 @@ const SEGMENT_TRACK =
   "inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[color-mix(in_srgb,var(--ink)_6%,var(--surface))] p-[3px]";
 // The lifted look of the active segment.
 const SEGMENT_ACTIVE = "bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)]";
+// Hover previews the active look (wine text) instead of a plain ink
+// darken, so hovering reads as "this is what selecting it does."
 const SEGMENT_INACTIVE =
-  "text-ink-soft hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-ink";
+  "text-ink-soft hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine";
 
 function ModuleTab({
   icon,
@@ -284,8 +286,10 @@ function ModuleTab({
   href?: string;
 }) {
   const className = [
+    // Same font-body as the inactive state throughout — only weight/color/
+    // surface change on activation, never the typeface.
     "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] transition",
-    active ? `font-display font-bold ${SEGMENT_ACTIVE}` : SEGMENT_INACTIVE,
+    active ? `font-medium ${SEGMENT_ACTIVE}` : SEGMENT_INACTIVE,
   ].join(" ");
   const content = (
     <>

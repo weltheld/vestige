@@ -61,10 +61,13 @@ function ModuleTab({
   active: boolean;
 }) {
   const className = [
+    // Same font-body as the inactive state throughout — only weight/color/
+    // surface change on activation, never the typeface. Hover previews the
+    // active look (wine text) instead of a plain ink darken.
     "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] transition",
     active
-      ? "bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)] font-display font-bold"
-      : "text-ink-soft hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-ink",
+      ? "bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)] font-medium"
+      : "text-ink-soft hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine",
   ].join(" ");
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className={className}>
