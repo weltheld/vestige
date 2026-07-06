@@ -31,6 +31,7 @@ export default async function NewSessionPage({
       players={players}
       initial={{ title: "", date: null, summary: "", player_characters: "", npcs: "", notes: "" }}
       characters={[]}
+      images={[]}
       chroniclerName={viewer.label}
       modulesCalendar={calendar}
     />

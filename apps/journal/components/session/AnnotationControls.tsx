@@ -2,37 +2,96 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Quote } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { Plus, MessageCircle } from "lucide-react";
 import { addAnnotation } from "@/app/c/[campaignId]/s/actions";
+import type { Annotation } from "@/lib/session-detail";
 
-/** The gold count badge on an annotated paragraph (drawer deferred — logs). */
-export function AnnotationBadge({ anchor, count }: { anchor: string; count: number }) {
-  return (
-    <button
-      type="button"
-      aria-label={`${count} annotations`}
-      onClick={() => console.log("open annotations drawer for", anchor)}
-      className="absolute -right-3 top-1 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-gold font-display text-[11px] font-semibold text-white"
-    >
-      {count}
-    </button>
-  );
-}
-
-/** Hover "+" that opens an inline composer and writes an annotation. */
-export function AnnotationAdder({
+/** The whole commenting surface for a Recap paragraph (there's no separate
+ *  Comments section — this is where users comment directly on the summary,
+ *  or any other section, right where it appears). Zero comments renders a
+ *  bare hover "+"; one or more renders a "N comments" toggle that expands
+ *  the full thread (every comment, not just the first) plus a composer that
+ *  stays open so more can be added. */
+export function AnnotationThread({
   campaignId,
   sessionId,
   anchor,
   excerpt,
+  annotations,
 }: {
   campaignId: string;
   sessionId: string;
   anchor: string;
   excerpt: string;
+  annotations: Annotation[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (annotations.length === 0) {
+    return <Composer campaignId={campaignId} sessionId={sessionId} anchor={anchor} excerpt={excerpt} alwaysOpen={false} />;
+  }
+
+  return (
+    <div className="mt-1.5">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-1.5 font-body text-[11px] text-ink-soft hover:text-ink"
+      >
+        <MessageCircle size={12} className="text-gold" />
+        {annotations.length} {annotations.length === 1 ? "comment" : "comments"}
+      </button>
+
+      {expanded && (
+        <div className="mt-2 flex max-w-[480px] flex-col gap-3 rounded-xl bg-cod-soft p-3.5">
+          {annotations.map((a) => (
+            <div key={a.id} className="flex gap-2.5">
+              <span
+                className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[10px] text-parchment"
+                aria-hidden="true"
+              >
+                {a.authorAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={a.authorAvatar} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  a.authorName.charAt(0).toUpperCase()
+                )}
+              </span>
+              <div className="flex flex-1 flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-[12px] text-ink">{a.authorName}</span>
+                  <span className="font-body text-[10px] text-muted">
+                    {format(parseISO(a.createdAt), "MMM d, h:mmaaa")}
+                  </span>
+                </div>
+                <p className="font-body text-[13px] leading-[1.55] text-ink">{a.body}</p>
+              </div>
+            </div>
+          ))}
+          <div className="h-px bg-hairline" />
+          <Composer campaignId={campaignId} sessionId={sessionId} anchor={anchor} excerpt={excerpt} alwaysOpen />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Composer({
+  campaignId,
+  sessionId,
+  anchor,
+  excerpt,
+  alwaysOpen,
+}: {
+  campaignId: string;
+  sessionId: string;
+  anchor: string;
+  excerpt: string;
+  alwaysOpen: boolean;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(alwaysOpen);
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -41,7 +100,7 @@ export function AnnotationAdder({
     setSaving(true);
     await addAnnotation(campaignId, sessionId, anchor, body.trim());
     setBody("");
-    setOpen(false);
+    if (!alwaysOpen) setOpen(false);
     setSaving(false);
     router.refresh();
   }
@@ -50,7 +109,7 @@ export function AnnotationAdder({
     return (
       <button
         type="button"
-        aria-label="Add annotation"
+        aria-label="Add comment"
         onClick={() => setOpen(true)}
         className="absolute -left-9 top-1 flex h-6 w-6 items-center justify-center rounded-md border border-hairline bg-surface text-gold opacity-0 transition group-hover:opacity-100"
       >
@@ -60,29 +119,38 @@ export function AnnotationAdder({
   }
 
   return (
-    <div className="mt-2 flex w-[220px] flex-col gap-2 rounded-xl bg-cod-soft p-3.5">
-      <div className="flex items-center gap-1.5">
-        <Quote size={12} className="text-gold-soft" />
-        <span className="line-clamp-1 font-body text-[11px] text-muted">Annotating: “{excerpt}”</span>
-      </div>
+    <div
+      className={
+        alwaysOpen
+          ? "flex flex-col gap-2"
+          : "mt-2 flex w-[240px] flex-col gap-2 rounded-xl bg-cod-soft p-3.5"
+      }
+    >
+      {!alwaysOpen && (
+        <span className="line-clamp-1 font-body text-[11px] text-muted">
+          Commenting on: &ldquo;{excerpt}&rdquo;
+        </span>
+      )}
       <textarea
-        autoFocus
+        autoFocus={!alwaysOpen}
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Your note…"
-        className="min-h-[60px] resize-none bg-transparent font-body text-[13px] text-ink outline-none placeholder:text-muted"
+        placeholder="Add a comment…"
+        className="min-h-[52px] resize-none rounded-md border border-hairline bg-surface px-2.5 py-2 font-body text-[13px] text-ink outline-none placeholder:text-muted"
       />
       <div className="flex items-center justify-between">
-        <button type="button" onClick={() => setOpen(false)} className="font-body text-[11px] text-ink-soft">
-          Cancel
-        </button>
+        {!alwaysOpen && (
+          <button type="button" onClick={() => setOpen(false)} className="font-body text-[11px] text-ink-soft">
+            Cancel
+          </button>
+        )}
         <button
           type="button"
           onClick={save}
           disabled={saving}
-          className="rounded bg-wine px-3 py-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-60"
+          className="ml-auto rounded bg-wine px-3 py-1.5 font-display text-[10px] font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-60"
         >
-          Save note
+          {saving ? "Posting…" : "Post comment"}
         </button>
       </div>
     </div>

@@ -5,17 +5,6 @@ import type { Database, JournalRevisionActionDb } from "@vestige/db";
 
 type SB = SupabaseClient<Database>;
 
-export type Comment = {
-  id: string;
-  sectionAnchor: string | null;
-  body: string;
-  imageUrl: string | null;
-  authorName: string;
-  authorAvatar: string | null;
-  createdAt: string;
-  parentCommentId: string | null;
-};
-
 export type Revision = {
   id: string;
   action: JournalRevisionActionDb;
@@ -38,26 +27,6 @@ async function authorMap(supabase: SB, ids: string[]) {
     .select("id, first_name, display_name, avatar_url")
     .in("id", unique);
   return new Map((data ?? []).map((p) => [p.id, p]));
-}
-
-export async function getComments(supabase: SB, sessionId: string): Promise<Comment[]> {
-  const { data } = await supabase
-    .from("journal_comments")
-    .select("id, section_anchor, body, image_url, author_id, parent_comment_id, created_at")
-    .eq("session_id", sessionId)
-    .order("created_at", { ascending: true });
-  const rows = data ?? [];
-  const authors = await authorMap(supabase, rows.map((r) => r.author_id));
-  return rows.map((r) => ({
-    id: r.id,
-    sectionAnchor: r.section_anchor,
-    body: r.body,
-    imageUrl: r.image_url,
-    authorName: name(authors.get(r.author_id)),
-    authorAvatar: authors.get(r.author_id)?.avatar_url ?? null,
-    createdAt: r.created_at,
-    parentCommentId: r.parent_comment_id,
-  }));
 }
 
 export async function getRevisions(supabase: SB, sessionId: string): Promise<Revision[]> {

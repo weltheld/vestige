@@ -142,6 +142,14 @@ export type JournalAnnotationRow = {
   created_at: string;
 };
 
+export type JournalSessionImageRow = {
+  id: string;
+  session_id: string;
+  url: string;
+  created_by: string;
+  created_at: string;
+};
+
 export type JournalCommentRow = {
   id: string;
   session_id: string;
@@ -424,6 +432,20 @@ export type Database = {
         Relationships: [
           Rel<"journal_comments_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
           Rel<"journal_comments_parent_comment_id_fkey", ["parent_comment_id"], "journal_comments", ["id"], false>,
+        ];
+      };
+      journal_session_images: {
+        Row: JournalSessionImageRow;
+        Insert: {
+          id?: string;
+          session_id: string;
+          url: string;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: Partial<JournalSessionImageRow>;
+        Relationships: [
+          Rel<"journal_session_images_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
         ];
       };
       journal_session_revisions: {

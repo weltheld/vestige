@@ -2,26 +2,21 @@
 
 import { useState } from "react";
 
-type Tab = "recap" | "comments" | "changelog";
+type Tab = "recap" | "changelog";
 
 export function SessionTabs({
   recap,
-  comments,
   changelog,
-  commentCount,
   revisionCount,
 }: {
   recap: React.ReactNode;
-  comments: React.ReactNode;
   changelog: React.ReactNode;
-  commentCount: number;
   revisionCount: number;
 }) {
   const [tab, setTab] = useState<Tab>("recap");
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "recap", label: "Recap" },
-    { key: "comments", label: `Comments (${commentCount})` },
     { key: "changelog", label: `Change Log (${revisionCount})` },
   ];
 
@@ -49,7 +44,6 @@ export function SessionTabs({
       </div>
 
       {tab === "recap" && recap}
-      {tab === "comments" && comments}
       {tab === "changelog" && changelog}
     </div>
   );

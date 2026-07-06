@@ -114,13 +114,15 @@ export const getCampaignIfMember = cache(
 export type CampaignPlayer = {
   userId: string;
   characterName: string;
+  avatarUrl: string | null;
   isDm: boolean;
 };
 
 /**
  * The campaign's actual players, for picking a PC by name instead of typing
  * one freehand — same per-campaign character identity Calendar already
- * shows (campaign_members.character_name, falling back to the profile).
+ * shows (campaign_members.character_name/.avatar_url, falling back to the
+ * profile).
  */
 export async function getCampaignPlayers(
   supabase: SB,
@@ -128,13 +130,13 @@ export async function getCampaignPlayers(
 ): Promise<CampaignPlayer[]> {
   const { data: members } = await supabase
     .from("campaign_members")
-    .select("user_id, is_dm, character_name")
+    .select("user_id, is_dm, character_name, avatar_url")
     .eq("campaign_id", campaignId);
   if (!members?.length) return [];
 
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, character_name, display_name")
+    .select("id, character_name, display_name, avatar_url")
     .in(
       "id",
       members.map((m) => m.user_id),
@@ -146,6 +148,7 @@ export async function getCampaignPlayers(
     return {
       userId: m.user_id,
       characterName: m.character_name || p?.character_name || p?.display_name || "Adventurer",
+      avatarUrl: m.avatar_url || p?.avatar_url || null,
       isDm: m.is_dm,
     };
   });

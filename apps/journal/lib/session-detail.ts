@@ -22,6 +22,11 @@ export type Annotation = {
   createdAt: string;
 };
 
+export type SessionImage = {
+  id: string;
+  url: string;
+};
+
 export type SessionDetail = {
   id: string;
   number: number;
@@ -32,6 +37,9 @@ export type SessionDetail = {
   npcs: string | null;
   notes: string | null;
   imageUrl: string | null;
+  /** The session's full image gallery — imageUrl is "the session image"
+   *  (the one shown at the hero/highest level), a pointer into this list. */
+  images: SessionImage[];
   authorName: string;
   updatedAt: string;
   editorName: string | null;
@@ -53,7 +61,7 @@ export async function getSessionDetail(
   sessionId: string,
 ): Promise<SessionDetail | null> {
   // First wave — everything that only needs the ids we already have.
-  const [{ data: s }, { data: links }, { data: anns }, { data: campaign }] =
+  const [{ data: s }, { data: links }, { data: anns }, { data: campaign }, { data: images }] =
     await Promise.all([
       supabase
         .from("journal_sessions")
@@ -73,6 +81,11 @@ export async function getSessionDetail(
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true }),
       supabase.from("campaigns").select("modules_enabled").eq("id", campaignId).maybeSingle(),
+      supabase
+        .from("journal_session_images")
+        .select("id, url")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true }),
     ]);
   if (!s) return null;
 
@@ -143,6 +156,7 @@ export async function getSessionDetail(
     npcs: s.npcs,
     notes: s.notes,
     imageUrl: s.image_url,
+    images: images ?? [],
     authorName: name(profById.get(s.created_by)),
     updatedAt: s.updated_at,
     editorName: s.updated_by ? name(profById.get(s.updated_by)) : null,

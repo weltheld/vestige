@@ -86,11 +86,12 @@ export async function addCharacter(
   sessionId: string,
   name: string,
   role: JournalCharacterRoleDb,
+  portraitUrl: string | null = null,
 ) {
   const { supabase, userId } = await uid();
   const { data: char, error } = await supabase
     .from("journal_characters")
-    .insert({ campaign_id: campaignId, name, role })
+    .insert({ campaign_id: campaignId, name, role, portrait_url: portraitUrl })
     .select("id")
     .single();
   if (error) throw error;
@@ -120,31 +121,78 @@ export async function removeCharacter(
   revalidatePath(`/c/${campaignId}/s/${sessionId}`);
 }
 
-export async function postComment(
-  campaignId: string,
-  sessionId: string,
-  sectionAnchor: string | null,
-  body: string,
-  parentCommentId: string | null = null,
-  imageUrl: string | null = null,
-) {
+/** Add an image to the session's gallery. The first image ever added also
+ *  becomes the session image (the one shown at the hero/highest level). */
+export async function addSessionImage(campaignId: string, sessionId: string, url: string) {
   const { supabase, userId } = await uid();
-  const { error } = await supabase.from("journal_comments").insert({
-    session_id: sessionId,
-    section_anchor: sectionAnchor,
-    body,
-    author_id: userId,
-    parent_comment_id: parentCommentId,
-    image_url: imageUrl,
-  });
+  const { error } = await supabase
+    .from("journal_session_images")
+    .insert({ session_id: sessionId, url, created_by: userId });
   if (error) throw error;
+
+  const { data: session } = await supabase
+    .from("journal_sessions")
+    .select("image_url")
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (!session?.image_url) {
+    await supabase.from("journal_sessions").update({ image_url: url }).eq("id", sessionId);
+  }
+
   await supabase.from("journal_session_revisions").insert({
     session_id: sessionId,
     author_id: userId,
-    action: "commented",
-    after_value: { section_anchor: sectionAnchor, body },
+    action: "image_added",
+    after_value: { url },
   });
   revalidatePath(`/c/${campaignId}/s/${sessionId}`);
+  revalidatePath(`/c/${campaignId}/s/${sessionId}/edit`);
+}
+
+/** Remove an image from the gallery. If it was the session image, the next
+ *  remaining gallery image (if any) takes over; otherwise it's cleared. */
+export async function removeSessionImage(campaignId: string, sessionId: string, imageId: string) {
+  const { supabase } = await uid();
+  const { data: image } = await supabase
+    .from("journal_session_images")
+    .select("url")
+    .eq("id", imageId)
+    .maybeSingle();
+
+  await supabase.from("journal_session_images").delete().eq("id", imageId);
+
+  const { data: session } = await supabase
+    .from("journal_sessions")
+    .select("image_url")
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (image?.url && session?.image_url === image.url) {
+    const { data: next } = await supabase
+      .from("journal_session_images")
+      .select("url")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    await supabase
+      .from("journal_sessions")
+      .update({ image_url: next?.url ?? null })
+      .eq("id", sessionId);
+  }
+  revalidatePath(`/c/${campaignId}/s/${sessionId}`);
+  revalidatePath(`/c/${campaignId}/s/${sessionId}/edit`);
+}
+
+/** Set which gallery image is "the session image" shown at the hero level. */
+export async function setSessionCoverImage(campaignId: string, sessionId: string, url: string) {
+  const { supabase } = await uid();
+  const { error } = await supabase
+    .from("journal_sessions")
+    .update({ image_url: url })
+    .eq("id", sessionId);
+  if (error) throw error;
+  revalidatePath(`/c/${campaignId}/s/${sessionId}`);
+  revalidatePath(`/c/${campaignId}/s/${sessionId}/edit`);
 }
 
 /** Delete a session and everything under it (characters, annotations,

@@ -35,7 +35,13 @@ export default async function EditSessionPage({
         notes: s.notes,
         image_url: s.imageUrl,
       }}
-      characters={s.characters.map((c) => ({ id: c.id, name: c.name, role: c.role }))}
+      characters={s.characters.map((c) => ({
+        id: c.id,
+        name: c.name,
+        role: c.role,
+        portraitUrl: c.portraitUrl,
+      }))}
+      images={s.images}
       chroniclerName={s.authorName}
       modulesCalendar={s.modulesEnabled.calendar}
     />

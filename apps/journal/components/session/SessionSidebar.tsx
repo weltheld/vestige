@@ -113,11 +113,26 @@ export function SessionSidebar({
             <img src={session.imageUrl} alt="" className="h-full w-full object-cover" />
           )}
         </div>
+        {session.images.length > 1 && (
+          <div className="flex flex-wrap gap-1.5">
+            {session.images
+              .filter((img) => img.url !== session.imageUrl)
+              .map((img) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={img.id}
+                  src={img.url}
+                  alt=""
+                  className="h-10 w-10 rounded-md object-cover"
+                />
+              ))}
+          </div>
+        )}
         <Link
           href={journal.editSession(campaignId, session.id)}
           className="font-body text-[12px] text-ink-soft underline underline-offset-2"
         >
-          Change image
+          {session.images.length > 1 ? "Manage images" : "Change image"}
         </Link>
       </Card>
 

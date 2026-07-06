@@ -14,20 +14,26 @@ import {
   addCharacter,
   removeCharacter,
   deleteSession,
+  addSessionImage,
+  removeSessionImage,
+  setSessionCoverImage,
   type SessionInput,
 } from "@/app/c/[campaignId]/s/actions";
 import { SectionEditor } from "./SectionEditor";
 import { pickImageFile, uploadJournalImage } from "@/lib/upload";
 
-type EditCharacter = { id: string; name: string; role: "PC" | "NPC" };
+type EditCharacter = { id: string; name: string; role: "PC" | "NPC"; portraitUrl: string | null };
 
-type EditPlayer = { userId: string; characterName: string; isDm: boolean };
+type EditPlayer = { userId: string; characterName: string; avatarUrl: string | null; isDm: boolean };
+
+type EditSessionImage = { id: string; url: string };
 
 type Props = {
   campaignId: string;
   sessionId: string | null;
   initial: SessionInput;
   characters: EditCharacter[];
+  images: EditSessionImage[];
   chroniclerName: string;
   modulesCalendar: boolean;
   players: EditPlayer[];
@@ -45,6 +51,7 @@ export function EditSessionClient({
   sessionId,
   initial,
   characters,
+  images,
   chroniclerName,
   modulesCalendar,
   players,
@@ -87,6 +94,9 @@ export function EditSessionClient({
         }
         creating.current = true;
         const id = await createSession(campaignId, fields);
+        // A cover chosen before the session existed isn't in the gallery
+        // yet (that table needs a real session id) — backfill it now.
+        if (fields.image_url) await addSessionImage(campaignId, id, fields.image_url);
         creating.current = false;
         lastRevisionAt.current = Date.now();
         setLocalSessionId(id);
@@ -116,6 +126,7 @@ export function EditSessionClient({
       router.push(journal.session(campaignId, localSessionId));
     } else {
       const id = await createSession(campaignId, fields);
+      if (fields.image_url) await addSessionImage(campaignId, id, fields.image_url);
       lastRevisionAt.current = Date.now();
       router.push(journal.session(campaignId, id));
     }
@@ -136,6 +147,11 @@ export function EditSessionClient({
             try {
               const url = await uploadJournalImage(campaignId, file);
               set({ image_url: url });
+              if (localSessionId) {
+                await addSessionImage(campaignId, localSessionId, url);
+                await setSessionCoverImage(campaignId, localSessionId, url);
+                router.refresh();
+              }
             } finally {
               setUploadingCover(false);
             }
@@ -241,8 +257,15 @@ export function EditSessionClient({
           <Card label="In This Session">
             {characters.map((c) => (
               <div key={c.id} className="group flex items-center gap-2.5 py-1">
-                <span className={`flex h-[30px] w-[30px] items-center justify-center rounded-full bg-wine font-display text-[12px] text-parchment ${c.role === "PC" ? "ring-2 ring-gold" : ""}`}>
-                  {c.name.charAt(0)}
+                <span
+                  className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[12px] text-parchment ${c.role === "PC" ? "ring-2 ring-gold" : ""}`}
+                >
+                  {c.portraitUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.portraitUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    c.name.charAt(0)
+                  )}
                 </span>
                 <span className="flex flex-1 flex-col">
                   <span className="font-display text-[13px] text-ink">{c.name}</span>
@@ -266,9 +289,39 @@ export function EditSessionClient({
             <CharacterComposer
               disabled={!localSessionId}
               players={players.filter((p) => !characters.some((c) => c.name === p.characterName))}
-              onAdd={async (name, role) => {
+              onAdd={async (name, role, avatarUrl) => {
                 if (!localSessionId) return;
-                await addCharacter(campaignId, localSessionId, name, role);
+                await addCharacter(campaignId, localSessionId, name, role, avatarUrl ?? null);
+                router.refresh();
+              }}
+            />
+          </Card>
+
+          <Card label="Session Images">
+            <SessionImageGallery
+              images={images}
+              coverUrl={fields.image_url ?? null}
+              disabled={!localSessionId}
+              onUpload={async (file) => {
+                if (!localSessionId) return;
+                const url = await uploadJournalImage(campaignId, file);
+                await addSessionImage(campaignId, localSessionId, url);
+                set({ image_url: fields.image_url ?? url });
+                router.refresh();
+              }}
+              onSetCover={async (url) => {
+                if (!localSessionId) return;
+                set({ image_url: url });
+                await setSessionCoverImage(campaignId, localSessionId, url);
+                router.refresh();
+              }}
+              onRemove={async (image) => {
+                if (!localSessionId) return;
+                if (fields.image_url === image.url) {
+                  const fallback = images.find((i) => i.id !== image.id)?.url ?? null;
+                  set({ image_url: fallback });
+                }
+                await removeSessionImage(campaignId, localSessionId, image.id);
                 router.refresh();
               }}
             />
@@ -494,7 +547,7 @@ function CharacterComposer({
 }: {
   disabled: boolean;
   players: EditPlayer[];
-  onAdd: (name: string, role: "PC" | "NPC") => void;
+  onAdd: (name: string, role: "PC" | "NPC", avatarUrl?: string | null) => void;
 }) {
   const [playerChoice, setPlayerChoice] = useState("");
   const [npcName, setNpcName] = useState("");
@@ -552,7 +605,10 @@ function CharacterComposer({
                 const value = e.target.value;
                 setPlayerChoice("");
                 if (value === GUEST_SENTINEL) setGuestMode(true);
-                else if (value) onAdd(value, "PC");
+                else if (value) {
+                  const player = players.find((p) => p.characterName === value);
+                  onAdd(value, "PC", player?.avatarUrl);
+                }
               }}
               className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none disabled:opacity-50"
             >
@@ -595,6 +651,93 @@ function CharacterComposer({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** A session can hold more than one image; exactly one is "the session
+ *  image" (shown at the hero/highest level) — the gold-ringed thumbnail. */
+function SessionImageGallery({
+  images,
+  coverUrl,
+  disabled,
+  onUpload,
+  onSetCover,
+  onRemove,
+}: {
+  images: EditSessionImage[];
+  coverUrl: string | null;
+  disabled: boolean;
+  onUpload: (file: File) => void | Promise<void>;
+  onSetCover: (url: string) => void | Promise<void>;
+  onRemove: (image: EditSessionImage) => void | Promise<void>;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        {images.map((img) => {
+          const isCover = img.url === coverUrl;
+          return (
+            <div
+              key={img.id}
+              className={`group relative aspect-square overflow-hidden rounded-lg ${isCover ? "ring-2 ring-gold" : ""}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt="" className="h-full w-full object-cover" />
+              {isCover && (
+                <span className="absolute bottom-1 left-1 rounded bg-gold px-1.5 py-0.5 font-display text-[8px] font-semibold uppercase tracking-wide text-white">
+                  Session image
+                </span>
+              )}
+              <div className="absolute inset-0 hidden items-start justify-end gap-1 bg-black/35 p-1 group-hover:flex">
+                {!isCover && (
+                  <button
+                    type="button"
+                    aria-label="Set as session image"
+                    onClick={() => onSetCover(img.url)}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-surface text-gold"
+                  >
+                    <Check size={11} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  aria-label="Remove image"
+                  onClick={() => onRemove(img)}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-surface text-wine"
+                >
+                  <X size={11} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        <button
+          type="button"
+          disabled={disabled || uploading}
+          onClick={async () => {
+            const file = await pickImageFile();
+            if (!file) return;
+            setUploading(true);
+            try {
+              await onUpload(file);
+            } finally {
+              setUploading(false);
+            }
+          }}
+          className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg text-muted disabled:opacity-50"
+          style={{ border: "1.5px dashed var(--hairline)" }}
+        >
+          <ImagePlus size={16} />
+          <span className="font-body text-[10px] italic">{uploading ? "Uploading…" : "Add"}</span>
+        </button>
+      </div>
+      {disabled && (
+        <p className="font-body text-[11px] italic text-muted">Save the session first.</p>
+      )}
     </div>
   );
 }
