@@ -158,7 +158,7 @@ export function InvitePageClient({
             <input
               readOnly
               value={inviteLink}
-              className="flex-1 h-11 px-3 rounded-md border border-hairline bg-surface/80 text-ink font-mono text-sm"
+              className="flex-1 h-11 px-3 rounded-md border border-hairline bg-[color-mix(in_srgb,var(--surface)_80%,var(--parchment))] text-ink font-mono text-sm"
             />
             <WaxButton
               type="button"
