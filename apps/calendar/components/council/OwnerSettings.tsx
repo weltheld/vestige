@@ -10,7 +10,7 @@ import {
   VenetianMask,
   X,
 } from "lucide-react";
-import type { BackgroundScene, Member, User, Weekday } from "@/lib/types";
+import type { Member, User, Weekday } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Avatar } from "./Avatar";
 import { ImageCropper } from "./ImageCropper";
@@ -27,22 +27,13 @@ const WEEKDAYS: { label: string; value: Weekday }[] = [
   { label: "Sunday", value: 0 },
 ];
 
-const BACKGROUNDS: { label: string; value: BackgroundScene; swatch: string }[] = [
-  { label: "Tavern", value: "tavern", swatch: "bg-[#E7DFCE]" },
-  { label: "Parchment", value: "parchment", swatch: "bg-parchment" },
-  { label: "Wine", value: "wine", swatch: "bg-[#ECDDDB]" },
-  { label: "Forest", value: "forest", swatch: "bg-[#E0E7DD]" },
-];
-
 type Props = {
   members: MemberWithUser[];
   creatorId: string;
   viableWeekdays: Weekday[];
-  background: BackgroundScene;
   bannerUrl?: string;
   bannerOriginalUrl?: string;
   onToggleWeekday: (w: Weekday) => void;
-  onChangeBackground: (bg: BackgroundScene) => void;
   onUploadBanner: (blob: Blob, original?: Blob) => Promise<void>;
   onRemoveBanner: () => void;
   onSetMemberDm: (userId: string, isDm: boolean) => void;
@@ -63,11 +54,9 @@ export function OwnerSettings({
   members,
   creatorId,
   viableWeekdays,
-  background,
   bannerUrl,
   bannerOriginalUrl,
   onToggleWeekday,
-  onChangeBackground,
   onUploadBanner,
   onRemoveBanner,
   onSetMemberDm,
@@ -283,33 +272,6 @@ export function OwnerSettings({
           {uploadError && (
             <p className="mt-2 text-xs text-vote-no">{uploadError}</p>
           )}
-        </div>
-      </section>
-
-      <div className="my-4 h-px bg-hairline" />
-
-      <section>
-        <p className="small-caps">Group Background</p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {BACKGROUNDS.map(({ label, value, swatch }) => {
-            const active = background === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => onChangeBackground(value)}
-                className={cn(
-                  "flex items-center gap-2 rounded-md border-2 px-3 py-2 text-sm transition",
-                  active
-                    ? "border-dm-gold bg-dm-gold/10"
-                    : "border-hairline bg-surface/60 hover:bg-parchment",
-                )}
-              >
-                <span className={cn("h-5 w-5 rounded-full border border-ink/20", swatch)} />
-                <span className="font-display tracking-wider uppercase text-xs">{label}</span>
-              </button>
-            );
-          })}
         </div>
       </section>
     </div>

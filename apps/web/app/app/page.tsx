@@ -20,12 +20,24 @@ export default async function AppHome() {
 
   // Independent reads — fetched together instead of as a waterfall.
   const [{ data: profile }, campaigns] = await Promise.all([
-    supabase.from("profiles").select("display_name, avatar_url").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("first_name, display_name, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle(),
     getMyCampaigns(supabase, user.id),
   ]);
 
   const label =
     profile?.display_name?.trim() || user.email?.split("@")[0] || "Adventurer";
+  // Prefer the dedicated first_name field (same fallback chain used for
+  // author names elsewhere in the platform) for the greeting specifically —
+  // label above is the full name shown in the header's account chip.
+  const firstName =
+    profile?.first_name?.trim() ||
+    profile?.display_name?.trim()?.split(" ")[0] ||
+    user.email?.split("@")[0] ||
+    "Adventurer";
 
   // All three only need `campaigns`, not each other.
   const [defaultCampaign, activity, upcoming] = await Promise.all([
@@ -62,6 +74,9 @@ export default async function AppHome() {
         campaigns={headerCampaigns}
       />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+        <h1 className="mb-6 font-display text-2xl font-bold leading-snug text-ink sm:text-[28px]">
+          Welcome back, {firstName}!
+        </h1>
         {campaigns.length === 0 ? (
           <p className="font-body text-ink-soft">
             You don&rsquo;t have any campaigns yet. Once you&rsquo;re added to one,

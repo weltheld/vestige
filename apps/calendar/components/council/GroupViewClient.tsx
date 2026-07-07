@@ -13,7 +13,6 @@ import { CharacterDialog } from "@/components/council/CharacterDialog";
 import type { CalendarDay } from "@/lib/calendar";
 import { buildMonthGrid, isoDate } from "@/lib/calendar";
 import type {
-  BackgroundScene,
   Group,
   Member,
   User,
@@ -285,17 +284,6 @@ export function GroupViewClient(props: Props) {
         .eq("id", group.id);
     },
     [supabase, group.id, group.viableWeekdays],
-  );
-
-  const handleChangeBackground = useCallback(
-    async (bg: BackgroundScene) => {
-      setGroup((g) => ({ ...g, background: bg }));
-      await supabase
-        .from("campaigns")
-        .update({ background: bg })
-        .eq("id", group.id);
-    },
-    [supabase, group.id],
   );
 
   const handleUploadBanner = useCallback(
@@ -590,11 +578,9 @@ export function GroupViewClient(props: Props) {
             members={members}
             creatorId={group.creatorId}
             viableWeekdays={group.viableWeekdays}
-            background={group.background}
             bannerUrl={group.bannerUrl}
             bannerOriginalUrl={bannerOriginalUrl}
             onToggleWeekday={handleToggleWeekday}
-            onChangeBackground={handleChangeBackground}
             onUploadBanner={handleUploadBanner}
             onRemoveBanner={handleRemoveBanner}
             onSetMemberDm={handleSetMemberDm}
@@ -678,11 +664,9 @@ function SettingsDialog({
   members,
   creatorId,
   viableWeekdays,
-  background,
   bannerUrl,
   bannerOriginalUrl,
   onToggleWeekday,
-  onChangeBackground,
   onUploadBanner,
   onRemoveBanner,
   onSetMemberDm,
@@ -692,11 +676,9 @@ function SettingsDialog({
   members: MemberWithUser[];
   creatorId: string;
   viableWeekdays: Weekday[];
-  background: BackgroundScene;
   bannerUrl?: string;
   bannerOriginalUrl?: string;
   onToggleWeekday: (w: Weekday) => void;
-  onChangeBackground: (bg: BackgroundScene) => void;
   onUploadBanner: (blob: Blob, original?: Blob) => Promise<void>;
   onRemoveBanner: () => void;
   onSetMemberDm: (userId: string, isDm: boolean) => void;
@@ -714,11 +696,9 @@ function SettingsDialog({
           members={members}
           creatorId={creatorId}
           viableWeekdays={viableWeekdays}
-          background={background}
           bannerUrl={bannerUrl}
           bannerOriginalUrl={bannerOriginalUrl}
           onToggleWeekday={onToggleWeekday}
-          onChangeBackground={onChangeBackground}
           onUploadBanner={onUploadBanner}
           onRemoveBanner={onRemoveBanner}
           onSetMemberDm={onSetMemberDm}

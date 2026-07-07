@@ -192,9 +192,13 @@ export function DayCell({
         )}
       </div>
 
+      {/* min-h reserves the badge row's height regardless of whether any
+          badges are actually showVotes-visible, so toggling "hide party
+          votes" never changes the tile's (and therefore the whole grid
+          row's) height. */}
       <div
         className={cn(
-          "mt-auto flex flex-wrap gap-1 pt-1.5",
+          "mt-auto flex min-h-[18px] flex-wrap gap-1 pt-1.5",
           isSession && "pr-7",
         )}
       >
