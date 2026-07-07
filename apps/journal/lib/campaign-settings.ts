@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@vestige/db";
+import { getOrCreateFamiliarConnection, type FamiliarConnection } from "./familiar";
 
 type SB = SupabaseClient<Database>;
 
@@ -20,6 +21,8 @@ export type CampaignSettings = {
   modulesEnabled: { calendar: boolean; journal: boolean };
   isCreator: boolean;
   members: SettingsMember[];
+  /** Familiar ingest token + status — creator only (the token is a secret). */
+  familiar: FamiliarConnection | null;
 };
 
 type MemberRow = {
@@ -56,6 +59,9 @@ export async function getCampaignSettings(
     characterName: m.character_name,
   }));
 
+  const isCreator = c.creator_id === viewerId;
+  const familiar = isCreator ? await getOrCreateFamiliarConnection(supabase, campaignId) : null;
+
   return {
     id: c.id,
     name: c.name,
@@ -64,7 +70,8 @@ export async function getCampaignSettings(
       calendar: true,
       journal: true,
     },
-    isCreator: c.creator_id === viewerId,
+    isCreator,
     members,
+    familiar,
   };
 }

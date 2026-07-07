@@ -150,6 +150,14 @@ export type JournalSessionImageRow = {
   created_at: string;
 };
 
+export type FamiliarConnectionRow = {
+  campaign_id: string;
+  ingest_token: string;
+  created_at: string;
+  last_recap_at: string | null;
+  recap_count: number;
+};
+
 export type JournalCommentRow = {
   id: string;
   session_id: string;
@@ -446,6 +454,20 @@ export type Database = {
         Update: Partial<JournalSessionImageRow>;
         Relationships: [
           Rel<"journal_session_images_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
+        ];
+      };
+      familiar_connections: {
+        Row: FamiliarConnectionRow;
+        Insert: {
+          campaign_id: string;
+          ingest_token: string;
+          created_at?: string;
+          last_recap_at?: string | null;
+          recap_count?: number;
+        };
+        Update: Partial<FamiliarConnectionRow>;
+        Relationships: [
+          Rel<"familiar_connections_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
         ];
       };
       journal_session_revisions: {

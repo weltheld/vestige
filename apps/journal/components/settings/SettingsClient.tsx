@@ -17,6 +17,7 @@ import {
   deleteCampaign,
 } from "@/app/c/[campaignId]/settings/actions";
 import { pickImageFile, uploadCampaignBanner } from "@/lib/upload";
+import { FamiliarSettings } from "./FamiliarSettings";
 
 export function SettingsClient({ settings }: { settings: CampaignSettings }) {
   const router = useRouter();
@@ -204,6 +205,15 @@ export function SettingsClient({ settings }: { settings: CampaignSettings }) {
             />
           </div>
         </Section>
+
+        {isCreator && settings.familiar && (
+          <>
+            <Divider />
+            <Section label="Familiar — auto-recaps">
+              <FamiliarSettings campaignId={id} connection={settings.familiar} />
+            </Section>
+          </>
+        )}
 
         {isCreator && (
           <>

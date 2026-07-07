@@ -4,9 +4,11 @@ import { BookOpen } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember } from "@/lib/data";
 import { getCampaignHeader, getSessions } from "@/lib/sessions";
+import { getFamiliarStatus } from "@/lib/familiar";
 import { appHref, journal } from "@/lib/links";
 import { SessionHero, startedSubtitle } from "@/components/SessionHero";
 import { SessionCard } from "@/components/SessionCard";
+import { FamiliarCard } from "@/components/FamiliarCard";
 
 export default async function SessionListPage({
   params,
@@ -21,9 +23,10 @@ export default async function SessionListPage({
   const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!campaign) redirect(appHref());
 
-  const [header, sessions] = await Promise.all([
+  const [header, sessions, familiarStatus] = await Promise.all([
     getCampaignHeader(supabase, campaignId, { name: campaign.name, coverUrl: campaign.imageUrl }),
     getSessions(supabase, campaignId),
+    getFamiliarStatus(campaignId),
   ]);
 
   return (
@@ -60,6 +63,8 @@ export default async function SessionListPage({
           ))}
         </div>
       )}
+
+      <FamiliarCard campaignId={campaignId} status={familiarStatus} />
     </main>
   );
 }
