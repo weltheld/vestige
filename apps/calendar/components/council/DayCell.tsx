@@ -100,7 +100,7 @@ export function DayCell({
   const bgTint = !day.inCurrentMonth
     ? "bg-transparent"
     : !isViableWeekday
-      ? "bg-[color-mix(in_srgb,var(--ink)_7%,var(--surface))]"
+      ? "bg-surface"
       : myVote === "yes"
         ? "bg-[color-mix(in_srgb,var(--vote-yes)_22%,var(--surface))]"
         : myVote === "no"
@@ -123,7 +123,10 @@ export function DayCell({
         "relative flex h-full min-h-[70px] w-full flex-col rounded-md border p-1.5 text-left transition lg:min-h-[78px]",
         bgTint,
         day.inCurrentMonth ? "border-hairline/70" : "border-transparent opacity-40",
-        !isViableWeekday && day.inCurrentMonth && "cursor-not-allowed",
+        // Grey non-selectable days out via opacity — composites toward the
+        // page background, so it reads as muted/disabled in every theme
+        // (a colour-mix tint flips direction between light and dark themes).
+        !isViableWeekday && day.inCurrentMonth && "cursor-not-allowed opacity-55",
         day.isPast && day.inCurrentMonth && "cursor-not-allowed opacity-55",
         interactive && "hover:border-ink/40 cursor-pointer",
         isBestDay && "border-dm-gold/80 ring-1 ring-dm-gold/40",
@@ -140,7 +143,6 @@ export function DayCell({
             className={cn(
               "font-display text-sm leading-none",
               day.isToday && "text-wine font-bold",
-              !isViableWeekday && day.inCurrentMonth && "text-ink-soft/40",
             )}
           >
             {day.dayOfMonth}
