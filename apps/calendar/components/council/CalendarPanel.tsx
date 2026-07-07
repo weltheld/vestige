@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   buildMonthGrid,
@@ -110,10 +110,36 @@ export function CalendarPanel({
     queueMicrotask(() => onDaysChange(days));
   }
 
+  // Direction of the last month change — drives the slide-in animation
+  // (grid slides from the side you're navigating toward). null on first
+  // render so the initial mount doesn't animate.
+  const [slideDir, setSlideDir] = useState<-1 | 1 | null>(null);
+
   function go(delta: -1 | 1) {
     const m = delta === -1 ? prevMonth(year, monthIndex) : nextMonth(year, monthIndex);
+    setSlideDir(delta);
     setMonth(m);
     onMonthChange?.(m.year, m.monthIndex);
+  }
+
+  // Horizontal swipe on the grid switches months (mobile/tablet — but it
+  // works with any touch input). Mostly-horizontal + a minimum distance so
+  // vertical scrolling and taps never trigger it.
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  function onTouchStart(e: React.TouchEvent) {
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    // Swipe left = forward (next month), swipe right = back.
+    go(dx < 0 ? 1 : -1);
   }
 
   return (
@@ -167,7 +193,15 @@ export function CalendarPanel({
         ))}
       </div>
 
-      <div className="grid flex-1 grid-cols-7 auto-rows-fr gap-1">
+      {/* key on the month so the slide-in animation re-runs on each change */}
+      <div
+        key={`${year}-${monthIndex}`}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        className={`grid flex-1 grid-cols-7 auto-rows-fr gap-1 ${
+          slideDir === 1 ? "month-slide-next" : slideDir === -1 ? "month-slide-prev" : ""
+        }`}
+      >
         {days.map((d) => (
           <DayCell
             key={d.iso}

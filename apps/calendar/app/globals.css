@@ -198,3 +198,39 @@ html, body {
     transform: translateX(350%);
   }
 }
+
+/* Month-change transition — the grid slides subtly in from the side you're
+   navigating toward and fades in. Re-triggered by keying the grid wrapper
+   on the month. */
+@keyframes month-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes month-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.month-slide-next {
+  animation: month-in-right 0.22s ease-out;
+}
+.month-slide-prev {
+  animation: month-in-left 0.22s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .month-slide-next,
+  .month-slide-prev {
+    animation: none;
+  }
+}

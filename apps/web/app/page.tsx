@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Calendar, BookOpen, Users, ArrowRight } from "lucide-react";
+import { Calendar, BookOpen, Users } from "lucide-react";
 import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -46,103 +46,7 @@ function Hero() {
         </Link>
       </div>
 
-      <div className="mt-6 grid w-full max-w-[1000px] gap-6 md:grid-cols-2">
-        <PreviewCard
-          label="Calendar"
-          href="/features/calendar"
-          title="Find the next session"
-          body="Your party votes whole-day availability. Vestige finds the best date."
-        >
-          <MiniCalendar />
-        </PreviewCard>
-        <PreviewCard
-          label="Journal"
-          href="/features/journal"
-          title="Remember every session"
-          body="Capture recaps, characters, NPCs, and annotations. One living book per campaign."
-        >
-          <MiniJournal />
-        </PreviewCard>
-      </div>
     </section>
-  );
-}
-
-function PreviewCard({
-  label,
-  href,
-  title,
-  body,
-  children,
-}: {
-  label: string;
-  href: string;
-  title: string;
-  body: string;
-  children: React.ReactNode;
-}) {
-  const Icon = label === "Calendar" ? Calendar : BookOpen;
-  return (
-    <Link
-      href={href}
-      className="group flex flex-col gap-3.5 rounded-2xl border border-hairline bg-cod-soft p-6 text-left transition hover:border-gold"
-    >
-      <div className="flex items-center gap-2 text-gold">
-        <Icon size={14} />
-        <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em]">
-          {label}
-        </span>
-      </div>
-      <h3 className="font-display text-[22px] font-semibold text-ink">{title}</h3>
-      <p className="font-body text-[13px] leading-[1.6] text-ink-soft">{body}</p>
-      <div className="mt-1">{children}</div>
-      <span className="mt-2 inline-flex items-center gap-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-wine">
-        Explore {label}
-        <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
-      </span>
-    </Link>
-  );
-}
-
-function MiniCalendar() {
-  // Decorative 4×7 grid; a few tinted cells suggest votes + a chosen day.
-  const yes = new Set([3, 9, 16, 17, 24]);
-  const best = 17;
-  return (
-    <div className="grid grid-cols-7 gap-1.5">
-      {Array.from({ length: 28 }, (_, i) => (
-        <div
-          key={i}
-          className={[
-            "aspect-square rounded-[5px] border",
-            i === best
-              ? "border-wine bg-wine/15"
-              : yes.has(i)
-                ? "border-transparent bg-vote-yes/20"
-                : "border-hairline/70 bg-surface",
-          ].join(" ")}
-        />
-      ))}
-    </div>
-  );
-}
-
-function MiniJournal() {
-  return (
-    <div className="relative">
-      <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-        Session 07
-      </p>
-      <p className="mt-1 font-display text-base text-wine">The Trial at Silverhold</p>
-      <div className="mt-3 space-y-2">
-        <div className="h-0.5 w-full max-w-[260px] rounded bg-hairline" />
-        <div className="h-0.5 w-[88%] max-w-[230px] rounded bg-hairline" />
-        <div className="h-0.5 w-[76%] max-w-[200px] rounded bg-hairline" />
-      </div>
-      <span className="mt-3 inline-flex items-center rounded-lg bg-cod-soft px-3 py-2 font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-gold">
-        + Annotate
-      </span>
-    </div>
   );
 }
 
