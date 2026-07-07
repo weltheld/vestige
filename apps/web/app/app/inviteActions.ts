@@ -1,10 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import {
-  getServerSupabase,
-  getServiceRoleSupabase,
-} from "@/lib/supabase/server";
+import { getServerSupabase, getServiceRoleSupabase } from "@vestige/db/server";
 
 export type InviteResponseResult = { ok: true } | { ok: false; error: string };
 
@@ -39,17 +36,15 @@ export async function acceptInvitationAction(
     return { ok: false, error: "This invitation isn't addressed to you." };
   }
 
-  const { error: memberError } = await admin
-    .from("campaign_members")
-    .upsert(
-      {
-        campaign_id: inv.campaign_id,
-        user_id: user.id,
-        role: "participant",
-        is_dm: false,
-      },
-      { onConflict: "campaign_id,user_id", ignoreDuplicates: true },
-    );
+  const { error: memberError } = await admin.from("campaign_members").upsert(
+    {
+      campaign_id: inv.campaign_id,
+      user_id: user.id,
+      role: "participant",
+      is_dm: false,
+    },
+    { onConflict: "campaign_id,user_id", ignoreDuplicates: true },
+  );
   if (memberError) return { ok: false, error: memberError.message };
 
   await admin
@@ -57,7 +52,7 @@ export async function acceptInvitationAction(
     .update({ status: "joined", user_id: user.id })
     .eq("id", invitationId);
 
-  revalidatePath("/home");
+  revalidatePath("/app");
   return { ok: true };
 }
 
@@ -83,6 +78,6 @@ export async function declineInvitationAction(
   }
 
   await admin.from("invitations").delete().eq("id", invitationId);
-  revalidatePath("/home");
+  revalidatePath("/app");
   return { ok: true };
 }

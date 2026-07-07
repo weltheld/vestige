@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getServerSupabase } from "@vestige/db/server";
+import { getServerSupabase, getServiceRoleSupabase } from "@vestige/db/server";
 import { VestigeHeader, PlatformFooter } from "@vestige/ui";
 import { getMyCampaigns } from "@/lib/campaigns";
 import { getRecentActivity } from "@/lib/activity";
@@ -7,6 +7,7 @@ import { getUpcomingSlots } from "@/lib/upcoming";
 import { resolveDefaultCampaign } from "@/lib/last-campaign";
 import { RecentActivity } from "@/components/RecentActivity";
 import { UpcomingRail } from "@/components/UpcomingRail";
+import { PendingInvites, type PendingInvite } from "@/components/PendingInvites";
 
 export default async function AppHome() {
   const supabase = await getServerSupabase();
@@ -40,10 +41,11 @@ export default async function AppHome() {
     "Adventurer";
 
   // All three only need `campaigns`, not each other.
-  const [defaultCampaign, activity, upcoming] = await Promise.all([
+  const [defaultCampaign, activity, upcoming, pendingInvites] = await Promise.all([
     resolveDefaultCampaign(supabase, user.id, campaigns),
     getRecentActivity(supabase, campaigns),
     getUpcomingSlots(supabase, campaigns),
+    getPendingInvites(supabase, user.id, user.email ?? "", campaigns.map((c) => c.id)),
   ]);
 
   const headerCampaigns = campaigns.map((c) => ({
@@ -74,6 +76,7 @@ export default async function AppHome() {
         campaigns={headerCampaigns}
       />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+        {pendingInvites.length > 0 && <PendingInvites invites={pendingInvites} />}
         <h1 className="mb-6 font-display text-2xl font-bold leading-snug text-ink sm:text-[28px]">
           Welcome back, {firstName}!
         </h1>
@@ -92,4 +95,45 @@ export default async function AppHome() {
       <PlatformFooter />
     </div>
   );
+}
+
+/**
+ * Pending invitations addressed to this user (existing-user in-app invites,
+ * not the email/magic-link kind, which auto-enrol on sign-in instead). They
+ * are NOT members until they accept. RLS lets a user read their own
+ * invitations; campaign names are fetched with the service role since they
+ * aren't members of those campaigns yet. Ported from Calendar's own
+ * dashboard (/home), which this page replaces.
+ */
+async function getPendingInvites(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+  userId: string,
+  email: string,
+  memberCampaignIds: string[],
+): Promise<PendingInvite[]> {
+  const myEmail = email.toLowerCase();
+  const { data: inviteRows } = await supabase
+    .from("invitations")
+    .select("id, campaign_id, status, user_id, email")
+    .neq("status", "joined");
+  const myInvites = (inviteRows ?? []).filter(
+    (i) =>
+      (i.user_id === userId || (i.email && i.email.toLowerCase() === myEmail)) &&
+      !memberCampaignIds.includes(i.campaign_id),
+  );
+  if (myInvites.length === 0) return [];
+
+  const admin = getServiceRoleSupabase();
+  const { data: inviteCampaigns } = await admin
+    .from("campaigns")
+    .select("id, name")
+    .in(
+      "id",
+      myInvites.map((i) => i.campaign_id),
+    );
+  const nameById = new Map((inviteCampaigns ?? []).map((c) => [c.id, c.name] as const));
+  return myInvites.map((i) => ({
+    id: i.id,
+    campaignName: nameById.get(i.campaign_id) ?? "A campaign",
+  }));
 }

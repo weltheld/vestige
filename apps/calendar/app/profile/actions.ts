@@ -6,6 +6,7 @@ import {
   getServerSupabase,
   getServiceRoleSupabase,
 } from "@/lib/supabase/server";
+import { PLATFORM_URL } from "@/lib/basePath";
 
 export type UploadAvatarResult =
   | { ok: true; url: string }
@@ -110,5 +111,8 @@ export async function updateProfileAction(
   }
 
   revalidatePath("/profile");
-  return { ok: true, nextHref: "/home" };
+  // If they're already a member of a campaign, send them there; otherwise
+  // the unified platform home (cross-zone — Calendar has no dashboard of
+  // its own anymore).
+  return { ok: true, nextHref: slug ? `/g/${slug}` : `${PLATFORM_URL}/app` };
 }

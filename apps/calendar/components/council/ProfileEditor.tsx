@@ -92,6 +92,10 @@ export function ProfileEditor({
       if (mode === "dialog") {
         onClose?.();
         router.refresh();
+      } else if (result.nextHref.startsWith("http")) {
+        // Cross-zone (the unified platform home) — router.push can't
+        // navigate outside this Next.js app.
+        window.location.assign(result.nextHref);
       } else {
         router.push(result.nextHref);
         router.refresh();

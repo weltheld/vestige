@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "./database.types";
 import { publicSupabaseAnonKey, publicSupabaseUrl } from "./env";
+import { PLATFORM_URL } from "@/lib/basePath";
 
 const PROTECTED_PATHS = ["/profile", "/new", "/g/", "/home"];
 
@@ -48,9 +49,9 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && (pathname === "/" || pathname === "/login")) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/home";
-    return NextResponse.redirect(redirectUrl);
+    // Calendar has no dashboard of its own anymore — an already-signed-in
+    // visitor lands on the unified platform home instead (cross-zone).
+    return NextResponse.redirect(new URL(`${PLATFORM_URL}/app`));
   }
 
   return response;

@@ -3,7 +3,7 @@ import {
   getServerSupabase,
   getServiceRoleSupabase,
 } from "@/lib/supabase/server";
-import { withBasePath } from "@/lib/basePath";
+import { withBasePath, PLATFORM_URL } from "@/lib/basePath";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -34,7 +34,12 @@ export async function GET(request: NextRequest) {
   }
 
   const target = await resolveDestination(supabase, next);
-  return NextResponse.redirect(new URL(withBasePath(target), origin));
+  // resolveDestination can point cross-zone (the unified platform home);
+  // only prepend this app's own basePath for same-zone targets.
+  const url = target.startsWith("http")
+    ? new URL(target)
+    : new URL(withBasePath(target), origin);
+  return NextResponse.redirect(url);
 }
 
 /**
@@ -43,7 +48,8 @@ export async function GET(request: NextRequest) {
  *  - Email invitations addressed to their address are claimed → membership.
  *  - A magic invite link (next=/g/<slug>) joins them to that campaign.
  * In-app invites of existing users (which carry a user_id, no email) are left
- * untouched — those still go through the explicit Accept/Decline flow on /home.
+ * untouched — those still go through the explicit Accept/Decline flow on the
+ * unified platform home (PLATFORM_URL/app).
  */
 async function autoEnroll(userId: string, email: string, next: string) {
   const admin = getServiceRoleSupabase();
@@ -99,7 +105,8 @@ async function autoEnroll(userId: string, email: string, next: string) {
  * Decide where to land after a magic-link sign-in:
  * - New/incomplete profile → onboarding (/profile).
  * - Explicit destination (e.g. an invite link) → honour it.
- * - Otherwise (a normal returning login) → their campaign calendar, or /home.
+ * - Otherwise (a normal returning login) → their campaign calendar, or the
+ *   unified platform home (PLATFORM_URL/app) if they're in no campaign.
  */
 async function resolveDestination(
   supabase: Awaited<ReturnType<typeof getServerSupabase>>,
@@ -124,7 +131,8 @@ async function resolveDestination(
   // Honour an explicit destination (invite links use next=/g/<slug>).
   if (next && next !== "/profile") return next;
 
-  // Returning login → most recent campaign calendar, else the home list.
+  // Returning login → most recent campaign calendar, else the unified
+  // platform home (cross-zone — Calendar no longer has its own dashboard).
   const { data: membership } = await supabase
     .from("campaign_members")
     .select("campaign_id")
@@ -140,5 +148,5 @@ async function resolveDestination(
       .maybeSingle();
     if (campaign?.slug) return `/g/${campaign.slug}`;
   }
-  return "/home";
+  return `${PLATFORM_URL}/app`;
 }
