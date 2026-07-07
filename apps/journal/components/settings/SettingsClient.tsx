@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, CalendarDays, BookOpen, ImagePlus } from "lucide-react";
+import { X, CalendarDays, BookOpen, ImagePlus, Loader2 } from "lucide-react";
 import { PageTitle } from "@vestige/ui";
 import type { CampaignSettings } from "@/lib/campaign-settings";
 import { journal } from "@/lib/links";
@@ -27,7 +27,27 @@ export function SettingsClient({ settings }: { settings: CampaignSettings }) {
   const [invites, setInvites] = useState("");
   const [coverUrl, setCoverUrl] = useState(settings.coverUrl);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
   const refresh = () => router.refresh();
+
+  async function changeCover() {
+    const file = await pickImageFile();
+    if (!file) return;
+    setCoverError(null);
+    setUploadingCover(true);
+    try {
+      const url = await uploadCampaignBanner(id, file);
+      await setCampaignCover(id, url);
+      setCoverUrl(url);
+    } catch (err) {
+      // Surface the real reason instead of silently doing nothing — the old
+      // hover-only "Uploading…" hint made a failed upload look like a no-op,
+      // especially on touch devices where there is no hover.
+      setCoverError(err instanceof Error ? err.message : "Upload failed. Please try again.");
+    } finally {
+      setUploadingCover(false);
+    }
+  }
 
   async function toggleModule(key: "calendar" | "journal") {
     const next = { ...modules, [key]: !modules[key] };
@@ -85,33 +105,43 @@ export function SettingsClient({ settings }: { settings: CampaignSettings }) {
 
         <Divider />
         <Section label="Campaign Cover">
-          <button
-            type="button"
-            disabled={!isCreator || uploadingCover}
-            onClick={async () => {
-              const file = await pickImageFile();
-              if (!file) return;
-              setUploadingCover(true);
-              try {
-                const url = await uploadCampaignBanner(id, file);
-                await setCampaignCover(id, url);
-                setCoverUrl(url);
-              } finally {
-                setUploadingCover(false);
-              }
-            }}
-            className="group relative h-[100px] w-[140px] overflow-hidden rounded-lg bg-cod-soft disabled:cursor-default"
-          >
-            {coverUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              disabled={!isCreator || uploadingCover}
+              onClick={changeCover}
+              className="group relative flex h-[120px] w-[200px] items-center justify-center overflow-hidden rounded-lg border border-hairline bg-cod-soft disabled:cursor-default"
+            >
+              {coverUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+              )}
+
+              {/* Uploading state — always visible (not hover-gated), so it
+                  gives feedback on touch devices too. */}
+              {uploadingCover ? (
+                <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/50 text-[12px] text-white">
+                  <Loader2 size={15} className="animate-spin" /> Uploading…
+                </div>
+              ) : !coverUrl && isCreator ? (
+                // Empty-state affordance so it's obviously an upload target
+                // even without hover.
+                <span className="flex flex-col items-center gap-1 text-muted">
+                  <ImagePlus size={20} />
+                  <span className="font-body text-[11px] italic">Add a cover</span>
+                </span>
+              ) : (
+                isCreator && (
+                  <div className="absolute inset-0 hidden items-center justify-center gap-1.5 bg-black/40 text-[12px] text-white group-hover:flex">
+                    <ImagePlus size={14} /> Change
+                  </div>
+                )
+              )}
+            </button>
+            {coverError && (
+              <p className="font-body text-[12px] text-vote-no">{coverError}</p>
             )}
-            {isCreator && (
-              <div className="absolute inset-0 hidden items-center justify-center bg-black/40 text-[11px] text-white group-hover:flex">
-                <ImagePlus size={14} className="mr-1" /> {uploadingCover ? "Uploading…" : "Change"}
-              </div>
-            )}
-          </button>
+          </div>
         </Section>
 
         <Divider />
