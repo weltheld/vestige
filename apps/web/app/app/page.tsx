@@ -62,6 +62,7 @@ export default async function AppHome() {
         user={{ label, avatarUrl: profile?.avatar_url ?? null }}
         calendarHref={defaultCampaign?.slug ? `/calendar/g/${defaultCampaign.slug}` : undefined}
         journalHref={defaultCampaign ? `/journal/c/${defaultCampaign.id}` : undefined}
+        manageHref={defaultCampaign?.slug ? `/calendar/g/${defaultCampaign.slug}/invite` : undefined}
         currentCampaign={
           defaultCampaign
             ? {

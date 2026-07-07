@@ -88,13 +88,16 @@ export function CampaignSelector({
 
           {manageHref && (
             <DropdownMenu.Item asChild>
-              <Link
+              {/* Plain <a>, not <Link> — manageHref can point cross-zone
+                  (e.g. web -> Calendar's invite page), and Next's Link only
+                  soft-navigates within its own app's route manifest. */}
+              <a
                 href={manageHref}
                 className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
               >
                 <Settings2 size={13} className="text-muted" />
                 Manage this campaign
-              </Link>
+              </a>
             </DropdownMenu.Item>
           )}
         </DropdownMenu.Content>
