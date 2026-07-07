@@ -88,6 +88,9 @@ export function DayCell({
 
   const interactive =
     day.inCurrentMonth && isViableWeekday && !day.isPast && !!myUserId;
+  // In-month days that can never be voted on: past days and non-viable
+  // weekdays. Rendered de-emphasised (no border, low opacity).
+  const isDisabled = day.inCurrentMonth && (day.isPast || !isViableWeekday);
 
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
 
@@ -122,12 +125,15 @@ export function DayCell({
       className={cn(
         "relative flex h-full min-h-[70px] w-full flex-col rounded-md border p-1.5 text-left transition lg:min-h-[78px]",
         bgTint,
-        day.inCurrentMonth ? "border-hairline/70" : "border-transparent opacity-40",
-        // Grey non-selectable days out via opacity — composites toward the
-        // page background, so it reads as muted/disabled in every theme
-        // (a colour-mix tint flips direction between light and dark themes).
-        !isViableWeekday && day.inCurrentMonth && "cursor-not-allowed opacity-55",
-        day.isPast && day.inCurrentMonth && "cursor-not-allowed opacity-55",
+        // Disabled days (past or non-viable) recede hard — no card border and
+        // low opacity — so they don't read as tappable. Opacity composites
+        // toward the page background, so it works in every theme (a colour-mix
+        // tint flips direction between light and dark themes).
+        isDisabled
+          ? "cursor-not-allowed border-transparent opacity-40"
+          : day.inCurrentMonth
+            ? "border-hairline/70"
+            : "border-transparent opacity-40",
         interactive && "hover:border-ink/40 cursor-pointer",
         isBestDay && "border-dm-gold/80 ring-1 ring-dm-gold/40",
       )}
