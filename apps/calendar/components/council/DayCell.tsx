@@ -100,9 +100,12 @@ export function DayCell({
   // Tints are mixed from the themed vote/surface tokens (not fixed hexes) so
   // they stay opaque and legible under every theme — a soft tint on the light
   // themes, a subtle one on the dark themes.
+  // Past days show as plain/disabled, same as non-viable weekdays — voting
+  // is closed by then, so there's no reason to keep surfacing what you
+  // voted (or didn't) once the date can't change.
   const bgTint = !day.inCurrentMonth
     ? "bg-transparent"
-    : !isViableWeekday
+    : !isViableWeekday || day.isPast
       ? "bg-surface"
       : myVote === "yes"
         ? "bg-[color-mix(in_srgb,var(--vote-yes)_22%,var(--surface))]"

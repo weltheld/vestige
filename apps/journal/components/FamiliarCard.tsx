@@ -11,14 +11,50 @@ const BENEFITS = [
 ];
 
 /** Promo + connection status for the Familiar recap app, on the campaign
- *  journal page. Visible to everyone; the ingest token lives in settings. */
+ *  journal page. Visible to everyone; the ingest token lives in settings.
+ *  `compact` drops the benefits list and full paragraph for use in the
+ *  narrow campaign sidebar. */
 export function FamiliarCard({
   campaignId,
   status,
+  compact = false,
 }: {
   campaignId: string;
   status: FamiliarStatus;
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <section className="flex flex-col gap-2 rounded-xl border border-hairline bg-cod-soft p-3.5">
+        <div className="flex items-center gap-1.5">
+          <Sparkles size={13} className="shrink-0 text-gold" />
+          <h2 className="font-display text-[12px] font-bold text-ink">Familiar</h2>
+        </div>
+        <StatusPill status={status} />
+        <p className="font-body text-[11px] leading-[1.5] text-ink-soft">
+          Auto-recaps your session from Discord into this journal.
+        </p>
+        <div className="flex items-center justify-between gap-2">
+          <a
+            href={FAMILIAR_DOWNLOAD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-display text-[10px] font-semibold uppercase tracking-wide text-wine hover:brightness-110"
+          >
+            <Download size={11} />
+            Get it
+          </a>
+          <Link
+            href={journal.settings(campaignId)}
+            className="font-body text-[10px] text-ink-soft underline underline-offset-2 hover:text-ink"
+          >
+            {status.connected ? "Manage →" : "Connect →"}
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="flex flex-col gap-4 rounded-xl border border-hairline bg-cod-soft p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
