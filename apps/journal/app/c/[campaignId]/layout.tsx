@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
 import { VestigeHeader, PlatformFooter } from "@vestige/ui";
 import { getViewer, getMyCampaigns, getCampaignIfMember } from "@/lib/data";
-import { appHref, calendarCampaignHref, journal } from "@/lib/links";
+import { appHref, calendarCampaignHref, journal, WEB_URL } from "@/lib/links";
 
 export default async function CampaignLayout({
   children,
@@ -40,13 +40,11 @@ export default async function CampaignLayout({
         campaigns={campaigns}
         journalHref={journal.campaign(campaignId)}
         calendarHref={campaign.slug ? calendarCampaignHref(campaign.slug) : undefined}
-        // manageHref renders via a plain <a> (fixed cross-zone use elsewhere
-        // in the shared header), which — unlike next/link's <Link> — does
-        // NOT auto-prepend this app's basePath ("/journal"). journal.settings()
-        // returns a bare app-relative path meant for <Link>; without the
-        // explicit prefix here this 404'd at the platform root instead of
-        // landing under /journal.
-        manageHref={`/journal${journal.settings(campaignId)}`}
+        // "Manage campaign" is a platform-level screen living in web — one
+        // canonical invite/party surface for every app. Absolute cross-zone
+        // URL (rendered via a plain <a>): from Journal it opens web's
+        // standalone manage page.
+        manageHref={`${WEB_URL}/app/c/${campaignId}/manage`}
       />
       <div className="flex-1">{children}</div>
       <PlatformFooter />

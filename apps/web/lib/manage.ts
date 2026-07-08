@@ -1,0 +1,157 @@
+import "server-only";
+
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@vestige/db";
+import { getServiceRoleSupabase } from "@vestige/db/server";
+
+type SB = SupabaseClient<Database>;
+
+export type ManageMember = {
+  userId: string;
+  isDm: boolean;
+  name: string;
+  avatarUrl: string | null;
+};
+export type ManageInvitation = {
+  id: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+  status: string;
+  emailInvite: boolean;
+};
+export type ManageAddable = {
+  userId: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+};
+
+export type ManageData = {
+  campaignId: string;
+  slug: string;
+  name: string;
+  isCreator: boolean;
+  members: ManageMember[];
+  invitations: ManageInvitation[];
+  addableUsers: ManageAddable[];
+};
+
+/** Everything the manage/invite screen needs. Returns null if the campaign
+ *  doesn't exist or the viewer isn't its creator (only creators manage). */
+export async function getManageData(
+  supabase: SB,
+  campaignId: string,
+  userId: string,
+): Promise<ManageData | null> {
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("id, slug, name, creator_id")
+    .eq("id", campaignId)
+    .maybeSingle();
+  if (!campaign || campaign.creator_id !== userId) return null;
+
+  const [{ data: members }, { data: invitations }] = await Promise.all([
+    supabase
+      .from("campaign_members")
+      .select("user_id, is_dm")
+      .eq("campaign_id", campaignId),
+    supabase
+      .from("invitations")
+      .select("id, email, user_id, status")
+      .eq("campaign_id", campaignId),
+  ]);
+
+  const ids = new Set<string>();
+  for (const m of members ?? []) ids.add(m.user_id);
+  for (const i of invitations ?? []) if (i.user_id) ids.add(i.user_id);
+  const { data: profiles } = ids.size
+    ? await supabase
+        .from("profiles")
+        .select("id, first_name, display_name, email, avatar_url")
+        .in("id", [...ids])
+    : { data: [] };
+  const profById = new Map((profiles ?? []).map((p) => [p.id, p] as const));
+  const nameOf = (p: { first_name: string | null; display_name: string | null } | undefined) =>
+    p?.first_name?.trim() || p?.display_name?.trim() || "Adventurer";
+
+  const memberList: ManageMember[] = (members ?? [])
+    .map((m) => {
+      const p = profById.get(m.user_id);
+      return { userId: m.user_id, isDm: m.is_dm, name: nameOf(p), avatarUrl: p?.avatar_url ?? null };
+    })
+    .sort((a, b) => (a.isDm === b.isDm ? 0 : a.isDm ? -1 : 1));
+
+  const invitationList: ManageInvitation[] = (invitations ?? [])
+    .filter((i) => i.status !== "joined")
+    .map((i) => {
+      const p = i.user_id ? profById.get(i.user_id) : undefined;
+      return {
+        id: i.id,
+        name: p ? nameOf(p) : null,
+        email: i.email ?? p?.email ?? "",
+        avatarUrl: p?.avatar_url ?? null,
+        status: i.status,
+        emailInvite: !i.user_id,
+      };
+    });
+
+  // People this creator invited (to any of their campaigns) who aren't in
+  // any campaign yet — addable directly. Uses the service role because they
+  // aren't members of this campaign, so RLS wouldn't let the creator read
+  // their profiles otherwise.
+  const admin = getServiceRoleSupabase();
+  const { data: myCampaigns } = await admin
+    .from("campaigns")
+    .select("id")
+    .eq("creator_id", userId);
+  const myIds = (myCampaigns ?? []).map((c) => c.id);
+  let addableUsers: ManageAddable[] = [];
+  if (myIds.length) {
+    const { data: myInvites } = await admin
+      .from("invitations")
+      .select("user_id, email")
+      .in("campaign_id", myIds);
+    const invIds = new Set<string>();
+    const invEmails = new Set<string>();
+    for (const i of myInvites ?? []) {
+      if (i.user_id) invIds.add(i.user_id);
+      if (i.email) invEmails.add(i.email.toLowerCase());
+    }
+    const [{ data: byId }, { data: byEmail }] = await Promise.all([
+      invIds.size
+        ? admin.from("profiles").select("id, first_name, display_name, email, avatar_url").in("id", [...invIds])
+        : Promise.resolve({ data: [] as NonNullable<Awaited<ReturnType<typeof admin.from>>["data"]> }),
+      invEmails.size
+        ? admin.from("profiles").select("id, first_name, display_name, email, avatar_url").in("email", [...invEmails])
+        : Promise.resolve({ data: [] as NonNullable<Awaited<ReturnType<typeof admin.from>>["data"]> }),
+    ]);
+    type Cand = { id: string; first_name: string | null; display_name: string | null; email: string | null; avatar_url: string | null };
+    const cand = new Map<string, Cand>();
+    for (const p of [...((byId as Cand[]) ?? []), ...((byEmail as Cand[]) ?? [])]) cand.set(p.id, p);
+    const candIds = [...cand.keys()];
+    if (candIds.length) {
+      const { data: allocated } = await admin
+        .from("campaign_members")
+        .select("user_id")
+        .in("user_id", candIds);
+      const taken = new Set((allocated ?? []).map((m) => m.user_id));
+      addableUsers = candIds
+        .filter((id) => !taken.has(id))
+        .map((id) => {
+          const p = cand.get(id)!;
+          return { userId: id, name: nameOf(p), email: p.email ?? "", avatarUrl: p.avatar_url ?? null };
+        });
+    }
+  }
+
+  return {
+    campaignId,
+    slug: campaign.slug,
+    name: campaign.name,
+    isCreator: true,
+    members: memberList,
+    invitations: invitationList,
+    addableUsers,
+  };
+}
