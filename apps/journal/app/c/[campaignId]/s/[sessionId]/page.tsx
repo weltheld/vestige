@@ -24,9 +24,13 @@ export default async function SessionDetailPage({
   const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!campaign) redirect(appHref());
 
-  const session = await getSessionDetail(supabase, campaignId, sessionId);
+  // Independent reads (revisions only needs the sessionId param) — fetched
+  // together instead of as a waterfall.
+  const [session, revisions] = await Promise.all([
+    getSessionDetail(supabase, campaignId, sessionId),
+    getRevisions(supabase, sessionId),
+  ]);
   if (!session) notFound();
-  const revisions = await getRevisions(supabase, sessionId);
 
   const num = String(session.number).padStart(2, "0");
   const subtitle = `${campaign.name} · ${session.date ? format(parseISO(session.date), "MMMM d, yyyy") : "Undated"}`;

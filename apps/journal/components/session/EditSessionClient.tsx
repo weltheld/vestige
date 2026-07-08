@@ -19,8 +19,21 @@ import {
   setSessionCoverImage,
   type SessionInput,
 } from "@/app/c/[campaignId]/s/actions";
-import { SectionEditor } from "./SectionEditor";
+import dynamic from "next/dynamic";
 import { pickImageFile, uploadJournalImage } from "@/lib/upload";
+
+// The tiptap editor stack is ~2/3 of this route's JS. Loading it lazily
+// (client-only) lets the page shell, sidebar, and title field paint first;
+// each editor hydrates a moment later behind a same-sized placeholder.
+const SectionEditor = dynamic(
+  () => import("./SectionEditor").then((m) => m.SectionEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[96px] animate-pulse rounded-md bg-[color-mix(in_srgb,var(--ink)_6%,var(--surface))]" />
+    ),
+  },
+);
 
 type EditCharacter = { id: string; name: string; role: "PC" | "NPC"; portraitUrl: string | null };
 

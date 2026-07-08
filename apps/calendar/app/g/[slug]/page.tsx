@@ -33,16 +33,39 @@ export default async function GroupPage({
     .maybeSingle();
   if (!campaign) notFound();
 
-  await supabase
-    .from("profiles")
-    .update({ last_campaign_id: campaign.id })
-    .eq("id", user.id);
+  // Everything below only needs campaign.id + user.id, so it all runs in
+  // one parallel wave: the last-campaign bookkeeping write (which nothing
+  // here reads back), the switcher's membership list, and the campaign's
+  // members/votes/sessions. Previously the write + switcher fetch were two
+  // extra sequential round-trips before the batch.
+  const [
+    ,
+    { data: myMemberships },
+    { data: membersRows },
+    { data: votesRows },
+    { data: sessionRows },
+  ] = await Promise.all([
+    supabase.from("profiles").update({ last_campaign_id: campaign.id }).eq("id", user.id),
+    supabase
+      .from("campaign_members")
+      .select("campaigns(id, slug, name, banner_url)")
+      .eq("user_id", user.id),
+    supabase
+      .from("campaign_members")
+      .select(
+        "campaign_id, user_id, role, is_dm, joined_at, character_name, avatar_url",
+      )
+      .eq("campaign_id", campaign.id),
+    supabase
+      .from("votes")
+      .select("*")
+      .eq("campaign_id", campaign.id),
+    supabase
+      .from("campaign_sessions")
+      .select("date")
+      .eq("campaign_id", campaign.id),
+  ]);
 
-  // All campaigns this user belongs to, for the header's campaign switcher.
-  const { data: myMemberships } = await supabase
-    .from("campaign_members")
-    .select("campaigns(id, slug, name, banner_url)")
-    .eq("user_id", user.id);
   const switcherCampaigns = (
     (myMemberships ?? []) as unknown as {
       campaigns: { id: string; slug: string; name: string; banner_url: string | null } | null;
@@ -51,25 +74,6 @@ export default async function GroupPage({
     .map((m) => m.campaigns)
     .filter((c): c is NonNullable<typeof c> => c !== null)
     .map((c) => ({ id: c.id, slug: c.slug, name: c.name, imageUrl: c.banner_url }));
-
-  // Load members + votes + sessions in parallel; then fetch profiles in one batch.
-  const [{ data: membersRows }, { data: votesRows }, { data: sessionRows }] =
-    await Promise.all([
-      supabase
-        .from("campaign_members")
-        .select(
-          "campaign_id, user_id, role, is_dm, joined_at, character_name, avatar_url",
-        )
-        .eq("campaign_id", campaign.id),
-      supabase
-        .from("votes")
-        .select("*")
-        .eq("campaign_id", campaign.id),
-      supabase
-        .from("campaign_sessions")
-        .select("date")
-        .eq("campaign_id", campaign.id),
-    ]);
 
   const memberUserIds = (membersRows ?? []).map((m) => m.user_id);
   const { data: profileRows } = memberUserIds.length
