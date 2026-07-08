@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Check, Settings2 } from "lucide-react";
 import { PLATFORM_URL } from "@/lib/basePath";
@@ -26,6 +26,7 @@ export function CampaignSwitcher({
   current: SwitcherCampaign;
   campaigns: SwitcherCampaign[];
 }) {
+  const router = useRouter();
   const list = campaigns.length ? campaigns : [current];
 
   return (
@@ -76,14 +77,17 @@ export function CampaignSwitcher({
 
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
 
-          <DropdownMenu.Item asChild>
-            <Link
-              href={`/g/${current.slug}/invite`}
-              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-            >
-              <Settings2 size={13} className="text-ink-soft" />
-              Manage this campaign
-            </Link>
+          <DropdownMenu.Item
+            // router.push in onSelect, not asChild+<Link> — Radix closes
+            // (unmounts) the dropdown synchronously on select, which can
+            // race an anchor's own client-side-navigation click handler and
+            // fall through to a full browser navigation instead. onSelect
+            // fires first and push()ing there sidesteps that race entirely.
+            onSelect={() => router.push(`/g/${current.slug}/invite`)}
+            className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+          >
+            <Settings2 size={13} className="text-ink-soft" />
+            Manage this campaign
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

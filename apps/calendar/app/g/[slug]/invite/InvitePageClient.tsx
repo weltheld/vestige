@@ -137,9 +137,7 @@ export function InvitePageClient({
         <Crest size={56} />
         <p className="small-caps">Vestige</p>
         <h1 className="font-display text-3xl text-ink">Manage campaign</h1>
-        <p className="font-body text-ink-soft italic">
-          {name} awaits its adventurers.
-        </p>
+        <p className="font-body text-ink-soft">{name}</p>
       </header>
 
       <section className="mt-7 space-y-2">

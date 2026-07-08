@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Pencil, LogOut, Settings2, Check, X } from "lucide-react";
 import { Avatar } from "./Avatar";
@@ -43,6 +43,7 @@ export function ProfileDialog({
   campaigns = [],
   onOpenPollSettings,
 }: Props) {
+  const router = useRouter();
   const onBanner = variant === "banner";
   const [open, setOpen] = useState(false);
   const campaignList = campaign ? (campaigns.length ? campaigns : [campaign]) : [];
@@ -98,17 +99,17 @@ export function ProfileDialog({
                     </DropdownMenu.Item>
                   );
                 })}
-                <DropdownMenu.Item asChild>
-                  {/* Same-zone relative link via next/link — this is what
-                      lets the intercepting route show it as a dialog above
-                      the current screen instead of a plain page. */}
-                  <Link
-                    href={`/g/${campaign.slug}/invite`}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-                  >
-                    <Settings2 size={13} className="text-ink-soft" />
-                    Manage this campaign
-                  </Link>
+                <DropdownMenu.Item
+                  // router.push in onSelect, not asChild+<Link> — Radix
+                  // closes (unmounts) the dropdown synchronously on select,
+                  // which can race an anchor's own client-navigation click
+                  // handler and fall through to a full browser navigation
+                  // instead. onSelect fires first, sidestepping that race.
+                  onSelect={() => router.push(`/g/${campaign.slug}/invite`)}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+                >
+                  <Settings2 size={13} className="text-ink-soft" />
+                  Manage this campaign
                 </DropdownMenu.Item>
                 <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
               </div>
