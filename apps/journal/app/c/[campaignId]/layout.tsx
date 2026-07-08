@@ -40,7 +40,13 @@ export default async function CampaignLayout({
         campaigns={campaigns}
         journalHref={journal.campaign(campaignId)}
         calendarHref={campaign.slug ? calendarCampaignHref(campaign.slug) : undefined}
-        manageHref={journal.settings(campaignId)}
+        // manageHref renders via a plain <a> (fixed cross-zone use elsewhere
+        // in the shared header), which — unlike next/link's <Link> — does
+        // NOT auto-prepend this app's basePath ("/journal"). journal.settings()
+        // returns a bare app-relative path meant for <Link>; without the
+        // explicit prefix here this 404'd at the platform root instead of
+        // landing under /journal.
+        manageHref={`/journal${journal.settings(campaignId)}`}
       />
       <div className="flex-1">{children}</div>
       <PlatformFooter />

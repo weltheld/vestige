@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { VenetianMask } from "lucide-react";
 import { getServerSupabase, getServiceRoleSupabase } from "@vestige/db/server";
 import { VestigeHeader, PlatformFooter } from "@vestige/ui";
 import { getMyCampaigns } from "@/lib/campaigns";
@@ -78,9 +79,23 @@ export default async function AppHome() {
       />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
         {pendingInvites.length > 0 && <PendingInvites invites={pendingInvites} />}
-        <h1 className="mb-6 font-display text-2xl font-bold leading-snug text-ink sm:text-[28px]">
-          Welcome back, {firstName}!
-        </h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-2xl font-bold leading-snug text-ink sm:text-[28px]">
+            Welcome back, {firstName}!
+          </h1>
+          {/* Cross-zone (Calendar owns campaign creation) — plain <a>, not
+              next/link's <Link>, which only soft-navigates within its own
+              app's route manifest. Restores the "Host a new campaign" entry
+              point that existed on Calendar's own retired /home dashboard;
+              it was dropped when that page was ported here. */}
+          <a
+            href="/calendar/new"
+            className="inline-flex items-center gap-2 rounded-md border border-hairline bg-surface px-3 py-2 font-display text-xs font-semibold tracking-wider uppercase text-ink-soft transition-colors hover:bg-cod-soft hover:text-ink"
+          >
+            <VenetianMask className="h-3.5 w-3.5 text-gold" />
+            Host a new campaign
+          </a>
+        </div>
         {campaigns.length === 0 ? (
           <p className="font-body text-ink-soft">
             You don&rsquo;t have any campaigns yet. Once you&rsquo;re added to one,
