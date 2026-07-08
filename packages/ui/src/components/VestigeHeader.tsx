@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { CalendarDays, ScrollText, LogOut, Pencil, ChevronDown, Check, Settings2 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
 import { CampaignSelector, type HeaderCampaign } from "./CampaignSelector";
 import { ThemePicker } from "./ThemePicker";
+import { ProfileEditDialog } from "./ProfileEditDialog";
 
 export type VestigeHeaderUser = {
   label: string;
@@ -24,8 +26,6 @@ export type { HeaderCampaign };
 // any relative <Link> href — a relative "/app" would wrongly become
 // "/journal/app" and 404. Cross-zone links always need to be absolute.
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3001";
-// Calendar's own env var already includes its "/calendar" basePath prefix.
-const CALENDAR_URL = process.env.NEXT_PUBLIC_CALENDAR_URL ?? "http://localhost:3000/calendar";
 
 type Props = {
   user: VestigeHeaderUser;
@@ -161,6 +161,7 @@ function ProfileMenu({
   campaigns: HeaderCampaign[];
   manageHref?: string;
 }) {
+  const [editOpen, setEditOpen] = useState(false);
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -226,14 +227,14 @@ function ProfileMenu({
               <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
             </div>
           )}
-          <DropdownMenu.Item asChild>
-            <a
-              href={`${CALENDAR_URL}/profile`}
-              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
-            >
-              <Pencil size={13} className="text-muted" />
-              Edit profile
-            </a>
+          <DropdownMenu.Item
+            // Opens the shared overlay in place (blurred backdrop + close-X),
+            // instead of a cross-zone navigation to Calendar's /profile page.
+            onSelect={() => setEditOpen(true)}
+            className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+          >
+            <Pencil size={13} className="text-muted" />
+            Edit profile
           </DropdownMenu.Item>
           {/* Theme — plain buttons (not menu items) so trying themes doesn't
               close the menu; the selection applies instantly. */}
@@ -253,6 +254,8 @@ function ProfileMenu({
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
+
+      <ProfileEditDialog open={editOpen} onClose={() => setEditOpen(false)} />
     </DropdownMenu.Root>
   );
 }
