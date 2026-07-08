@@ -193,11 +193,17 @@ export function CalendarPanel({
         ))}
       </div>
 
-      {/* key on the month so the slide-in animation re-runs on each change */}
+      {/* key on the month so the slide-in animation re-runs on each change.
+          touch-action: pan-y stops the browser's own horizontal pan/bounce
+          from engaging on this drag — without it, the native overscroll
+          rubber-band effect briefly shifts the whole page sideways before
+          our JS swap runs, since the page has no horizontal scroll of its
+          own to actually pan. */}
       <div
         key={`${year}-${monthIndex}`}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
+        style={{ touchAction: "pan-y" }}
         className={`grid flex-1 grid-cols-7 auto-rows-fr gap-1 ${
           slideDir === 1 ? "month-slide-next" : slideDir === -1 ? "month-slide-prev" : ""
         }`}

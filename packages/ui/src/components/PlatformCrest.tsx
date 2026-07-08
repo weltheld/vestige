@@ -11,7 +11,11 @@ export function PlatformCrest({ size = 38, className }: { size?: number; classNa
       height={size}
       role="img"
       aria-label="Vestige"
-      className={className}
+      // shrink-0: without it, a tight flex row (header/loading skeleton on a
+      // narrow viewport) shrinks this SVG along with its siblings by default
+      // — since it's a replaced element with explicit width/height, it
+      // visibly shrinks instead of the graceful truncation text gets.
+      className={["shrink-0", className].filter(Boolean).join(" ")}
     >
       <g fill="none" stroke="var(--gold)" strokeWidth="2.75" strokeLinejoin="round">
         <path d="M74 8 L88 60 L140 74 L88 88 L74 140 L60 88 L8 74 L60 60 Z" />
