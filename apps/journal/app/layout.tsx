@@ -19,9 +19,26 @@ const body = Alegreya_Sans({
   display: "swap",
 });
 
+const TITLE = "Vestige · Journal";
+const DESCRIPTION = "Chronicle your campaign's sessions.";
+
 export const metadata: Metadata = {
-  title: "Vestige · Journal",
-  description: "Chronicle your campaign's sessions.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_WEB_URL ?? "https://vestige-web-pi.vercel.app"),
+  title: TITLE,
+  description: DESCRIPTION,
+  // og:image / twitter:image come from app/opengraph-image.png (Next's file
+  // convention), which resolves this app's basePath ("/journal") on its own.
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "Vestige",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

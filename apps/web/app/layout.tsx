@@ -18,10 +18,27 @@ const body = Alegreya_Sans({
   display: "swap",
 });
 
+const TITLE = "Vestige — Plan and remember your D&D campaign";
+const DESCRIPTION =
+  "Plan sessions in the Calendar. Remember them in the Journal. One quiet place for everything your party shares between sessions.";
+
 export const metadata: Metadata = {
-  title: "Vestige — Plan and remember your D&D campaign",
-  description:
-    "Plan sessions in the Calendar. Remember them in the Journal. One quiet place for everything your party shares between sessions.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_WEB_URL ?? "https://vestige-web-pi.vercel.app"),
+  title: TITLE,
+  description: DESCRIPTION,
+  // og:image / twitter:image come from app/opengraph-image.png (Next's file
+  // convention) rather than a hand-written path here.
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "Vestige",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

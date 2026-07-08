@@ -316,15 +316,6 @@ export function InvitePageClient({
           {notice}
         </p>
       )}
-
-      <div className="mt-6 flex justify-end">
-        <WaxButton
-          variant="outline"
-          onClick={() => router.push(`/g/${slug}`)}
-        >
-          Enter the company &rarr;
-        </WaxButton>
-      </div>
     </>
   );
 }
