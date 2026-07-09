@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase, getServiceRoleSupabase } from "@vestige/db/server";
 
-export type RedeemResult = { ok: true; campaignName: string } | { ok: false; error: string };
+export type RedeemResult =
+  | { ok: true; campaignName: string; alreadyMember: boolean }
+  | { ok: false; error: string };
 
 /** Join a campaign by its short code (shown to the creator on the Manage
  *  Campaign screen) — the low-friction alternative to a magic-link invite.
@@ -34,6 +36,16 @@ export async function redeemJoinCode(rawCode: string): Promise<RedeemResult> {
     .maybeSingle();
   if (!campaign) return { ok: false, error: "That code doesn't match any campaign." };
 
+  const { data: existingMember } = await admin
+    .from("campaign_members")
+    .select("user_id")
+    .eq("campaign_id", campaign.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (existingMember) {
+    return { ok: true, campaignName: campaign.name, alreadyMember: true };
+  }
+
   const { error } = await admin
     .from("campaign_members")
     .upsert(
@@ -43,5 +55,5 @@ export async function redeemJoinCode(rawCode: string): Promise<RedeemResult> {
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/app");
-  return { ok: true, campaignName: campaign.name };
+  return { ok: true, campaignName: campaign.name, alreadyMember: false };
 }

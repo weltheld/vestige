@@ -29,7 +29,11 @@ export function JoinCampaignForm({ emptyState = false }: { emptyState?: boolean 
         return;
       }
       setCode("");
-      setNotice(`Joined ${res.campaignName}!`);
+      setNotice(
+        res.alreadyMember
+          ? `You're already in ${res.campaignName}.`
+          : `Joined ${res.campaignName}!`,
+      );
       router.refresh();
     });
   }
