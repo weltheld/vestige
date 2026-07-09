@@ -35,7 +35,39 @@ export type ManageData = {
   members: ManageMember[];
   invitations: ManageInvitation[];
   addableUsers: ManageAddable[];
+  joinCode: string;
 };
+
+// No 0/O/1/I/L — the characters people most often mix up when reading a
+// code off a screen or a scrap of paper.
+const JOIN_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+function newJoinCode(): string {
+  const bytes = new Uint8Array(6);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => JOIN_CODE_ALPHABET[b % JOIN_CODE_ALPHABET.length]).join("");
+}
+
+/** The campaign's join code, created on first access (idempotent — one
+ *  code per campaign, creator-only per RLS). Uses the service role since
+ *  `getManageData` already establishes the caller is the creator. */
+async function getOrCreateJoinCode(campaignId: string): Promise<string> {
+  const admin = getServiceRoleSupabase();
+  const { data: existing } = await admin
+    .from("campaign_join_codes")
+    .select("code")
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+  if (existing) return existing.code;
+
+  const { data: created, error } = await admin
+    .from("campaign_join_codes")
+    .insert({ campaign_id: campaignId, code: newJoinCode() })
+    .select("code")
+    .single();
+  if (error || !created) throw error ?? new Error("Failed to create join code.");
+  return created.code;
+}
 
 /** Everything the manage/invite screen needs. Returns null if the campaign
  *  doesn't exist or the viewer isn't its creator (only creators manage). */
@@ -145,6 +177,8 @@ export async function getManageData(
     }
   }
 
+  const joinCode = await getOrCreateJoinCode(campaignId);
+
   return {
     campaignId,
     slug: campaign.slug,
@@ -153,5 +187,6 @@ export async function getManageData(
     members: memberList,
     invitations: invitationList,
     addableUsers,
+    joinCode,
   };
 }

@@ -9,6 +9,7 @@ import { resolveDefaultCampaign } from "@/lib/last-campaign";
 import { RecentActivity } from "@/components/RecentActivity";
 import { UpcomingRail } from "@/components/UpcomingRail";
 import { PendingInvites, type PendingInvite } from "@/components/PendingInvites";
+import { JoinCampaignForm } from "@/components/JoinCampaignForm";
 
 // Journal's settings route lives in a different Multi-Zones app — must be
 // absolute so the header renders a plain <a> (cross-zone hard navigation)
@@ -103,15 +104,17 @@ export default async function AppHome() {
           </a>
         </div>
         {campaigns.length === 0 ? (
-          <p className="font-body text-ink-soft">
-            You don&rsquo;t have any campaigns yet. Once you&rsquo;re added to one,
-            it&rsquo;ll show up here.
-          </p>
+          <JoinCampaignForm emptyState />
         ) : (
-          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
-            <UpcomingRail slots={upcoming} />
-            <RecentActivity items={activity} />
-          </div>
+          <>
+            <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+              <UpcomingRail slots={upcoming} />
+              <RecentActivity items={activity} />
+            </div>
+            <div className="mt-6 max-w-sm">
+              <JoinCampaignForm />
+            </div>
+          </>
         )}
       </main>
       <PlatformFooter />

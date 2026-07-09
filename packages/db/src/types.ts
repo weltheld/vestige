@@ -158,6 +158,12 @@ export type FamiliarConnectionRow = {
   recap_count: number;
 };
 
+export type CampaignJoinCodeRow = {
+  campaign_id: string;
+  code: string;
+  created_at: string;
+};
+
 export type JournalCommentRow = {
   id: string;
   session_id: string;
@@ -468,6 +474,18 @@ export type Database = {
         Update: Partial<FamiliarConnectionRow>;
         Relationships: [
           Rel<"familiar_connections_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+        ];
+      };
+      campaign_join_codes: {
+        Row: CampaignJoinCodeRow;
+        Insert: {
+          campaign_id: string;
+          code: string;
+          created_at?: string;
+        };
+        Update: Partial<CampaignJoinCodeRow>;
+        Relationships: [
+          Rel<"campaign_join_codes_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
         ];
       };
       journal_session_revisions: {
