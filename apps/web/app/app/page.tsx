@@ -10,6 +10,11 @@ import { RecentActivity } from "@/components/RecentActivity";
 import { UpcomingRail } from "@/components/UpcomingRail";
 import { PendingInvites, type PendingInvite } from "@/components/PendingInvites";
 
+// Journal's settings route lives in a different Multi-Zones app — must be
+// absolute so the header renders a plain <a> (cross-zone hard navigation)
+// instead of a same-zone <Link>, which can't route into another zone.
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://vestige-web-pi.vercel.app";
+
 export default async function AppHome() {
   const supabase = await getServerSupabase();
   // getClaims() verifies locally (asymmetric signing key) instead of
@@ -64,6 +69,7 @@ export default async function AppHome() {
         calendarHref={defaultCampaign?.slug ? `/calendar/g/${defaultCampaign.slug}` : undefined}
         journalHref={defaultCampaign ? `/journal/c/${defaultCampaign.id}` : undefined}
         manageHref={defaultCampaign ? `/app/c/${defaultCampaign.id}/manage` : undefined}
+        settingsHref={defaultCampaign ? `${WEB_URL}/journal/c/${defaultCampaign.id}/settings` : undefined}
         currentCampaign={
           defaultCampaign
             ? {

@@ -6,9 +6,13 @@ import { appHref, calendarCampaignHref, journal, WEB_URL } from "@/lib/links";
 
 export default async function CampaignLayout({
   children,
+  modal,
   params,
 }: {
   children: React.ReactNode;
+  /** The @modal parallel slot — renders the intercepted (.)settings overlay
+   *  when active, nothing otherwise (see @modal/default.tsx). */
+  modal: React.ReactNode;
   params: Promise<{ campaignId: string }>;
 }) {
   const { campaignId } = await params;
@@ -45,9 +49,13 @@ export default async function CampaignLayout({
         // URL (rendered via a plain <a>): from Journal it opens web's
         // standalone manage page.
         manageHref={`${WEB_URL}/app/c/${campaignId}/manage`}
+        // Journal-relative — same-zone, so this renders as a true Next.js
+        // <Link> and can be intercepted as the blurred-overlay modal.
+        settingsHref={journal.settings(campaignId)}
       />
       <div className="flex-1">{children}</div>
       <PlatformFooter />
+      {modal}
     </div>
   );
 }

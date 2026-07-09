@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { X, CalendarDays, BookOpen, ImagePlus, Loader2 } from "lucide-react";
+import { X, ImagePlus, Loader2 } from "lucide-react";
 import { PageTitle } from "@vestige/ui";
 import type { CampaignSettings } from "@/lib/campaign-settings";
 import { journal } from "@/lib/links";
@@ -13,22 +12,35 @@ import {
   setMemberDm,
   removeMember,
   inviteMembers,
-  setModules,
   deleteCampaign,
 } from "@/app/c/[campaignId]/settings/actions";
 import { pickImageFile, uploadCampaignBanner } from "@/lib/upload";
 import { FamiliarSettings } from "./FamiliarSettings";
 
-export function SettingsClient({ settings }: { settings: CampaignSettings }) {
+type Props = {
+  settings: CampaignSettings;
+  /**
+   * "page" (default) — the standalone route, reached by a direct/cross-zone
+   * visit. "modal" — rendered by the `(.)settings` intercepted route, as a
+   * layer above the current Journal page (blurred backdrop + close-X),
+   * matching the platform's "Edit profile" overlay. Only same-zone (Journal
+   * → Journal) navigations can trigger the modal — Next.js route
+   * interception doesn't cross Multi-Zones apps, so entering from Calendar
+   * or Web always lands on the plain page instead.
+   */
+  variant?: "page" | "modal";
+};
+
+export function SettingsClient({ settings, variant = "page" }: Props) {
   const router = useRouter();
   const { id, isCreator } = settings;
   const [name, setName] = useState(settings.name);
-  const [modules, setLocalModules] = useState(settings.modulesEnabled);
   const [invites, setInvites] = useState("");
   const [coverUrl, setCoverUrl] = useState(settings.coverUrl);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
   const refresh = () => router.refresh();
+  const close = () => (variant === "modal" ? router.back() : router.push(journal.campaign(id)));
 
   async function changeCover() {
     const file = await pickImageFile();
@@ -49,32 +61,27 @@ export function SettingsClient({ settings }: { settings: CampaignSettings }) {
     }
   }
 
-  async function toggleModule(key: "calendar" | "journal") {
-    const next = { ...modules, [key]: !modules[key] };
-    if (key === "calendar" && modules.calendar) {
-      const ok = window.confirm(
-        "Disabling the Calendar will hide all polls and scheduling for this campaign. Existing data is preserved. Continue?",
-      );
-      if (!ok) return;
-    }
-    setLocalModules(next);
-    await setModules(id, next);
-    refresh();
-  }
+  const card = (
+    <div
+      className={
+        variant === "modal"
+          ? "relative w-full max-w-[720px] rounded-2xl border border-hairline bg-surface p-8 shadow-[0_8px_32px_-8px_rgba(43,33,24,0.35)] sm:p-10"
+          : "flex flex-col gap-7 rounded-2xl bg-surface p-10"
+      }
+    >
+      <div className={variant === "modal" ? "mb-7 flex items-center justify-between" : "flex items-center justify-between"}>
+        <PageTitle title={name || "Campaign"} />
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Close"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-hairline text-ink-soft transition hover:text-wine"
+        >
+          <X size={18} />
+        </button>
+      </div>
 
-  return (
-    <main className="mx-auto mt-20 w-full max-w-[720px] px-6 pb-24">
-      <div className="flex flex-col gap-7 rounded-2xl bg-surface p-10">
-        <div className="flex items-center justify-between">
-          <PageTitle title={name || "Campaign"} />
-          <Link
-            href={journal.campaign(id)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-hairline text-ink-soft hover:text-wine"
-          >
-            <X size={18} />
-          </Link>
-        </div>
-
+      <div className={variant === "modal" ? "flex flex-col gap-7" : "contents"}>
         {!isCreator && (
           <p className="rounded-[10px] bg-cod-soft px-3.5 py-3 font-body text-[12px] italic text-ink-soft">
             Only the campaign creator can change these settings.
@@ -216,26 +223,6 @@ export function SettingsClient({ settings }: { settings: CampaignSettings }) {
           )}
         </Section>
 
-        <Divider />
-        <Section label="Modules">
-          <div className="flex gap-4">
-            <ModuleToggle
-              icon={<CalendarDays size={18} />}
-              label="Calendar"
-              on={modules.calendar}
-              disabled={!isCreator}
-              onToggle={() => toggleModule("calendar")}
-            />
-            <ModuleToggle
-              icon={<BookOpen size={18} />}
-              label="Journal"
-              on={modules.journal}
-              disabled={!isCreator}
-              onToggle={() => toggleModule("journal")}
-            />
-          </div>
-        </Section>
-
         {isCreator && settings.familiar && (
           <>
             <Divider />
@@ -263,8 +250,23 @@ export function SettingsClient({ settings }: { settings: CampaignSettings }) {
           </>
         )}
       </div>
-    </main>
+    </div>
   );
+
+  if (variant === "modal") {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto p-4 sm:p-8">
+        <button
+          aria-label="Close"
+          className="fixed inset-0 bg-ink/50 backdrop-blur-sm"
+          onClick={close}
+        />
+        {card}
+      </div>
+    );
+  }
+
+  return <main className="mx-auto mt-20 w-full max-w-[720px] px-6 pb-24">{card}</main>;
 }
 
 function Section({
@@ -290,38 +292,4 @@ function Section({
 
 function Divider() {
   return <div className="h-px bg-hairline" />;
-}
-
-function ModuleToggle({
-  icon,
-  label,
-  on,
-  disabled,
-  onToggle,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  on: boolean;
-  disabled: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onToggle}
-      className={`flex flex-1 items-center gap-3 rounded-xl border p-4 text-left transition ${
-        on ? "border-gold bg-cod-soft" : "border-hairline bg-surface opacity-70"
-      } disabled:cursor-default`}
-    >
-      <span className={on ? "text-gold" : "text-muted"}>{icon}</span>
-      <span className="flex flex-1 flex-col">
-        <span className="font-display text-[14px] text-ink">{label}</span>
-        <span className="font-body text-[11px] text-muted">{on ? "Enabled" : "Disabled"}</span>
-      </span>
-      <span className={`h-5 w-9 rounded-full p-0.5 ${on ? "bg-wine" : "bg-hairline"}`}>
-        <span className={`block h-4 w-4 rounded-full bg-white transition ${on ? "translate-x-4" : ""}`} />
-      </span>
-    </button>
-  );
 }

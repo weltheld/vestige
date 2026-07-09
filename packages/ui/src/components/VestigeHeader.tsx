@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, ScrollText, LogOut, Pencil, ChevronDown, Check, Settings2 } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, ScrollText, LogOut, Pencil, ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
 import { CampaignSelector, type HeaderCampaign } from "./CampaignSelector";
 import { ThemePicker } from "./ThemePicker";
 import { ProfileEditDialog } from "./ProfileEditDialog";
+
+// See CampaignSelector's copy of this — relative hrefs are same-zone and
+// soft-navigable (so Journal can intercept them as the overlay modal);
+// absolute hrefs are cross-zone and need a plain <a>.
+const isAbsoluteUrl = (href: string) => /^https?:\/\//.test(href);
 
 export type VestigeHeaderUser = {
   label: string;
@@ -40,6 +46,10 @@ type Props = {
   journalHref?: string;
   /** "Manage this campaign" target in the selector dropdown. */
   manageHref?: string;
+  /** "Campaign settings" target in the selector dropdown (name, cover,
+   *  members, Familiar). Relative hrefs render as a soft-navigable <Link>,
+   *  so within Journal this opens as a blurred-overlay layer. */
+  settingsHref?: string;
 };
 
 /**
@@ -57,6 +67,7 @@ export function VestigeHeader({
   calendarHref,
   journalHref,
   manageHref,
+  settingsHref,
 }: Props) {
   async function signOut() {
     await getBrowserSupabase().auth.signOut();
@@ -124,6 +135,7 @@ export function VestigeHeader({
               current={currentCampaign}
               campaigns={campaigns.length ? campaigns : [currentCampaign]}
               manageHref={manageHref}
+              settingsHref={settingsHref}
             />
           </div>
         )}
@@ -134,6 +146,7 @@ export function VestigeHeader({
           currentCampaign={currentCampaign}
           campaigns={campaigns.length ? campaigns : currentCampaign ? [currentCampaign] : []}
           manageHref={manageHref}
+          settingsHref={settingsHref}
         />
       </div>
     </header>
@@ -154,12 +167,14 @@ function ProfileMenu({
   currentCampaign,
   campaigns,
   manageHref,
+  settingsHref,
 }: {
   user: VestigeHeaderUser;
   onSignOut: () => void;
   currentCampaign?: HeaderCampaign | null;
   campaigns: HeaderCampaign[];
   manageHref?: string;
+  settingsHref?: string;
 }) {
   const [editOpen, setEditOpen] = useState(false);
   return (
@@ -213,6 +228,27 @@ function ProfileMenu({
                   </DropdownMenu.Item>
                 );
               })}
+              {settingsHref && (
+                <DropdownMenu.Item asChild>
+                  {isAbsoluteUrl(settingsHref) ? (
+                    <a
+                      href={settingsHref}
+                      className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+                    >
+                      <SlidersHorizontal size={13} className="text-muted" />
+                      Campaign settings
+                    </a>
+                  ) : (
+                    <Link
+                      href={settingsHref}
+                      className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+                    >
+                      <SlidersHorizontal size={13} className="text-muted" />
+                      Campaign settings
+                    </Link>
+                  )}
+                </DropdownMenu.Item>
+              )}
               {manageHref && (
                 <DropdownMenu.Item asChild>
                   <a
