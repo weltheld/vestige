@@ -10,7 +10,6 @@ import {
   setCampaignCover,
   setMemberDm,
   removeMember,
-  inviteMembers,
   deleteCampaign,
 } from "@/app/c/[campaignId]/settings/actions";
 import { pickImageFile, uploadCampaignBanner } from "@/lib/upload";
@@ -34,7 +33,6 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
   const router = useRouter();
   const { id, isCreator } = settings;
   const [name, setName] = useState(settings.name);
-  const [invites, setInvites] = useState("");
   const [coverUrl, setCoverUrl] = useState(settings.coverUrl);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
@@ -82,7 +80,7 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
         <p className="font-body text-xs text-muted">Campaign settings</p>
       </header>
 
-      <div className="mt-6 flex flex-col gap-7">
+      <div className="mt-6 flex flex-col gap-9">
         {!isCreator && (
           <p className="rounded-[10px] bg-cod-soft px-3.5 py-3 font-body text-[12px] italic text-ink-soft">
             Only the campaign creator can change these settings.
@@ -111,7 +109,6 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
           </div>
         </Section>
 
-        <Divider />
         <Section label="Campaign Cover">
           <div className="flex flex-col gap-2">
             <button
@@ -152,7 +149,6 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
           </div>
         </Section>
 
-        <Divider />
         <Section label={`Members (${settings.members.length})`}>
           <div className="flex flex-col">
             {settings.members.map((m) => (
@@ -201,54 +197,29 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
               </div>
             ))}
           </div>
-          {isCreator && (
-            <div className="mt-3 flex items-center gap-3">
-              <input
-                value={invites}
-                onChange={(e) => setInvites(e.target.value)}
-                placeholder="Add emails, separated by commas"
-                className="flex-1 border-b border-hairline bg-transparent py-1 font-body text-[13px] text-ink outline-none placeholder:text-muted"
-              />
-              <button
-                type="button"
-                onClick={async () => {
-                  await inviteMembers(id, invites.split(","));
-                  setInvites("");
-                  refresh();
-                }}
-                className="rounded-lg bg-wine px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white"
-              >
-                Send invites
-              </button>
-            </div>
-          )}
+          {/* Inviting new people lives in Manage Campaign (magic link,
+              email invites, add existing users) — not duplicated here. */}
         </Section>
 
         {isCreator && settings.familiar && (
-          <>
-            <Divider />
-            <Section label="Familiar — auto-recaps">
-              <FamiliarSettings campaignId={id} connection={settings.familiar} />
-            </Section>
-          </>
+          <Section label="Familiar — auto-recaps">
+            <FamiliarSettings campaignId={id} connection={settings.familiar} />
+          </Section>
         )}
 
         {isCreator && (
-          <>
-            <Divider />
-            <Section label="Danger Zone" tone="wine">
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!window.confirm(`Permanently delete "${name}" and all its sessions? This cannot be undone.`)) return;
-                  await deleteCampaign(id);
-                }}
-                className="font-body text-[13px] text-wine underline underline-offset-2"
-              >
-                Delete campaign
-              </button>
-            </Section>
-          </>
+          <Section label="Danger Zone" tone="wine">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!window.confirm(`Permanently delete "${name}" and all its sessions? This cannot be undone.`)) return;
+                await deleteCampaign(id);
+              }}
+              className="font-body text-[13px] text-wine underline underline-offset-2"
+            >
+              Delete campaign
+            </button>
+          </Section>
         )}
       </div>
     </div>
@@ -295,8 +266,4 @@ function Section({
       {children}
     </section>
   );
-}
-
-function Divider() {
-  return <div className="h-px bg-hairline" />;
 }

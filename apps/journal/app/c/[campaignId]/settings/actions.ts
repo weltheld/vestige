@@ -50,33 +50,6 @@ export async function removeMember(campaignId: string, userId: string) {
   revalidatePath(`/c/${campaignId}/settings`);
 }
 
-/** Queue email invitations (creator-only via RLS). Delivery is handled by the
- *  existing Council of Days invite pipeline / Supabase magic-link emails. */
-export async function inviteMembers(campaignId: string, emails: string[]) {
-  const supabase = await sb();
-  const rows = emails
-    .map((e) => e.trim().toLowerCase())
-    .filter((e) => e.includes("@"))
-    .map((email) => ({ campaign_id: campaignId, email, status: "queued" as const }));
-  if (rows.length === 0) return;
-  const { error } = await supabase.from("invitations").insert(rows);
-  if (error) throw error;
-  revalidatePath(`/c/${campaignId}/settings`);
-}
-
-export async function setModules(
-  campaignId: string,
-  modules: { calendar: boolean; journal: boolean },
-) {
-  const supabase = await sb();
-  const { error } = await supabase
-    .from("campaigns")
-    .update({ modules_enabled: modules })
-    .eq("id", campaignId);
-  if (error) throw error;
-  revalidatePath(`/c/${campaignId}/settings`);
-}
-
 export async function deleteCampaign(campaignId: string) {
   const supabase = await sb();
   const { error } = await supabase.from("campaigns").delete().eq("id", campaignId);
