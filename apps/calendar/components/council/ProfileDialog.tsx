@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Pencil, LogOut, Settings2, Check, X } from "lucide-react";
+import { ChevronDown, Pencil, LogOut, Settings2, SlidersHorizontal, Check, X } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { ProfileEditor } from "./ProfileEditor";
 import { signOutAction } from "@/app/auth/actions";
@@ -97,6 +97,15 @@ export function ProfileDialog({
                     </DropdownMenu.Item>
                   );
                 })}
+                <DropdownMenu.Item
+                  // Campaign settings lives in Journal. Cross-zone from
+                  // Calendar → always a hard nav to the plain settings page.
+                  onSelect={() => window.location.assign(`${PLATFORM_URL}/journal/c/${campaign.id}/settings`)}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+                >
+                  <SlidersHorizontal size={13} className="text-ink-soft" />
+                  Campaign settings
+                </DropdownMenu.Item>
                 <DropdownMenu.Item
                   // Manage campaign is a platform-level screen in web (one
                   // invite surface for every app). Cross-zone → hard nav.

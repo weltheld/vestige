@@ -1,7 +1,7 @@
 "use client";
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Check, Settings2 } from "lucide-react";
+import { ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
 import { PLATFORM_URL } from "@/lib/basePath";
 
 export type SwitcherCampaign = {
@@ -74,6 +74,18 @@ export function CampaignSwitcher({
           })}
 
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
+
+          <DropdownMenu.Item
+            // Campaign settings lives in Journal (name/cover/members/
+            // Familiar). Cross-zone from Calendar — always a hard nav, so
+            // it lands on Journal's plain settings page, not the overlay
+            // (route interception can't cross Multi-Zones apps).
+            onSelect={() => window.location.assign(`${PLATFORM_URL}/journal/c/${current.id}/settings`)}
+            className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+          >
+            <SlidersHorizontal size={13} className="text-ink-soft" />
+            Campaign settings
+          </DropdownMenu.Item>
 
           <DropdownMenu.Item
             // Manage campaign is a platform-level screen in web (one invite

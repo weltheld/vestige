@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, ImagePlus, Loader2 } from "lucide-react";
-import { PageTitle } from "@vestige/ui";
 import type { CampaignSettings } from "@/lib/campaign-settings";
 import { journal } from "@/lib/links";
 import {
@@ -62,26 +61,28 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
   }
 
   const card = (
-    <div
-      className={
-        variant === "modal"
-          ? "relative w-full max-w-[720px] rounded-2xl border border-hairline bg-surface p-8 shadow-[0_8px_32px_-8px_rgba(43,33,24,0.35)] sm:p-10"
-          : "flex flex-col gap-7 rounded-2xl bg-surface p-10"
-      }
-    >
-      <div className={variant === "modal" ? "mb-7 flex items-center justify-between" : "flex items-center justify-between"}>
-        <PageTitle title={name || "Campaign"} />
-        <button
-          type="button"
-          onClick={close}
-          aria-label="Close"
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-hairline text-ink-soft transition hover:text-wine"
-        >
-          <X size={18} />
-        </button>
-      </div>
+    // Same card chrome, header pattern (centered "Vestige" eyebrow + title),
+    // and corner close-X as the platform's "Edit profile" overlay — the two
+    // should read as the same family of layer regardless of which is open.
+    <div className="relative w-full max-w-[560px] rounded-xl border border-hairline bg-surface p-8 shadow-[0_8px_32px_-8px_rgba(43,33,24,0.35)] sm:p-10">
+      <button
+        type="button"
+        onClick={close}
+        aria-label="Close"
+        className="absolute right-4 top-4 rounded-md p-1 text-muted transition hover:bg-cod-soft hover:text-ink"
+      >
+        <X className="h-5 w-5" />
+      </button>
 
-      <div className={variant === "modal" ? "flex flex-col gap-7" : "contents"}>
+      <header className="flex flex-col items-center gap-1 text-center">
+        <p className="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+          Vestige
+        </p>
+        <h1 className="font-display text-2xl text-ink">{name || "Campaign"}</h1>
+        <p className="font-body text-xs text-muted">Campaign settings</p>
+      </header>
+
+      <div className="mt-6 flex flex-col gap-7">
         {!isCreator && (
           <p className="rounded-[10px] bg-cod-soft px-3.5 py-3 font-body text-[12px] italic text-ink-soft">
             Only the campaign creator can change these settings.
@@ -266,7 +267,13 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
     );
   }
 
-  return <main className="mx-auto mt-20 w-full max-w-[720px] px-6 pb-24">{card}</main>;
+  // Direct/cross-zone visit — full page, but the same centered-card look
+  // (matching ManageCampaignPage's own standalone-page wrapper).
+  return (
+    <div className="flex min-h-screen w-full items-start justify-center bg-parchment px-4 py-10 sm:px-8">
+      {card}
+    </div>
+  );
 }
 
 function Section({
