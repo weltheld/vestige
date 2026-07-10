@@ -2,10 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { VenetianMask, Copy, Check } from "lucide-react";
+import { VenetianMask, Copy, Check, X, LogOut } from "lucide-react";
 import { PlatformCrest } from "@vestige/ui";
 import type { ManageData } from "@/lib/manage";
-import { sendInvite, cancelInvite, resendInvite, addExistingMember } from "@/app/app/c/[campaignId]/manage/actions";
+import {
+  sendInvite,
+  cancelInvite,
+  resendInvite,
+  addExistingMember,
+  removeMember,
+  leaveCampaign,
+} from "@/app/app/c/[campaignId]/manage/actions";
 
 /** The platform Manage-campaign content — magic link, party list, people you
  *  can add, and email invites. Rendered inside either the standalone page or
@@ -32,6 +39,75 @@ export function ManageCampaignScreen({ data, magicLink }: { data: ManageData; ma
       router.refresh();
     });
   };
+
+  const leave = () => {
+    if (!window.confirm(`Leave “${data.name}”? You'll need a new invite to rejoin.`)) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await leaveCampaign(data.campaignId);
+      if (!res.ok) {
+        setError(res.error ?? "Something went wrong.");
+        return;
+      }
+      // They've lost access — hard-nav back to the platform home.
+      window.location.assign("/app");
+    });
+  };
+
+  // Members (non-creators) get a read-only party list plus a way out.
+  if (!data.isCreator) {
+    return (
+      <div>
+        <header className="flex flex-col items-center gap-2 text-center">
+          <PlatformCrest size={44} />
+          <p className="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+            Vestige
+          </p>
+          <h1 className="font-display text-2xl font-bold text-ink">{data.name}</h1>
+        </header>
+
+        <section className="mt-7 flex flex-col gap-3">
+          <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+            The party
+          </p>
+          <ul className="flex flex-col gap-2">
+            {data.members.map((m) => (
+              <li
+                key={m.userId}
+                className="flex items-center justify-between rounded-md border border-hairline bg-cod-soft px-3 py-2"
+              >
+                <span className="flex items-center gap-3">
+                  <Avatar url={m.avatarUrl} name={m.name} />
+                  <span className="font-body text-[14px] text-ink">{m.name}</span>
+                </span>
+                {m.isDm && (
+                  <span className="inline-flex items-center gap-1 font-display text-[11px] uppercase tracking-wider text-gold">
+                    <VenetianMask className="h-3.5 w-3.5" /> DM
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <button
+          type="button"
+          disabled={pending}
+          onClick={leave}
+          className="mt-8 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-vote-no/40 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-vote-no transition hover:bg-vote-no/10 disabled:opacity-60"
+        >
+          <LogOut size={14} />
+          {pending ? "Leaving…" : "Leave campaign"}
+        </button>
+
+        {error && (
+          <p className="mt-3 rounded-md border border-vote-no/40 bg-vote-no/10 px-3 py-2 font-body text-[12px] text-vote-no">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -113,13 +189,30 @@ export function ManageCampaignScreen({ data, magicLink }: { data: ManageData; ma
                 <Avatar url={m.avatarUrl} name={m.name} />
                 <span className="font-body text-[14px] text-ink">{m.name}</span>
               </span>
-              {m.isDm ? (
-                <span className="inline-flex items-center gap-1 font-display text-[11px] uppercase tracking-wider text-gold">
-                  <VenetianMask className="h-3.5 w-3.5" /> DM
-                </span>
-              ) : (
-                <span className="font-display text-[11px] uppercase tracking-wider text-vote-yes">Joined</span>
-              )}
+              <span className="flex items-center gap-3">
+                {m.isDm ? (
+                  <span className="inline-flex items-center gap-1 font-display text-[11px] uppercase tracking-wider text-gold">
+                    <VenetianMask className="h-3.5 w-3.5" /> DM
+                  </span>
+                ) : (
+                  <span className="font-display text-[11px] uppercase tracking-wider text-vote-yes">Joined</span>
+                )}
+                {/* Creator can remove anyone but themselves. */}
+                {m.userId !== data.viewerId && (
+                  <button
+                    type="button"
+                    aria-label={`Remove ${m.name}`}
+                    disabled={pending}
+                    onClick={() => {
+                      if (!window.confirm(`Remove ${m.name} from “${data.name}”?`)) return;
+                      run(() => removeMember(data.campaignId, m.userId), () => setNotice(`${m.name} removed.`));
+                    }}
+                    className="rounded p-1 text-muted transition hover:bg-vote-no/10 hover:text-vote-no"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </span>
             </li>
           ))}
           {data.invitations.map((i) => (

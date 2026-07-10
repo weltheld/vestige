@@ -31,7 +31,11 @@ export type ManageData = {
   campaignId: string;
   slug: string;
   name: string;
+  /** The signed-in viewer. Creators see the full invite/manage surface and
+   *  can remove others; members see a read-only party list + Leave. */
+  viewerId: string;
   isCreator: boolean;
+  creatorId: string;
   members: ManageMember[];
   invitations: ManageInvitation[];
   addableUsers: ManageAddable[];
@@ -69,8 +73,9 @@ async function getOrCreateJoinCode(campaignId: string): Promise<string> {
   return created.code;
 }
 
-/** Everything the manage/invite screen needs. Returns null if the campaign
- *  doesn't exist or the viewer isn't its creator (only creators manage). */
+/** Everything the manage screen needs. Creators get the full invite surface;
+ *  members get a read-only party list (+ Leave, handled in the UI). Returns
+ *  null if the campaign doesn't exist or the viewer isn't in it at all. */
 export async function getManageData(
   supabase: SB,
   campaignId: string,
@@ -81,24 +86,35 @@ export async function getManageData(
     .select("id, slug, name, creator_id")
     .eq("id", campaignId)
     .maybeSingle();
-  if (!campaign || campaign.creator_id !== userId) return null;
+  if (!campaign) return null;
+  const isCreator = campaign.creator_id === userId;
 
-  const [{ data: members }, { data: invitations }] = await Promise.all([
-    supabase
-      .from("campaign_members")
-      .select("user_id, is_dm")
-      .eq("campaign_id", campaignId),
-    supabase
-      .from("invitations")
-      .select("id, email, user_id, status")
-      .eq("campaign_id", campaignId),
-  ]);
+  const admin = getServiceRoleSupabase();
+
+  // Members are needed for both views. Read with the service role after we
+  // confirm (below) the viewer belongs to the campaign — profiles RLS won't
+  // reliably expose fellow members otherwise.
+  const { data: members } = await admin
+    .from("campaign_members")
+    .select("user_id, is_dm")
+    .eq("campaign_id", campaignId);
+
+  // Non-creators must be members of this campaign to see anything.
+  if (!isCreator && !(members ?? []).some((m) => m.user_id === userId)) return null;
+
+  // Invitations are a creator-only concern.
+  const { data: invitations } = isCreator
+    ? await supabase
+        .from("invitations")
+        .select("id, email, user_id, status")
+        .eq("campaign_id", campaignId)
+    : { data: [] as { id: string; email: string | null; user_id: string | null; status: string }[] };
 
   const ids = new Set<string>();
   for (const m of members ?? []) ids.add(m.user_id);
   for (const i of invitations ?? []) if (i.user_id) ids.add(i.user_id);
   const { data: profiles } = ids.size
-    ? await supabase
+    ? await admin
         .from("profiles")
         .select("id, first_name, display_name, email, avatar_url")
         .in("id", [...ids])
@@ -129,17 +145,17 @@ export async function getManageData(
     });
 
   // People this creator invited (to any of their campaigns) who aren't in
-  // any campaign yet — addable directly. Uses the service role because they
-  // aren't members of this campaign, so RLS wouldn't let the creator read
-  // their profiles otherwise.
-  const admin = getServiceRoleSupabase();
-  const { data: myCampaigns } = await admin
-    .from("campaigns")
-    .select("id")
-    .eq("creator_id", userId);
-  const myIds = (myCampaigns ?? []).map((c) => c.id);
+  // any campaign yet — addable directly (creator-only). Uses the service role
+  // because they aren't members of this campaign, so RLS wouldn't let the
+  // creator read their profiles otherwise.
   let addableUsers: ManageAddable[] = [];
-  if (myIds.length) {
+  if (isCreator) {
+    const { data: myCampaigns } = await admin
+      .from("campaigns")
+      .select("id")
+      .eq("creator_id", userId);
+    const myIds = (myCampaigns ?? []).map((c) => c.id);
+    if (myIds.length) {
     const { data: myInvites } = await admin
       .from("invitations")
       .select("user_id, email")
@@ -174,16 +190,20 @@ export async function getManageData(
           const p = cand.get(id)!;
           return { userId: id, name: nameOf(p), email: p.email ?? "", avatarUrl: p.avatar_url ?? null };
         });
+      }
     }
   }
 
-  const joinCode = await getOrCreateJoinCode(campaignId);
+  // The join code is a creator-only invite affordance; members never see it.
+  const joinCode = isCreator ? await getOrCreateJoinCode(campaignId) : "";
 
   return {
     campaignId,
     slug: campaign.slug,
     name: campaign.name,
-    isCreator: true,
+    viewerId: userId,
+    isCreator,
+    creatorId: campaign.creator_id,
     members: memberList,
     invitations: invitationList,
     addableUsers,

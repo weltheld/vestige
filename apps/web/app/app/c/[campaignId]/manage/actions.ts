@@ -116,6 +116,61 @@ export async function cancelInvite(campaignId: string, invitationId: string): Pr
   return { ok: true };
 }
 
+/** Creator removes another member. The creator can't remove themselves this
+ *  way (they'd orphan the campaign — deletion is a separate action). */
+export async function removeMember(campaignId: string, userId: string): Promise<SimpleResult> {
+  const guard = await creatorGuard(campaignId);
+  if (!guard.ok) return { ok: false, error: guard.error };
+  if (userId === guard.user.id) {
+    return { ok: false, error: "The campaign owner can't remove themselves." };
+  }
+
+  const admin = getServiceRoleSupabase();
+  const { error } = await admin
+    .from("campaign_members")
+    .delete()
+    .eq("campaign_id", campaignId)
+    .eq("user_id", userId);
+  if (error) return { ok: false, error: error.message };
+
+  // Any lingering invitation shouldn't silently re-add them on next visit.
+  await admin.from("invitations").delete().eq("campaign_id", campaignId).eq("user_id", userId);
+
+  revalidatePath(`/app/c/${campaignId}/manage`);
+  return { ok: true };
+}
+
+/** A member leaves a campaign they belong to. The creator can't leave (they
+ *  own it) — they'd delete it instead. */
+export async function leaveCampaign(campaignId: string): Promise<SimpleResult> {
+  const supabase = await getServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "You must be signed in." };
+
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("id, creator_id")
+    .eq("id", campaignId)
+    .maybeSingle();
+  if (!campaign) return { ok: false, error: "Campaign not found." };
+  if (campaign.creator_id === user.id) {
+    return { ok: false, error: "The campaign owner can't leave — delete the campaign instead." };
+  }
+
+  const admin = getServiceRoleSupabase();
+  const { error } = await admin
+    .from("campaign_members")
+    .delete()
+    .eq("campaign_id", campaignId)
+    .eq("user_id", user.id);
+  if (error) return { ok: false, error: error.message };
+
+  await admin.from("invitations").delete().eq("campaign_id", campaignId).eq("user_id", user.id);
+  return { ok: true };
+}
+
 export async function addExistingMember(campaignId: string, userId: string): Promise<SimpleResult> {
   const guard = await creatorGuard(campaignId);
   if (!guard.ok) return { ok: false, error: guard.error };

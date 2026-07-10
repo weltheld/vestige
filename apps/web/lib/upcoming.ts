@@ -102,8 +102,10 @@ export async function getUpcomingSlots(
     const date = setDate ?? bestVotedDate(campaignVotes);
     const type: UpcomingSlot["type"] = setDate ? "set" : date ? "voted" : "none";
 
+    // Show the party for any scheduled date — set or best-voted. Availability
+    // is derived from each member's vote on that date (yes = available).
     const players: UpcomingPlayer[] =
-      type === "voted"
+      type !== "none"
         ? campaignMembers.map((m) => {
             const p = profileById.get(m.user_id);
             const vote = campaignVotes.find((v) => v.user_id === m.user_id && v.date === date);
