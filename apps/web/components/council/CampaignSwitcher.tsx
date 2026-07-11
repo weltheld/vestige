@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
-import { PLATFORM_URL } from "@/lib/calendar/basePath";
 
 export type SwitcherCampaign = {
   id: string;
@@ -13,10 +13,9 @@ export type SwitcherCampaign = {
 };
 
 /**
- * The campaign-switch pill + dropdown in the platform header, matching
- * Journal's CampaignSelector (@vestige/ui) design and behaviour exactly —
- * ported locally since Council of Days can't import that package (separate
- * deploy, not in the pnpm workspace).
+ * The campaign-switch pill + dropdown in Calendar's header, matching the
+ * shared CampaignSelector (@vestige/ui) design. Everything is same-app now,
+ * so every item is a soft-navigable <Link>.
  */
 export function CampaignSwitcher({
   current,
@@ -55,8 +54,8 @@ export function CampaignSwitcher({
             const active = c.id === current.id;
             return (
               <DropdownMenu.Item key={c.id} asChild>
-                <a
-                  href={`${PLATFORM_URL}/calendar/g/${c.slug}`}
+                <Link
+                  href={`/calendar/g/${c.slug}`}
                   className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 outline-none transition data-[highlighted]:bg-parchment"
                 >
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -68,33 +67,33 @@ export function CampaignSwitcher({
                     )}
                   </span>
                   {active && <Check size={15} className="shrink-0 text-dm-gold" />}
-                </a>
+                </Link>
               </DropdownMenu.Item>
             );
           })}
 
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
 
-          <DropdownMenu.Item
-            // Campaign settings lives in Journal (name/cover/members/
-            // Familiar). Cross-zone from Calendar — always a hard nav, so
-            // it lands on Journal's plain settings page, not the overlay
-            // (route interception can't cross Multi-Zones apps).
-            onSelect={() => window.location.assign(`${PLATFORM_URL}/journal/c/${current.id}/settings`)}
-            className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-          >
-            <SlidersHorizontal size={13} className="text-ink-soft" />
-            Campaign settings
+          <DropdownMenu.Item asChild>
+            {/* Campaign settings lives in Journal (name/cover/members/
+                Familiar) — same app now, so a soft navigation. */}
+            <Link
+              href={`/journal/c/${current.id}/settings`}
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+            >
+              <SlidersHorizontal size={13} className="text-ink-soft" />
+              Campaign settings
+            </Link>
           </DropdownMenu.Item>
 
-          <DropdownMenu.Item
-            // Manage campaign is a platform-level screen in web (one invite
-            // surface for every app). Cross-zone, so a hard navigation.
-            onSelect={() => window.location.assign(`${PLATFORM_URL}/app/c/${current.id}/manage`)}
-            className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-          >
-            <Settings2 size={13} className="text-ink-soft" />
-            Manage this campaign
+          <DropdownMenu.Item asChild>
+            <Link
+              href={`/app/c/${current.id}/manage`}
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+            >
+              <Settings2 size={13} className="text-ink-soft" />
+              Manage this campaign
+            </Link>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

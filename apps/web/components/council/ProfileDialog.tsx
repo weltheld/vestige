@@ -8,7 +8,7 @@ import { ProfileEditor } from "./ProfileEditor";
 import { signOutAction } from "@/app/calendar/auth/actions";
 import { type SwitcherCampaign } from "./CampaignSwitcher";
 import { ThemePicker } from "./ThemePicker";
-import { PLATFORM_URL } from "@/lib/calendar/basePath";
+import Link from "next/link";
 
 type Props = {
   firstName: string;
@@ -85,35 +85,36 @@ export function ProfileDialog({
                   const active = c.id === campaign.id;
                   return (
                     <DropdownMenu.Item key={c.id} asChild>
-                      <a
-                        href={`${PLATFORM_URL}/calendar/g/${c.slug}`}
+                      <Link
+                        href={`/calendar/g/${c.slug}`}
                         className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 outline-none transition data-[highlighted]:bg-parchment"
                       >
                         <span className="min-w-0 flex-1 truncate font-body text-xs text-ink">
                           {c.name}
                         </span>
                         {active && <Check size={13} className="shrink-0 text-dm-gold" />}
-                      </a>
+                      </Link>
                     </DropdownMenu.Item>
                   );
                 })}
-                <DropdownMenu.Item
-                  // Campaign settings lives in Journal. Cross-zone from
-                  // Calendar → always a hard nav to the plain settings page.
-                  onSelect={() => window.location.assign(`${PLATFORM_URL}/journal/c/${campaign.id}/settings`)}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-                >
-                  <SlidersHorizontal size={13} className="text-ink-soft" />
-                  Campaign settings
+                <DropdownMenu.Item asChild>
+                  {/* Campaign settings lives in Journal — same app now. */}
+                  <Link
+                    href={`/journal/c/${campaign.id}/settings`}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+                  >
+                    <SlidersHorizontal size={13} className="text-ink-soft" />
+                    Campaign settings
+                  </Link>
                 </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  // Manage campaign is a platform-level screen in web (one
-                  // invite surface for every app). Cross-zone → hard nav.
-                  onSelect={() => window.location.assign(`${PLATFORM_URL}/app/c/${campaign.id}/manage`)}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-                >
-                  <Settings2 size={13} className="text-ink-soft" />
-                  Manage this campaign
+                <DropdownMenu.Item asChild>
+                  <Link
+                    href={`/app/c/${campaign.id}/manage`}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+                  >
+                    <Settings2 size={13} className="text-ink-soft" />
+                    Manage this campaign
+                  </Link>
                 </DropdownMenu.Item>
                 <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
               </div>

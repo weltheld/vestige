@@ -15,7 +15,7 @@ import { BASE_PATH, withBasePath } from "@/lib/calendar/basePath";
  *  - A magic invite link (next=/g/<slug>) joins them to that campaign.
  * In-app invites of existing users (which carry a user_id, no email) are left
  * untouched — those still go through the explicit Accept/Decline flow on the
- * unified platform home (PLATFORM_URL/app).
+ * platform home (/app).
  */
 export async function autoEnroll(userId: string, email: string, next: string) {
   const admin = getServiceRoleSupabase();

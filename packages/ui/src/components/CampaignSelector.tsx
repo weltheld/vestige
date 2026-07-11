@@ -4,12 +4,6 @@ import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
 
-// A relative href ("/c/id/settings") is same-zone — soft-navigable with
-// <Link>, which is what lets Journal intercept it as a blurred-overlay
-// modal. An absolute href (cross-zone, e.g. web -> Journal) can't be
-// soft-navigated by this app's router, so it falls back to a plain <a>.
-const isAbsoluteUrl = (href: string) => /^https?:\/\//.test(href);
-
 export type HeaderCampaign = {
   id: string;
   name: string;
@@ -97,42 +91,28 @@ export function CampaignSelector({
 
           {settingsHref && (
             <DropdownMenu.Item asChild>
-              {isAbsoluteUrl(settingsHref) ? (
-                // Cross-zone (e.g. Calendar/Web -> Journal) — plain <a>,
-                // always a full navigation to the standalone settings page.
-                <a
-                  href={settingsHref}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
-                >
-                  <SlidersHorizontal size={13} className="text-muted" />
-                  Campaign settings
-                </a>
-              ) : (
-                // Same-zone (already in Journal) — <Link> so this can be
-                // intercepted as the blurred-overlay modal, from anywhere.
-                <Link
-                  href={settingsHref}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
-                >
-                  <SlidersHorizontal size={13} className="text-muted" />
-                  Campaign settings
-                </Link>
-              )}
+              {/* Soft-navigable <Link> — the whole platform is one app now,
+                  so Journal's settings route can be intercepted as the
+                  blurred-overlay modal from anywhere. */}
+              <Link
+                href={settingsHref}
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+              >
+                <SlidersHorizontal size={13} className="text-muted" />
+                Campaign settings
+              </Link>
             </DropdownMenu.Item>
           )}
 
           {manageHref && (
             <DropdownMenu.Item asChild>
-              {/* Plain <a>, not <Link> — manageHref can point cross-zone
-                  (e.g. web -> Calendar's invite page), and Next's Link only
-                  soft-navigates within its own app's route manifest. */}
-              <a
+              <Link
                 href={manageHref}
                 className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
               >
                 <Settings2 size={13} className="text-muted" />
                 Manage this campaign
-              </a>
+              </Link>
             </DropdownMenu.Item>
           )}
         </DropdownMenu.Content>

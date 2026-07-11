@@ -2,7 +2,7 @@ import { CalendarDays, ScrollText } from "lucide-react";
 import { Crest } from "./Crest";
 import { ProfileDialog } from "./ProfileDialog";
 import { CampaignSwitcher, type SwitcherCampaign } from "./CampaignSwitcher";
-import { PLATFORM_URL } from "@/lib/calendar/basePath";
+import Link from "next/link";
 
 type Props = {
   firstName: string;
@@ -41,12 +41,8 @@ export function PlatformHeader({
   return (
     <header className="border-b border-hairline bg-parchment">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-        {/* Cross-zone link to the platform root — MUST be a plain <a> with an
-            absolute URL. This app's own basePath ("/calendar") gets
-            auto-prepended by Next to any relative <Link>/<a> href, which
-            would turn "/app" into the nonexistent "/calendar/app". */}
-        <a
-          href={`${PLATFORM_URL}/app`}
+        <Link
+          href="/app"
           aria-label="Vestige — home"
           className="flex min-w-0 items-center gap-2.5"
         >
@@ -54,7 +50,7 @@ export function PlatformHeader({
           <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
             Vestige
           </span>
-        </a>
+        </Link>
 
         {/* Segmented module switcher — the two modules read as one toggle.
             Desktop shows labels; mobile/tablet drops to icon-only segments
@@ -68,13 +64,13 @@ export function PlatformHeader({
               <CalendarDays size={14} />
               Calendar
             </span>
-            <a
-              href={`${PLATFORM_URL}/journal`}
+            <Link
+              href="/journal"
               className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
             >
               <ScrollText size={14} />
               Journal
-            </a>
+            </Link>
           </div>
         </nav>
 
@@ -87,14 +83,14 @@ export function PlatformHeader({
             >
               <CalendarDays size={18} />
             </span>
-            <a
-              href={`${PLATFORM_URL}/journal`}
+            <Link
+              href="/journal"
               aria-label="Journal"
               title="Journal"
               className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
             >
               <ScrollText size={18} />
-            </a>
+            </Link>
           </div>
         </nav>
 

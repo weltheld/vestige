@@ -6,7 +6,6 @@ import {
   getServerSupabase,
   getServiceRoleSupabase,
 } from "@vestige/db/server";
-import { PLATFORM_URL } from "@/lib/calendar/basePath";
 
 export type UploadAvatarResult =
   | { ok: true; url: string }

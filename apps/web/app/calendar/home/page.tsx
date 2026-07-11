@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { PLATFORM_URL } from "@/lib/calendar/basePath";
 
 /**
  * Calendar's own dashboard was retired in favour of the unified platform
@@ -8,5 +7,5 @@ import { PLATFORM_URL } from "@/lib/calendar/basePath";
  * bookmark, a stale link) to the real thing.
  */
 export default function HomePage() {
-  redirect(`${PLATFORM_URL}/app`);
+  redirect("/app");
 }

@@ -10,9 +10,3 @@ export const BASE_PATH = "/calendar";
 export function withBasePath(path: string): string {
   return `${BASE_PATH}${path}`;
 }
-
-/**
- * Same-app now — platform links (e.g. /app) are plain relative paths.
- * Kept as a constant because many call sites template it into URLs.
- */
-export const PLATFORM_URL = "";

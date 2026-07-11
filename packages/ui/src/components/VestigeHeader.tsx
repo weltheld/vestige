@@ -10,11 +10,6 @@ import { CampaignSelector, type HeaderCampaign } from "./CampaignSelector";
 import { ThemePicker } from "./ThemePicker";
 import { ProfileEditDialog } from "./ProfileEditDialog";
 
-// See CampaignSelector's copy of this — relative hrefs are same-zone and
-// soft-navigable (so Journal can intercept them as the overlay modal);
-// absolute hrefs are cross-zone and need a plain <a>.
-const isAbsoluteUrl = (href: string) => /^https?:\/\//.test(href);
-
 export type VestigeHeaderUser = {
   label: string;
   avatarUrl: string | null;
@@ -24,14 +19,6 @@ export type VestigeHeaderUser = {
 export type VestigeHeaderCampaign = { name: string };
 
 export type { HeaderCampaign };
-
-// Web is the primary Multi-Zones domain — the wordmark and profile chip
-// always point there regardless of which app renders this header. MUST be
-// absolute: this component can render inside an app with its own basePath
-// (e.g. Journal's "/journal"), and Next.js auto-prepends that basePath to
-// any relative <Link> href — a relative "/app" would wrongly become
-// "/journal/app" and 404. Cross-zone links always need to be absolute.
-const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "http://localhost:3001";
 
 type Props = {
   user: VestigeHeaderUser;
@@ -77,8 +64,8 @@ export function VestigeHeader({
   return (
     <header className="border-b border-hairline bg-parchment">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-        <a
-          href={`${WEB_URL}/app`}
+        <Link
+          href="/app"
           aria-label="Vestige — home"
           className="flex min-w-0 items-center gap-2.5"
         >
@@ -86,7 +73,7 @@ export function VestigeHeader({
           <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
             Vestige
           </span>
-        </a>
+        </Link>
 
         {/* Segmented module switcher — the two modules read as one toggle.
             Desktop shows labels; mobile/tablet drops to icon-only segments
@@ -216,7 +203,7 @@ function ProfileMenu({
                 const active = c.id === currentCampaign.id;
                 return (
                   <DropdownMenu.Item key={c.id} asChild>
-                    <a
+                    <Link
                       href={c.href ?? "#"}
                       className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 outline-none transition data-[highlighted]:bg-cod-soft"
                     >
@@ -224,40 +211,30 @@ function ProfileMenu({
                         {c.name}
                       </span>
                       {active && <Check size={13} className="shrink-0 text-gold" />}
-                    </a>
+                    </Link>
                   </DropdownMenu.Item>
                 );
               })}
               {settingsHref && (
                 <DropdownMenu.Item asChild>
-                  {isAbsoluteUrl(settingsHref) ? (
-                    <a
-                      href={settingsHref}
-                      className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
-                    >
-                      <SlidersHorizontal size={13} className="text-muted" />
-                      Campaign settings
-                    </a>
-                  ) : (
-                    <Link
-                      href={settingsHref}
-                      className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
-                    >
-                      <SlidersHorizontal size={13} className="text-muted" />
-                      Campaign settings
-                    </Link>
-                  )}
+                  <Link
+                    href={settingsHref}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+                  >
+                    <SlidersHorizontal size={13} className="text-muted" />
+                    Campaign settings
+                  </Link>
                 </DropdownMenu.Item>
               )}
               {manageHref && (
                 <DropdownMenu.Item asChild>
-                  <a
+                  <Link
                     href={manageHref}
                     className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
                   >
                     <Settings2 size={13} className="text-muted" />
                     Manage this campaign
-                  </a>
+                  </Link>
                 </DropdownMenu.Item>
               )}
               <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
@@ -337,12 +314,10 @@ function ModuleTab({
     </>
   );
   if (href) {
-    // href is always absolute (cross-zone) or already includes the correct
-    // basePath — plain <a> avoids Next re-prepending this app's own basePath.
     return (
-      <a href={href} aria-current={active ? "page" : undefined} className={className}>
+      <Link href={href} aria-current={active ? "page" : undefined} className={className}>
         {content}
-      </a>
+      </Link>
     );
   }
   return (
@@ -369,9 +344,9 @@ function ModuleIconTab({
   ].join(" ");
   if (href) {
     return (
-      <a href={href} aria-label={label} title={label} aria-current={active ? "page" : undefined} className={className}>
+      <Link href={href} aria-label={label} title={label} aria-current={active ? "page" : undefined} className={className}>
         {icon}
-      </a>
+      </Link>
     );
   }
   return (
