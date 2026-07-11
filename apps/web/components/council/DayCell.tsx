@@ -166,6 +166,10 @@ export function DayCell({
         // instant physical feedback before the tint/ring even land.
         interactive && "hover:border-ink/40 cursor-pointer active:scale-[0.96]",
         isBestDay && "border-dm-gold/80 ring-1 ring-dm-gold/40",
+        // Today gets a wine frame + the edge tag below — last in the list so
+        // tailwind-merge lets it win over the hairline/disabled borders (and
+        // over Best day's gold, which keeps its ring).
+        day.isToday && "border-2 border-wine",
       )}
       aria-label={
         interactive
@@ -183,11 +187,6 @@ export function DayCell({
           >
             {day.dayOfMonth}
           </span>
-          {day.isToday && (
-            <span className="text-[8px] font-display tracking-wider uppercase text-wine">
-              Today
-            </span>
-          )}
           {isBestDay && (
             <span className="ml-1 hidden rounded-sm bg-dm-gold px-1 py-0.5 text-[9px] font-display tracking-wider uppercase text-parchment shadow-sm sm:inline-block">
               Best day
@@ -269,6 +268,14 @@ export function DayCell({
         />
       )}
     </button>
+
+      {/* "Today" tag straddling the tile's top border (option B). Outside
+          the button so the press squish doesn't drag it along. */}
+      {day.isToday && (
+        <span className="pointer-events-none absolute left-1.5 top-0 z-10 -translate-y-1/2 rounded bg-wine px-1.5 py-px font-display text-[9px] font-semibold uppercase tracking-[0.1em] text-white">
+          Today
+        </span>
+      )}
 
       {/* Session crest medallion. Owners can click it to remove the session
           (an × fades in over the coin on hover); everyone else just sees it. */}
