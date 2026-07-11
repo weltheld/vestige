@@ -3,7 +3,16 @@ import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@vestige/db";
 import { publicSupabaseAnonKey, publicSupabaseUrl } from "@vestige/db";
 
-const PROTECTED_PATHS = ["/app"];
+// Calendar's paths joined this list when it was folded into this app —
+// unauthenticated visitors there go to Calendar's own login (magic-link +
+// auto-enroll flow), everything else to the platform sign-in.
+const PROTECTED_PATHS = [
+  "/app",
+  "/calendar/profile",
+  "/calendar/new",
+  "/calendar/g/",
+  "/calendar/home",
+];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -42,14 +51,28 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && needsAuth) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/signin";
+    redirectUrl.pathname = pathname.startsWith("/calendar") ? "/calendar/login" : "/signin";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && (pathname === "/" || pathname === "/signin" || pathname === "/signup")) {
+  // A signed-in visit to /calendar/login WITH a ?next param is an invite
+  // link — let the login page run: it auto-enrols and forwards without a
+  // re-auth round trip. Without ?next (or on the other entry pages) there's
+  // nothing to do there; the platform home covers it.
+  const plainLogin =
+    pathname === "/calendar/login" && !request.nextUrl.searchParams.has("next");
+  if (
+    user &&
+    (pathname === "/" ||
+      pathname === "/signin" ||
+      pathname === "/signup" ||
+      pathname === "/calendar" ||
+      plainLogin)
+  ) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/app";
+    redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }
 

@@ -1,8 +1,3 @@
-// Calendar's own deployment, still mounted at /calendar via Multi-Zones
-// (Journal now lives in this app natively under app/journal/). Server-only —
-// used just to build rewrite destinations.
-const CALENDAR_ZONE_URL = process.env.CALENDAR_ZONE_URL ?? "http://localhost:3000";
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -16,11 +11,24 @@ const nextConfig = {
     staleTimes: {
       dynamic: 30,
     },
+    // Calendar's banner uploads send the cropped image AND the original
+    // (up to 5MB) to a Server Action in one FormData payload — well past
+    // Next's 1MB default body limit.
+    serverActions: {
+      bodySizeLimit: "8mb",
+    },
   },
-  async rewrites() {
+  // Bridge for old bookmarks and long-lived magic-link emails that point at
+  // Calendar's pre-merge bare paths (no /calendar prefix). Ported from the
+  // standalone Calendar app; useful once its old domain is pointed at this
+  // project. "/" and "/auth/callback" are NOT bridged — this app owns both.
+  async redirects() {
     return [
-      { source: "/calendar", destination: `${CALENDAR_ZONE_URL}/calendar` },
-      { source: "/calendar/:path*", destination: `${CALENDAR_ZONE_URL}/calendar/:path*` },
+      { source: "/login", destination: "/calendar/login", permanent: false },
+      { source: "/home", destination: "/calendar/home", permanent: false },
+      { source: "/new", destination: "/calendar/new", permanent: false },
+      { source: "/profile", destination: "/calendar/profile", permanent: false },
+      { source: "/g/:path*", destination: "/calendar/g/:path*", permanent: false },
     ];
   },
   images: {
