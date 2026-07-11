@@ -100,6 +100,24 @@ export function DayCell({
   const isDisabled = day.inCurrentMonth && (day.isPast || !isViableWeekday);
 
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  // Per-click pulse ring in the colour of the vote the click switches TO —
+  // keyed on a counter so rapid cycling re-fires the animation every time.
+  const [pop, setPop] = useState<{ key: number; color: string } | null>(null);
+
+  function cycle() {
+    if (!interactive) return;
+    const next = nextVoteValue(myVote);
+    const color =
+      next === "yes"
+        ? "var(--vote-yes)"
+        : next === "maybe"
+          ? "var(--vote-maybe)"
+          : next === "no"
+            ? "var(--vote-no)"
+            : "var(--ink-soft)";
+    setPop((p) => ({ key: (p?.key ?? 0) + 1, color }));
+    onCycle(day.iso);
+  }
 
   // Tinted background derived from user's own vote. Solid (opaque) beige
   // blends so the tile keeps its parchment color and just gains a subtle
@@ -130,7 +148,7 @@ export function DayCell({
     >
     <button
       type="button"
-      onClick={() => interactive && onCycle(day.iso)}
+      onClick={cycle}
       disabled={!interactive}
       className={cn(
         "relative flex h-full min-h-[70px] w-full flex-col rounded-md border p-1.5 text-left transition lg:min-h-[78px]",
@@ -144,7 +162,9 @@ export function DayCell({
           : day.inCurrentMonth
             ? "border-hairline/70"
             : "border-transparent opacity-40",
-        interactive && "hover:border-ink/40 cursor-pointer",
+        // Press-down squish (springs back via the button's transition) —
+        // instant physical feedback before the tint/ring even land.
+        interactive && "hover:border-ink/40 cursor-pointer active:scale-[0.96]",
         isBestDay && "border-dm-gold/80 ring-1 ring-dm-gold/40",
       )}
       aria-label={
@@ -239,6 +259,15 @@ export function DayCell({
           </span>
         )}
       </div>
+
+      {pop && (
+        <span
+          key={pop.key}
+          aria-hidden
+          className="vote-pop-ring pointer-events-none absolute inset-0 rounded-md"
+          style={{ "--pop-color": pop.color } as React.CSSProperties}
+        />
+      )}
     </button>
 
       {/* Session crest medallion. Owners can click it to remove the session

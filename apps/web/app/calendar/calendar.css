@@ -79,6 +79,28 @@
   }
 }
 
+/* Vote pop — a ring in the new vote's colour bursts out of the tile on
+   every click, so cycling yes → maybe → no lands with a bit of tactile
+   joy. Re-triggered by keying the overlay span on a per-click counter. */
+.vote-pop-ring {
+  animation: vote-pop-ring 0.35s ease-out forwards;
+}
+@keyframes vote-pop-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--pop-color, var(--gold)) 60%, transparent);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 0 12px transparent;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vote-pop-ring {
+    animation: none;
+  }
+}
+
 /* Month-change transition — the grid slides subtly in from the side you're
    navigating toward and fades in. Re-triggered by keying the grid wrapper
    on the month. */
