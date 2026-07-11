@@ -16,10 +16,13 @@ export type CalendarDay = {
   isPast: boolean;
 };
 
-const TODAY = (() => {
-  if (typeof window === "undefined") return new Date(2026, 5, 12);
+// Evaluated per call, never at module scope: a module-level Date on the
+// server sticks for the lifetime of a warm serverless instance, and the
+// old hardcoded server fixture (June 12, 2026) made SSR mark genuinely
+// past days as "future" — which kept their votes visible.
+function today(): Date {
   return new Date();
-})();
+}
 
 export function isoDate(d: Date): string {
   return format(d, "yyyy-MM-dd");
@@ -30,7 +33,7 @@ export function buildMonthGrid(year: number, monthIndex: number): CalendarDay[] 
   const last = endOfMonth(first);
   const gridStart = startOfWeek(first, { weekStartsOn: 1 });
   const days: CalendarDay[] = [];
-  const todayIso = isoDate(TODAY);
+  const todayIso = isoDate(today());
 
   let cursor = gridStart;
   while (true) {
@@ -72,7 +75,8 @@ export function nextMonth(year: number, monthIndex: number) {
 }
 
 export function defaultMonth() {
-  return { year: TODAY.getFullYear(), monthIndex: TODAY.getMonth() };
+  const t = today();
+  return { year: t.getFullYear(), monthIndex: t.getMonth() };
 }
 
 export function longDateLabel(iso: string) {
