@@ -55,7 +55,10 @@ export function DayCell({
   showVotes = true,
 }: Props) {
   const hasConflict = !!conflictCampaigns?.length;
-  const hasAlign = !!alignVotes?.length;
+  // Cross-campaign vote dots are votes too — dropped on past days along
+  // with the tallies (conflict swords stay: a booked session is a fact,
+  // not a scheduling signal).
+  const hasAlign = !day.isPast && !!alignVotes?.length;
   // Tooltip: every member, name coloured by their vote; non-voters greyed.
   const voteByUserId = new Map(votes.map((v) => [v.userId, v.value]));
   const rank: Record<string, number> = { yes: 0, maybe: 1, no: 2 };
@@ -77,6 +80,7 @@ export function DayCell({
     ? (votes.find((v) => v.userId === myUserId)?.value as VoteValue | undefined)
     : undefined;
   const dmFree =
+    !day.isPast &&
     dmUserIds.length > 0 &&
     dmUserIds.every((id) =>
       votes.some((v) => v.userId === id && v.value === "yes"),
@@ -88,6 +92,9 @@ export function DayCell({
 
   const interactive =
     day.inCurrentMonth && isViableWeekday && !day.isPast && !!myUserId;
+  // Votes are scheduling signals — once the day has passed they're noise,
+  // so past days drop their tallies and hover breakdown entirely.
+  const votesVisible = showVotes && !day.isPast;
   // In-month days that can never be voted on: past days and non-viable
   // weekdays. Rendered de-emphasised (no border, low opacity).
   const isDisabled = day.inCurrentMonth && (day.isPast || !isViableWeekday);
@@ -213,19 +220,19 @@ export function DayCell({
           isSession && "pr-7",
         )}
       >
-        {showVotes && yesCount > 0 && (
+        {votesVisible && yesCount > 0 && (
           <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-display text-[10px] font-bold leading-none" style={{background:"#c8d8c0",color:"#1e3a28"}}>
             <Check className="h-2.5 w-2.5" strokeWidth={3} />
             {yesCount}
           </span>
         )}
-        {showVotes && maybeCount > 0 && (
+        {votesVisible && maybeCount > 0 && (
           <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-display text-[10px] font-bold leading-none" style={{background:"#e8d8a8",color:"#5a4010"}}>
             <Minus className="h-2.5 w-2.5" strokeWidth={3} />
             {maybeCount}
           </span>
         )}
-        {showVotes && noCount > 0 && (
+        {votesVisible && noCount > 0 && (
           <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-display text-[10px] font-bold leading-none" style={{background:"#e8c0c0",color:"#5a1820"}}>
             <X className="h-2.5 w-2.5" strokeWidth={3} />
             {noCount}
@@ -271,7 +278,7 @@ export function DayCell({
 
       {day.inCurrentMonth &&
         cursor &&
-        (hasConflict || hasAlign || (showVotes && isViableWeekday && tooltipRows.length > 0)) && (
+        (hasConflict || hasAlign || (votesVisible && isViableWeekday && tooltipRows.length > 0)) && (
           <div
             className="pointer-events-none fixed z-50 w-max max-w-[220px] rounded-md border border-hairline bg-surface px-3 py-2 text-left shadow-parchment"
             style={{ left: cursor.x + 14, top: cursor.y + 14 }}
@@ -317,7 +324,7 @@ export function DayCell({
               </div>
             )}
 
-            {showVotes && isViableWeekday && tooltipRows.length > 0 && (
+            {votesVisible && isViableWeekday && tooltipRows.length > 0 && (
               <div
                 className={cn(
                   (hasConflict || hasAlign) && "border-t border-hairline pt-1",
