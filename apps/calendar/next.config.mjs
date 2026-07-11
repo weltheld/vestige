@@ -14,6 +14,14 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "8mb",
     },
+    // Every route here is dynamically rendered (auth-gated), and Next 15
+    // defaults the client router cache to 0s for dynamic pages — so each
+    // back/forward or revisit refetches everything and shows a loader.
+    // 30s makes recently-visited pages render instantly from cache;
+    // mutations still update immediately via router.refresh().
+    staleTimes: {
+      dynamic: 30,
+    },
   },
   // Mounted under the Vestige platform's domain at /calendar (Next.js
   // Multi-Zones), so magic-link sign-in is shared across the whole
