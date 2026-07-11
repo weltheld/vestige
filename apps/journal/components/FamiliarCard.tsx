@@ -48,7 +48,7 @@ export function FamiliarCard({
             href={journal.settings(campaignId)}
             className="font-body text-[10px] text-ink-soft underline underline-offset-2 hover:text-ink"
           >
-            {status.connected ? "Manage →" : "Connect →"}
+            {status.connected || status.verified ? "Manage →" : "Connect →"}
           </Link>
         </div>
       </section>
@@ -92,33 +92,37 @@ export function FamiliarCard({
         href={journal.settings(campaignId)}
         className="font-body text-[12px] text-ink-soft underline underline-offset-2 hover:text-ink"
       >
-        {status.connected ? "Manage the connection in settings →" : "Get your ingest token in settings →"}
+        {status.connected || status.verified
+          ? "Manage the connection in settings →"
+          : "Get your ingest token in settings →"}
       </Link>
     </section>
   );
 }
 
 function StatusPill({ status }: { status: FamiliarStatus }) {
-  const connected = status.connected;
+  const { connected, verified } = status;
   const label = connected
     ? status.lastRecapAt
       ? `Connected · last ${format(parseISO(status.lastRecapAt), "MMM d")}`
       : "Connected"
-    : "Not connected yet";
+    : verified
+      ? "Verified — no recaps yet"
+      : "Not connected yet";
+  const dotColor = connected ? "var(--vote-yes)" : verified ? "var(--gold)" : "var(--muted)";
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[10px] font-semibold uppercase tracking-wide"
       style={{
         background: connected
           ? "color-mix(in srgb, var(--vote-yes) 15%, var(--surface))"
-          : "color-mix(in srgb, var(--ink) 8%, var(--surface))",
-        color: connected ? "var(--vote-yes)" : "var(--muted)",
+          : verified
+            ? "color-mix(in srgb, var(--gold) 15%, var(--surface))"
+            : "color-mix(in srgb, var(--ink) 8%, var(--surface))",
+        color: connected ? "var(--vote-yes)" : verified ? "var(--gold)" : "var(--muted)",
       }}
     >
-      <span
-        className="h-1.5 w-1.5 rounded-full"
-        style={{ background: connected ? "var(--vote-yes)" : "var(--muted)" }}
-      />
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: dotColor }} />
       {label}
     </span>
   );

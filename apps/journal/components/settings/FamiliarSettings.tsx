@@ -48,7 +48,14 @@ export function FamiliarSettings({
       <div className="flex items-center gap-2">
         <span
           className="h-2 w-2 shrink-0 rounded-full"
-          style={{ background: connection.recapCount > 0 ? "var(--vote-yes)" : "var(--muted)" }}
+          style={{
+            background:
+              connection.recapCount > 0
+                ? "var(--vote-yes)"
+                : connection.verifiedAt
+                  ? "var(--gold)"
+                  : "var(--muted)",
+          }}
         />
         <span className="font-body text-[13px] text-ink">
           {connection.recapCount > 0 ? (
@@ -60,6 +67,8 @@ export function FamiliarSettings({
                 : ""}
               .
             </>
+          ) : connection.verifiedAt ? (
+            "Verified — Familiar can reach this campaign. Recaps will appear here after your next session."
           ) : (
             "Not connected yet — paste the token below into Familiar to link this campaign."
           )}

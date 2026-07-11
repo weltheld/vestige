@@ -156,6 +156,7 @@ export type FamiliarConnectionRow = {
   created_at: string;
   last_recap_at: string | null;
   recap_count: number;
+  verified_at: string | null;
 };
 
 export type CampaignJoinCodeRow = {
@@ -470,6 +471,7 @@ export type Database = {
           created_at?: string;
           last_recap_at?: string | null;
           recap_count?: number;
+          verified_at?: string | null;
         };
         Update: Partial<FamiliarConnectionRow>;
         Relationships: [

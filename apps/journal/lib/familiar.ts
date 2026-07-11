@@ -24,6 +24,7 @@ export type FamiliarConnection = {
   ingestUrl: string;
   lastRecapAt: string | null;
   recapCount: number;
+  verifiedAt: string | null;
 };
 
 /**
@@ -37,7 +38,7 @@ export async function getOrCreateFamiliarConnection(
 ): Promise<FamiliarConnection | null> {
   const { data: existing } = await supabase
     .from("familiar_connections")
-    .select("ingest_token, last_recap_at, recap_count")
+    .select("ingest_token, last_recap_at, recap_count, verified_at")
     .eq("campaign_id", campaignId)
     .maybeSingle();
 
@@ -46,7 +47,7 @@ export async function getOrCreateFamiliarConnection(
     const { data: created, error } = await supabase
       .from("familiar_connections")
       .insert({ campaign_id: campaignId, ingest_token: newIngestToken() })
-      .select("ingest_token, last_recap_at, recap_count")
+      .select("ingest_token, last_recap_at, recap_count, verified_at")
       .single();
     if (error || !created) return null;
     row = created;
@@ -57,25 +58,29 @@ export async function getOrCreateFamiliarConnection(
     ingestUrl: FAMILIAR_INGEST_URL,
     lastRecapAt: row.last_recap_at,
     recapCount: row.recap_count,
+    verifiedAt: row.verified_at,
   };
 }
 
-export type FamiliarStatus = { connected: boolean; lastRecapAt: string | null };
+export type FamiliarStatus = { connected: boolean; verified: boolean; lastRecapAt: string | null };
 
 /**
  * Non-secret connection status for the campaign page card, readable by any
  * member. The token lives in a creator-only RLS table, so this reads
- * last_recap_at with the service role (status only — never the token).
+ * last_recap_at/verified_at with the service role (status only — never the
+ * token). `verified` is true once Familiar's lightweight ping has confirmed
+ * the endpoint + token work, ahead of any real recap ever being sent.
  */
 export async function getFamiliarStatus(campaignId: string): Promise<FamiliarStatus> {
   const admin = getServiceRoleSupabase();
   const { data } = await admin
     .from("familiar_connections")
-    .select("last_recap_at, recap_count")
+    .select("last_recap_at, recap_count, verified_at")
     .eq("campaign_id", campaignId)
     .maybeSingle();
   return {
     connected: !!data && data.recap_count > 0,
+    verified: !!data?.verified_at,
     lastRecapAt: data?.last_recap_at ?? null,
   };
 }
