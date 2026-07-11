@@ -119,62 +119,6 @@ export function ManageCampaignScreen({ data, magicLink }: { data: ManageData; ma
         <h1 className="font-display text-2xl font-bold text-ink">Manage campaign</h1>
       </header>
 
-      <section className="mt-7 flex flex-col gap-2">
-        <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-          Invite via Magic Link
-        </p>
-        <div className="flex items-center gap-2">
-          <input
-            readOnly
-            value={magicLink}
-            className="h-11 flex-1 rounded-md border border-hairline bg-[color-mix(in_srgb,var(--surface)_80%,var(--parchment))] px-3 font-mono text-[12px] text-ink"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              navigator.clipboard?.writeText(magicLink);
-              setCopied(true);
-              window.setTimeout(() => setCopied(false), 1500);
-            }}
-            className="inline-flex h-11 items-center gap-1.5 rounded-md border border-hairline px-4 font-display text-[11px] font-semibold uppercase tracking-wider text-ink-soft transition hover:bg-cod-soft hover:text-ink"
-          >
-            {copied ? <Check size={14} className="text-vote-yes" /> : <Copy size={14} />}
-            {copied ? "Copied" : "Copy"}
-          </button>
-        </div>
-        <p className="font-body text-[11px] text-muted">
-          Anyone with this link can sign in by email and join.
-        </p>
-      </section>
-
-      <section className="mt-7 flex flex-col gap-2">
-        <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-          Invite via Code
-        </p>
-        <div className="flex items-center gap-2">
-          <input
-            readOnly
-            value={data.joinCode}
-            className="h-11 w-32 rounded-md border border-hairline bg-[color-mix(in_srgb,var(--surface)_80%,var(--parchment))] px-3 text-center font-mono text-[14px] uppercase tracking-widest text-ink"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              navigator.clipboard?.writeText(data.joinCode);
-              setCodeCopied(true);
-              window.setTimeout(() => setCodeCopied(false), 1500);
-            }}
-            className="inline-flex h-11 items-center gap-1.5 rounded-md border border-hairline px-4 font-display text-[11px] font-semibold uppercase tracking-wider text-ink-soft transition hover:bg-cod-soft hover:text-ink"
-          >
-            {codeCopied ? <Check size={14} className="text-vote-yes" /> : <Copy size={14} />}
-            {codeCopied ? "Copied" : "Copy"}
-          </button>
-        </div>
-        <p className="font-body text-[11px] text-muted">
-          Anyone can enter this code on their Vestige home screen to join — no email needed.
-        </p>
-      </section>
-
       <section className="mt-7 flex flex-col gap-3">
         <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
           The party so far
@@ -256,6 +200,62 @@ export function ManageCampaignScreen({ data, magicLink }: { data: ManageData; ma
             </li>
           )}
         </ul>
+      </section>
+
+      <section className="mt-7 flex flex-col gap-2">
+        <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+          Invite via Magic Link
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            readOnly
+            value={magicLink}
+            className="h-11 flex-1 rounded-md border border-hairline bg-[color-mix(in_srgb,var(--surface)_80%,var(--parchment))] px-3 font-mono text-[12px] text-ink"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(magicLink);
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1500);
+            }}
+            className="inline-flex h-11 items-center gap-1.5 rounded-md border border-hairline px-4 font-display text-[11px] font-semibold uppercase tracking-wider text-ink-soft transition hover:bg-cod-soft hover:text-ink"
+          >
+            {copied ? <Check size={14} className="text-vote-yes" /> : <Copy size={14} />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+        <p className="font-body text-[11px] text-muted">
+          Anyone with this link can sign in by email and join.
+        </p>
+      </section>
+
+      <section className="mt-7 flex flex-col gap-2">
+        <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+          Invite via Code
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            readOnly
+            value={data.joinCode}
+            className="h-11 w-32 rounded-md border border-hairline bg-[color-mix(in_srgb,var(--surface)_80%,var(--parchment))] px-3 text-center font-mono text-[14px] uppercase tracking-widest text-ink"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(data.joinCode);
+              setCodeCopied(true);
+              window.setTimeout(() => setCodeCopied(false), 1500);
+            }}
+            className="inline-flex h-11 items-center gap-1.5 rounded-md border border-hairline px-4 font-display text-[11px] font-semibold uppercase tracking-wider text-ink-soft transition hover:bg-cod-soft hover:text-ink"
+          >
+            {codeCopied ? <Check size={14} className="text-vote-yes" /> : <Copy size={14} />}
+            {codeCopied ? "Copied" : "Copy"}
+          </button>
+        </div>
+        <p className="font-body text-[11px] text-muted">
+          Anyone can enter this code on their Vestige home screen to join — no email needed.
+        </p>
       </section>
 
       {data.addableUsers.length > 0 && (

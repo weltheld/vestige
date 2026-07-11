@@ -57,6 +57,25 @@ export async function deleteCampaign(campaignId: string) {
   redirect(appHref());
 }
 
+/** A member removes themselves — RLS lets anyone delete their own
+ *  campaign_members row, same rule that lets a creator remove someone
+ *  else's. Not offered to the creator (they'd need to delete or transfer
+ *  the campaign instead, since it can't be ownerless). */
+export async function leaveCampaign(campaignId: string) {
+  const supabase = await getServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in");
+  const { error } = await supabase
+    .from("campaign_members")
+    .delete()
+    .eq("campaign_id", campaignId)
+    .eq("user_id", user.id);
+  if (error) throw error;
+  redirect(appHref());
+}
+
 /** Roll the campaign's Familiar ingest token (creator-only via RLS). Any
  *  Familiar install still using the old token stops working until re-pasted —
  *  the point of a regenerate. */
@@ -66,7 +85,10 @@ export async function regenerateFamiliarToken(campaignId: string): Promise<{ tok
   const token = `fam_${rand()}${rand()}`;
   const { error } = await supabase
     .from("familiar_connections")
-    .upsert({ campaign_id: campaignId, ingest_token: token }, { onConflict: "campaign_id" });
+    .upsert(
+      { campaign_id: campaignId, ingest_token: token, verified_at: null },
+      { onConflict: "campaign_id" },
+    );
   if (error) throw error;
   revalidatePath(`/c/${campaignId}/settings`);
   return { token };

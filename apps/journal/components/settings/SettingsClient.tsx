@@ -11,6 +11,7 @@ import {
   setMemberDm,
   removeMember,
   deleteCampaign,
+  leaveCampaign,
 } from "@/app/c/[campaignId]/settings/actions";
 import { pickImageFile, uploadCampaignBanner } from "@/lib/upload";
 import { FamiliarSettings } from "./FamiliarSettings";
@@ -207,7 +208,7 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
           </Section>
         )}
 
-        {isCreator && (
+        {isCreator ? (
           <Section label="Danger Zone" tone="wine">
             <button
               type="button"
@@ -218,6 +219,19 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
               className="font-body text-[13px] text-wine underline underline-offset-2"
             >
               Delete campaign
+            </button>
+          </Section>
+        ) : (
+          <Section label="Leave Campaign" tone="wine">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!window.confirm(`Leave "${name}"? You'll need a new invite or join code to come back.`)) return;
+                await leaveCampaign(id);
+              }}
+              className="font-body text-[13px] text-wine underline underline-offset-2"
+            >
+              Leave campaign
             </button>
           </Section>
         )}
