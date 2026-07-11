@@ -115,7 +115,14 @@ export function CalendarPanel({
   // render so the initial mount doesn't animate.
   const [slideDir, setSlideDir] = useState<-1 | 1 | null>(null);
 
+  // Fully past months are gone — scheduling starts at the current month,
+  // so back-navigation stops there (arrows and swipe alike).
+  const min = defaultMonth();
+  const atMinMonth =
+    year < min.year || (year === min.year && monthIndex <= min.monthIndex);
+
   function go(delta: -1 | 1) {
+    if (delta === -1 && atMinMonth) return;
     const m = delta === -1 ? prevMonth(year, monthIndex) : nextMonth(year, monthIndex);
     setSlideDir(delta);
     setMonth(m);
@@ -149,7 +156,8 @@ export function CalendarPanel({
         <button
           aria-label="Previous month"
           onClick={() => go(-1)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface shadow-sm hover:bg-parchment"
+          disabled={atMinMonth}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface shadow-sm hover:bg-parchment disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-surface"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -170,7 +178,8 @@ export function CalendarPanel({
           <button
             aria-label="Previous month"
             onClick={() => go(-1)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface shadow-sm hover:bg-parchment"
+            disabled={atMinMonth}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface shadow-sm hover:bg-parchment disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-surface"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
