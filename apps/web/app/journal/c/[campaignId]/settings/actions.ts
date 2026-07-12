@@ -84,18 +84,27 @@ export type AiKeyResult = { ok: true } | { ok: false; error: string };
  *  so these actions return results instead. */
 function aiKeyError(error: { code?: string; message: string }): AiKeyResult {
   // 42P01 = undefined_table: the campaign_ai_settings migration wasn't run.
-  if (error.code === "42P01" || error.message.includes("campaign_ai_settings")) {
+  if (error.code === "42P01") {
     return {
       ok: false,
       error:
         "The AI-settings table doesn't exist yet — run the campaign_ai_settings migration in Supabase first.",
     };
   }
+  // 42703 = undefined_column: the table exists but predates the dual-keys
+  // migration (anthropic_key / groq_key missing).
+  if (error.code === "42703") {
+    return {
+      ok: false,
+      error:
+        "The AI-settings table is outdated — run the campaign_ai_dual_keys migration in Supabase.",
+    };
+  }
   // RLS rejection surfaces as a policy violation for non-creators.
   if (error.code === "42501") {
     return { ok: false, error: "Only the campaign creator can change this." };
   }
-  return { ok: false, error: "Could not save the key. Try again." };
+  return { ok: false, error: `Could not save the key (${error.code ?? "unknown error"}).` };
 }
 
 const KEY_COLUMN: Record<AiProviderDb, "anthropic_key" | "groq_key"> = {
