@@ -35,12 +35,18 @@ export function NpcForm({
   npcId,
   initial,
   canSummarize = false,
+  onSaved,
+  onCancel,
 }: {
   campaignId: string;
   npcId?: string;
   initial?: { name: string; summary: string | null; status: NpcStatusDb; kind: NpcKindDb };
   /** Only the campaign owner may trigger the paid AI summarize action. */
   canSummarize?: boolean;
+  /** Called after a successful in-place save (detail page returns to view mode). */
+  onSaved?: () => void;
+  /** Renders a Cancel button that calls this (back to view mode, unsaved edits dropped). */
+  onCancel?: () => void;
 }) {
   const router = useRouter();
   const parsed = parseFootnotes(initial?.summary ?? null);
@@ -72,6 +78,7 @@ export function NpcForm({
           setNotice("Saved.");
           window.setTimeout(() => setNotice(null), 2000);
           router.refresh();
+          onSaved?.();
         } else {
           const { id } = await createNpc(campaignId, input);
           router.push(journal.npc(campaignId, id));
@@ -195,6 +202,16 @@ export function NpcForm({
         >
           {pending ? "Saving…" : npcId ? "Save changes" : "Add to codex"}
         </button>
+        {onCancel && (
+          <button
+            type="button"
+            disabled={pending || summarizing}
+            onClick={onCancel}
+            className="font-body text-[13px] text-ink-soft underline underline-offset-2 transition hover:text-ink disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        )}
         {notice && !error && <span className="font-body text-[12px] text-vote-yes">{notice}</span>}
         {error && <span className="font-body text-[12px] text-vote-no">{error}</span>}
       </div>

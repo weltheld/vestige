@@ -6,8 +6,7 @@ import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember, isCampaignOwner } from "@/lib/journal/data";
 import { getNpc, getNpcMentions } from "@/lib/journal/npcs";
 import { appHref, journal } from "@/lib/journal/links";
-import { NpcForm } from "@/components/journal/codex/NpcForm";
-import { DeleteNpcButton } from "@/components/journal/codex/DeleteNpcButton";
+import { NpcEntry } from "@/components/journal/codex/NpcEntry";
 import { parseFootnotes, footnoteForSession } from "@/lib/journal/codex-footnotes";
 
 // "Summarize from sessions" calls Claude from a server action invoked on
@@ -48,10 +47,15 @@ export default async function NpcDetailPage({
           Codex
         </Link>
         <div className="mt-4">
-          <NpcForm
+          <NpcEntry
             campaignId={campaignId}
-            npcId={npc.id}
-            initial={{ name: npc.name, summary: npc.summary, status: npc.status, kind: npc.kind }}
+            npc={{
+              id: npc.id,
+              name: npc.name,
+              summary: npc.summary,
+              status: npc.status,
+              kind: npc.kind,
+            }}
             canSummarize={isOwner}
           />
         </div>
@@ -106,10 +110,7 @@ export default async function NpcDetailPage({
           </ul>
         )}
       </section>
-
-      <section className="border-t border-hairline pt-5">
-        <DeleteNpcButton campaignId={campaignId} npcId={npc.id} name={npc.name} />
-      </section>
+      {/* Delete lives inside edit mode (NpcEntry) — not on the read view. */}
     </main>
   );
 }
