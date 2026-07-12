@@ -1,19 +1,10 @@
-import { Crest } from "@/components/council/Crest";
+import { HeaderSkeleton } from "@vestige/ui";
 import { Skeleton } from "@/components/council/Skeleton";
 
 export default function Loading() {
   return (
     <div className="flex min-h-screen flex-col bg-parchment">
-      <header className="border-b border-hairline bg-parchment">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-          <Crest size={38} className="animate-spin" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="ml-2 h-10 w-[168px] rounded-xl" />
-          <div className="flex-1" />
-          <Skeleton className="h-9 w-40 rounded-full" />
-          <Skeleton className="h-9 w-28 rounded-full" />
-        </div>
-      </header>
+      <HeaderSkeleton />
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col lg:grid lg:grid-cols-[280px_1fr]">
         <aside className="hidden border-r border-hairline/70 p-5 lg:block">

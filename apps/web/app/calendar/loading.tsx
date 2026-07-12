@@ -1,3 +1,4 @@
+import { HeaderSkeleton } from "@vestige/ui";
 import { Crest } from "@/components/council/Crest";
 import { Skeleton } from "@/components/council/Skeleton";
 
@@ -6,15 +7,7 @@ import { Skeleton } from "@/components/council/Skeleton";
 export default function Loading() {
   return (
     <div className="flex min-h-screen flex-col bg-parchment">
-      <header className="border-b border-hairline bg-parchment">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-          <Crest size={38} className="animate-spin" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="ml-2 h-10 w-[168px] rounded-xl" />
-          <div className="flex-1" />
-          <Skeleton className="h-9 w-28 rounded-full" />
-        </div>
-      </header>
+      <HeaderSkeleton campaignPill={false} />
       <main className="flex flex-1 items-start justify-center px-4 py-10 sm:py-14">
         <div className="w-full max-w-[480px] rounded-xl border border-hairline bg-surface p-8 shadow-parchment sm:p-10">
           <div className="flex flex-col items-center gap-3">

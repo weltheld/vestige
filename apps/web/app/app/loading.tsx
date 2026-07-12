@@ -1,17 +1,10 @@
-import { PlatformCrest, Skeleton } from "@vestige/ui";
+import { HeaderSkeleton, Skeleton } from "@vestige/ui";
 
 export default function Loading() {
   return (
     <>
-      <header className="border-b border-hairline">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-          <PlatformCrest size={38} className="animate-spin" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="ml-2 h-10 w-[168px] rounded-xl" />
-          <div className="flex-1" />
-          <Skeleton className="h-9 w-28 rounded-full" />
-        </div>
-      </header>
+      {/* Campaign list — the real header has no campaign pill here. */}
+      <HeaderSkeleton campaignPill={false} />
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
           <section>

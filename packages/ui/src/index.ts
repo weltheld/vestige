@@ -14,5 +14,6 @@ export { Button } from "./components/Button";
 export { PlatformFooter } from "./components/PlatformFooter";
 export { WaxSeal } from "./components/WaxSeal";
 export { Skeleton } from "./components/Skeleton";
+export { HeaderSkeleton } from "./components/HeaderSkeleton";
 export { ThemePicker, applyTheme, THEME_OPTIONS, type ThemeOption } from "./components/ThemePicker";
 export { ProfileEditDialog } from "./components/ProfileEditDialog";

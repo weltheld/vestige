@@ -1,4 +1,4 @@
-import { PlatformCrest, Skeleton } from "@vestige/ui";
+import { HeaderSkeleton, Skeleton } from "@vestige/ui";
 
 // This route only resolves the campaign then redirects into its default
 // module (Calendar for most campaigns) — so the skeleton mirrors the Calendar
@@ -6,16 +6,7 @@ import { PlatformCrest, Skeleton } from "@vestige/ui";
 export default function Loading() {
   return (
     <div className="flex min-h-screen flex-col bg-parchment">
-      <header className="border-b border-hairline">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-          <PlatformCrest size={38} className="animate-spin" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="ml-2 h-10 w-[168px] rounded-xl" />
-          <div className="flex-1" />
-          <Skeleton className="h-9 w-40 rounded-full" />
-          <Skeleton className="h-9 w-28 rounded-full" />
-        </div>
-      </header>
+      <HeaderSkeleton />
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col lg:grid lg:grid-cols-[280px_1fr]">
         <aside className="hidden border-r border-hairline/70 p-5 lg:block">
