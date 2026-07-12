@@ -77,15 +77,36 @@ export async function leaveCampaign(campaignId: string) {
   redirect(appHref());
 }
 
+export type AiKeyResult = { ok: true } | { ok: false; error: string };
+
+/** Turn a Supabase error into something the settings card can show —
+ *  thrown errors are masked in production Server Actions ("digest" only),
+ *  so these actions return results instead. */
+function aiKeyError(error: { code?: string; message: string }): AiKeyResult {
+  // 42P01 = undefined_table: the campaign_ai_settings migration wasn't run.
+  if (error.code === "42P01" || error.message.includes("campaign_ai_settings")) {
+    return {
+      ok: false,
+      error:
+        "The AI-settings table doesn't exist yet — run the campaign_ai_settings migration in Supabase first.",
+    };
+  }
+  // RLS rejection surfaces as a policy violation for non-creators.
+  if (error.code === "42501") {
+    return { ok: false, error: "Only the campaign creator can change this." };
+  }
+  return { ok: false, error: "Could not save the key. Try again." };
+}
+
 /** Save the campaign's AI provider + key for Codex summaries. Creator-only
  *  via RLS (campaign_ai_settings policies) — a non-creator's upsert fails. */
 export async function saveCampaignAiKey(
   campaignId: string,
   provider: AiProviderDb,
   apiKey: string,
-) {
+): Promise<AiKeyResult> {
   const key = apiKey.trim();
-  if (!key) throw new Error("An API key is required.");
+  if (!key) return { ok: false, error: "An API key is required." };
   const supabase = await sb();
   const { error } = await supabase
     .from("campaign_ai_settings")
@@ -93,18 +114,20 @@ export async function saveCampaignAiKey(
       { campaign_id: campaignId, provider, api_key: key, updated_at: new Date().toISOString() },
       { onConflict: "campaign_id" },
     );
-  if (error) throw error;
+  if (error) return aiKeyError(error);
   revalidatePath(`/journal/c/${campaignId}/settings`);
+  return { ok: true };
 }
 
-export async function removeCampaignAiKey(campaignId: string) {
+export async function removeCampaignAiKey(campaignId: string): Promise<AiKeyResult> {
   const supabase = await sb();
   const { error } = await supabase
     .from("campaign_ai_settings")
     .delete()
     .eq("campaign_id", campaignId);
-  if (error) throw error;
+  if (error) return aiKeyError(error);
   revalidatePath(`/journal/c/${campaignId}/settings`);
+  return { ok: true };
 }
 
 /** Roll the campaign's Familiar ingest token (creator-only via RLS). Any

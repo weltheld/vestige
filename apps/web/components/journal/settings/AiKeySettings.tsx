@@ -44,11 +44,13 @@ export function AiKeySettings({
     setError(null);
     setBusy(true);
     try {
-      await saveCampaignAiKey(campaignId, provider, key);
+      const res = await saveCampaignAiKey(campaignId, provider, key);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
       setKey("");
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save the key.");
     } finally {
       setBusy(false);
     }
@@ -59,10 +61,12 @@ export function AiKeySettings({
     setError(null);
     setBusy(true);
     try {
-      await removeCampaignAiKey(campaignId);
+      const res = await removeCampaignAiKey(campaignId);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not remove the key.");
     } finally {
       setBusy(false);
     }
