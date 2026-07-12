@@ -111,6 +111,21 @@ export const getCampaignIfMember = cache(
   },
 );
 
+/** True if the user is the campaign's creator/owner (campaigns.creator_id) —
+ *  the one gate for owner-only actions like triggering paid AI calls. */
+export async function isCampaignOwner(
+  supabase: SB,
+  userId: string,
+  campaignId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("campaigns")
+    .select("creator_id")
+    .eq("id", campaignId)
+    .maybeSingle();
+  return data?.creator_id === userId;
+}
+
 export type CampaignPlayer = {
   userId: string;
   characterName: string;

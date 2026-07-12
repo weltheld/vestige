@@ -6,6 +6,7 @@ import { getServerSupabase } from "@vestige/db/server";
 import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
 import { journal } from "@/lib/journal/links";
 import { draftEntitySummary } from "@/lib/journal/codex-summary";
+import { isCampaignOwner } from "@/lib/journal/data";
 
 export type NpcInput = {
   name: string;
@@ -79,7 +80,13 @@ export async function summarizeNpc(
   campaignId: string,
   npcId: string,
 ): Promise<SummarizeResult> {
-  const { supabase } = await uid();
+  const { supabase, userId } = await uid();
+  // Every summarize click spends the campaign's Anthropic API key — only
+  // the campaign owner may trigger it, checked server-side (not just hidden
+  // in the UI) since this is a paid action.
+  if (!(await isCampaignOwner(supabase, userId, campaignId))) {
+    return { ok: false, error: "Only the campaign owner can generate summaries." };
+  }
   // Member-scoped read via RLS; also pins the entity to the campaign.
   const { data: npc } = await supabase
     .from("npcs")

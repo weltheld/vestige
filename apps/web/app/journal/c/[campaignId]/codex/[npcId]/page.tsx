@@ -3,7 +3,7 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
-import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
+import { getViewer, getCampaignIfMember, isCampaignOwner } from "@/lib/journal/data";
 import { getNpc, getNpcMentions } from "@/lib/journal/npcs";
 import { appHref, journal } from "@/lib/journal/links";
 import { NpcForm } from "@/components/journal/codex/NpcForm";
@@ -28,7 +28,10 @@ export default async function NpcDetailPage({
 
   const npc = await getNpc(supabase, npcId);
   if (!npc || npc.campaign_id !== campaignId) notFound();
-  const mentions = await getNpcMentions(supabase, npcId);
+  const [mentions, isOwner] = await Promise.all([
+    getNpcMentions(supabase, npcId),
+    isCampaignOwner(supabase, viewer.id, campaignId),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-[640px] flex-col gap-10 px-4 pb-16 pt-8 sm:px-8">
@@ -45,6 +48,7 @@ export default async function NpcDetailPage({
             campaignId={campaignId}
             npcId={npc.id}
             initial={{ name: npc.name, summary: npc.summary, status: npc.status, kind: npc.kind }}
+            canSummarize={isOwner}
           />
         </div>
       </div>

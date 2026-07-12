@@ -25,10 +25,13 @@ export function NpcForm({
   campaignId,
   npcId,
   initial,
+  canSummarize = false,
 }: {
   campaignId: string;
   npcId?: string;
   initial?: { name: string; summary: string | null; status: NpcStatusDb; kind: NpcKindDb };
+  /** Only the campaign owner may trigger the paid AI summarize action. */
+  canSummarize?: boolean;
 }) {
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
@@ -140,7 +143,7 @@ export function NpcForm({
       <label className="flex flex-col gap-1.5">
         <span className="flex items-center font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
           Summary
-          {npcId && (
+          {npcId && canSummarize && (
             <button
               type="button"
               disabled={summarizing || pending}
