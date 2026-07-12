@@ -14,23 +14,34 @@ const KIND_NOUN: Record<NpcKindDb, string> = {
 };
 
 const SYSTEM_PROMPT =
-  "You maintain the codex of a Dungeons & Dragons campaign journal — a quiet, library-catalogue reference the players consult between sessions. " +
-  "You will receive excerpts from session write-ups that mention one entity, and you write that entity's codex summary. " +
-  "Rules: use ONLY facts stated in the excerpts, never invent or embellish; write 3-6 sentences of flowing prose (no headings, no lists, no markdown); " +
-  "order facts roughly chronologically; write in the same language the excerpts are written in; " +
-  "refer to the entity by name; if the excerpts reveal little, a shorter summary is better than padding.";
+  "You are the campaign's loremaster, keeping the codex of a Dungeons & Dragons journal — the chronicle the players consult between sessions. " +
+  "You will receive numbered session excerpts that mention one entity, and you write that entity's codex chronicle.\n" +
+  "Content rules (strict):\n" +
+  "- Use ONLY what the excerpts state outright. No interpretation, no speculation, no motives or feelings that aren't written there, no conclusions of your own. If the excerpts don't say why, the chronicle doesn't either.\n" +
+  "- Cite every fact with the session it comes from, using an inline marker like [1] or [2] (the excerpt numbers). A sentence drawing on two sessions carries both markers.\n" +
+  "- Order facts chronologically. If the excerpts reveal little, a shorter chronicle is better than padding.\n" +
+  "Style rules:\n" +
+  "- Voice: high-fantasy chronicle — the measured, evocative telling of a loremaster recording a story, not a database entry. Let the drama live in word choice and rhythm, never in added content.\n" +
+  "- 3-6 sentences of flowing prose. No headings, no lists, no markdown. Refer to the entity by name.\n" +
+  "- Write in the same language the excerpts are written in.\n" +
+  "- Do NOT write the footnote legend yourself — only the inline [n] markers; the legend is appended for you.";
+
+/** Drop a previously appended footnote legend (everything from the "—"
+ *  separator) so re-summarizing doesn't feed stale citations back in. */
+function stripFootnotes(summary: string): string {
+  return summary.split(/\n\n—\n/)[0].trim();
+}
 
 function buildUserPrompt(
   entity: { name: string; kind: NpcKindDb; summary: string | null },
   excerpts: string,
 ): string {
+  const existing = entity.summary?.trim() ? stripFootnotes(entity.summary) : "";
   return (
     `Entity: ${entity.name} (a ${KIND_NOUN[entity.kind]})\n` +
-    (entity.summary?.trim()
-      ? `Existing summary (may be revised or extended): ${entity.summary.trim()}\n`
-      : "") +
-    `\nSession excerpts mentioning ${entity.name}:\n\n${excerpts}\n\n` +
-    `Write the codex summary for ${entity.name}.`
+    (existing ? `Existing chronicle (may be revised or extended): ${existing}\n` : "") +
+    `\nNumbered session excerpts mentioning ${entity.name}:\n\n${excerpts}\n\n` +
+    `Write the codex chronicle for ${entity.name}.`
   );
 }
 
@@ -187,16 +198,39 @@ export async function draftEntitySummary(
     )
     .order("date", { ascending: true });
 
-  const excerpts = (sessions ?? [])
-    .map((s) => {
+  // Numbered excerpts — the model cites facts as [n]; the footnote legend
+  // is appended below from these same rows, so sources can't be invented.
+  const sessionList = sessions ?? [];
+  const excerpts = sessionList
+    .map((s, i) => {
       const parts = [s.summary, s.npcs, s.notes].filter(Boolean).join("\n\n");
-      return `## ${s.title}${s.date ? ` (${s.date})` : ""}\n${parts}`;
+      return `## [${i + 1}] ${s.title}${s.date ? ` (${s.date})` : ""}\n${parts}`;
     })
     .join("\n\n---\n\n")
     // Keep the request bounded even for very long campaigns.
     .slice(0, 60_000);
 
-  return config.provider === "anthropic"
-    ? draftWithAnthropic(entity, excerpts, config.apiKey)
-    : draftWithGroq(entity, excerpts, config.apiKey);
+  const result =
+    config.provider === "anthropic"
+      ? await draftWithAnthropic(entity, excerpts, config.apiKey)
+      : await draftWithGroq(entity, excerpts, config.apiKey);
+  if (!result.ok) return result;
+
+  // Footnote legend for the [n] markers actually used — built from the real
+  // session titles/dates, never from model output.
+  const cited = new Set(
+    [...result.summary.matchAll(/\[(\d+)\]/g)]
+      .map((m) => Number(m[1]))
+      .filter((n) => n >= 1 && n <= sessionList.length),
+  );
+  const footnotes = [...cited]
+    .sort((a, b) => a - b)
+    .map((n) => {
+      const s = sessionList[n - 1];
+      return `[${n}] ${s.title}${s.date ? ` (${s.date})` : ""}`;
+    });
+  const summary = footnotes.length
+    ? `${result.summary}\n\n—\n${footnotes.join("\n")}`
+    : result.summary;
+  return { ok: true, summary };
 }
