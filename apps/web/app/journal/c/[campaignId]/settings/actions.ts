@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
+import type { AiProviderDb } from "@vestige/db";
 import { appHref } from "@/lib/journal/links";
 
 async function sb() {
@@ -74,6 +75,36 @@ export async function leaveCampaign(campaignId: string) {
     .eq("user_id", user.id);
   if (error) throw error;
   redirect(appHref());
+}
+
+/** Save the campaign's AI provider + key for Codex summaries. Creator-only
+ *  via RLS (campaign_ai_settings policies) — a non-creator's upsert fails. */
+export async function saveCampaignAiKey(
+  campaignId: string,
+  provider: AiProviderDb,
+  apiKey: string,
+) {
+  const key = apiKey.trim();
+  if (!key) throw new Error("An API key is required.");
+  const supabase = await sb();
+  const { error } = await supabase
+    .from("campaign_ai_settings")
+    .upsert(
+      { campaign_id: campaignId, provider, api_key: key, updated_at: new Date().toISOString() },
+      { onConflict: "campaign_id" },
+    );
+  if (error) throw error;
+  revalidatePath(`/journal/c/${campaignId}/settings`);
+}
+
+export async function removeCampaignAiKey(campaignId: string) {
+  const supabase = await sb();
+  const { error } = await supabase
+    .from("campaign_ai_settings")
+    .delete()
+    .eq("campaign_id", campaignId);
+  if (error) throw error;
+  revalidatePath(`/journal/c/${campaignId}/settings`);
 }
 
 /** Roll the campaign's Familiar ingest token (creator-only via RLS). Any

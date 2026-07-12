@@ -15,6 +15,7 @@ import {
 } from "@/app/journal/c/[campaignId]/settings/actions";
 import { pickImageFile, uploadCampaignBanner } from "@/lib/journal/upload";
 import { FamiliarSettings } from "./FamiliarSettings";
+import { AiKeySettings } from "./AiKeySettings";
 
 type Props = {
   settings: CampaignSettings;
@@ -205,6 +206,12 @@ export function SettingsClient({ settings, variant = "page" }: Props) {
         {isCreator && settings.familiar && (
           <Section label="Familiar — auto-recaps">
             <FamiliarSettings campaignId={id} connection={settings.familiar} />
+          </Section>
+        )}
+
+        {isCreator && (
+          <Section label="AI Summaries — Codex">
+            <AiKeySettings campaignId={id} current={settings.ai} />
           </Section>
         )}
 

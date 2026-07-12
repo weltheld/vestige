@@ -96,7 +96,7 @@ export async function summarizeNpc(
   if (!npc || npc.campaign_id !== campaignId) {
     return { ok: false, error: "Entry not found." };
   }
-  return draftEntitySummary(supabase, npc);
+  return draftEntitySummary(supabase, npc, campaignId);
 }
 
 /** Delete an NPC (mentions cascade). Existing [Name](codex:id) links in

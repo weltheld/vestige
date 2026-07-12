@@ -2,7 +2,7 @@ import "server-only";
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, NpcKindDb } from "@vestige/db";
+import type { Database, NpcKindDb, AiProviderDb } from "@vestige/db";
 import { getNpcMentions } from "./npcs";
 
 type SB = SupabaseClient<Database>;
@@ -39,8 +39,9 @@ type DraftResult = { ok: true; summary: string } | { ok: false; error: string };
 async function draftWithAnthropic(
   entity: { name: string; kind: NpcKindDb; summary: string | null },
   excerpts: string,
+  apiKey: string,
 ): Promise<DraftResult> {
-  const client = new Anthropic();
+  const client = new Anthropic({ apiKey });
   try {
     const response = await client.messages.create({
       model: "claude-opus-4-8",
@@ -77,6 +78,7 @@ const GROQ_MODEL = "llama-3.3-70b-versatile";
 async function draftWithGroq(
   entity: { name: string; kind: NpcKindDb; summary: string | null },
   excerpts: string,
+  apiKey: string,
 ): Promise<DraftResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 55_000);
@@ -84,7 +86,7 @@ async function draftWithGroq(
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -118,6 +120,27 @@ async function draftWithGroq(
   }
 }
 
+/** The provider + key to use for a campaign: its own saved key (campaign
+ *  settings, creator-only RLS row) first, then the deployment's env vars. */
+async function resolveProvider(
+  supabase: SB,
+  campaignId: string,
+): Promise<{ provider: AiProviderDb; apiKey: string } | null> {
+  const { data } = await supabase
+    .from("campaign_ai_settings")
+    .select("provider, api_key")
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+  if (data?.api_key) return { provider: data.provider, apiKey: data.api_key };
+  if (process.env.ANTHROPIC_API_KEY) {
+    return { provider: "anthropic", apiKey: process.env.ANTHROPIC_API_KEY };
+  }
+  if (process.env.GROQ_API_KEY) {
+    return { provider: "groq", apiKey: process.env.GROQ_API_KEY };
+  }
+  return null;
+}
+
 /**
  * Draft a codex summary for an entity from the journal sessions that
  * mention it. Returns the text WITHOUT writing it — the caller shows it in
@@ -125,20 +148,20 @@ async function draftWithGroq(
  *
  * Uses the campaign member's own Supabase client for all reads, so RLS
  * guarantees they can only summarize entities of campaigns they belong to.
- *
- * Provider choice: ANTHROPIC_API_KEY (Claude) if set, otherwise
- * GROQ_API_KEY (free-tier Llama) — no config means both are just unset.
+ * (The caller additionally restricts this to the campaign owner, which is
+ * also what lets the campaign_ai_settings read below succeed.)
  */
 export async function draftEntitySummary(
   supabase: SB,
   entity: { id: string; name: string; kind: NpcKindDb; summary: string | null },
+  campaignId: string,
 ): Promise<DraftResult> {
-  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
-  const hasGroq = !!process.env.GROQ_API_KEY;
-  if (!hasAnthropic && !hasGroq) {
+  const config = await resolveProvider(supabase, campaignId);
+  if (!config) {
     return {
       ok: false,
-      error: "Summarization isn't configured (add ANTHROPIC_API_KEY or GROQ_API_KEY).",
+      error:
+        "Summarization isn't configured — add an Anthropic or Groq API key in campaign settings.",
     };
   }
 
@@ -168,7 +191,7 @@ export async function draftEntitySummary(
     // Keep the request bounded even for very long campaigns.
     .slice(0, 60_000);
 
-  return hasAnthropic
-    ? draftWithAnthropic(entity, excerpts)
-    : draftWithGroq(entity, excerpts);
+  return config.provider === "anthropic"
+    ? draftWithAnthropic(entity, excerpts, config.apiKey)
+    : draftWithGroq(entity, excerpts, config.apiKey);
 }

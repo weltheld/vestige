@@ -180,6 +180,16 @@ export type FamiliarConnectionRow = {
   verified_at: string | null;
 };
 
+export type AiProviderDb = "anthropic" | "groq";
+
+export type CampaignAiSettingsRow = {
+  campaign_id: string;
+  provider: AiProviderDb;
+  api_key: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type CampaignJoinCodeRow = {
   campaign_id: string;
   code: string;
@@ -536,6 +546,20 @@ export type Database = {
         Update: Partial<CampaignJoinCodeRow>;
         Relationships: [
           Rel<"campaign_join_codes_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+        ];
+      };
+      campaign_ai_settings: {
+        Row: CampaignAiSettingsRow;
+        Insert: {
+          campaign_id: string;
+          provider: AiProviderDb;
+          api_key: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<CampaignAiSettingsRow>;
+        Relationships: [
+          Rel<"campaign_ai_settings_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
         ];
       };
       journal_session_revisions: {

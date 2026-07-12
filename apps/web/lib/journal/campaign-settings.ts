@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@vestige/db";
+import type { Database, AiProviderDb } from "@vestige/db";
 import { getOrCreateFamiliarConnection, type FamiliarConnection } from "./familiar";
 
 type SB = SupabaseClient<Database>;
@@ -14,6 +14,10 @@ export type SettingsMember = {
   characterName: string | null;
 };
 
+/** The stored key never leaves the server in full — only a masked preview
+ *  (provider + last 4 chars) reaches the settings UI. */
+export type AiKeySettings = { provider: AiProviderDb; keyPreview: string };
+
 export type CampaignSettings = {
   id: string;
   name: string;
@@ -23,6 +27,8 @@ export type CampaignSettings = {
   members: SettingsMember[];
   /** Familiar ingest token + status — creator only (the token is a secret). */
   familiar: FamiliarConnection | null;
+  /** AI summarization key (masked) — creator only; null = none saved. */
+  ai: AiKeySettings | null;
 };
 
 type MemberRow = {
@@ -62,6 +68,19 @@ export async function getCampaignSettings(
   const isCreator = c.creator_id === viewerId;
   const familiar = isCreator ? await getOrCreateFamiliarConnection(supabase, campaignId) : null;
 
+  // RLS already scopes this to the creator; the guard just skips the query.
+  let ai: AiKeySettings | null = null;
+  if (isCreator) {
+    const { data: aiRow } = await supabase
+      .from("campaign_ai_settings")
+      .select("provider, api_key")
+      .eq("campaign_id", campaignId)
+      .maybeSingle();
+    if (aiRow) {
+      ai = { provider: aiRow.provider, keyPreview: `····${aiRow.api_key.slice(-4)}` };
+    }
+  }
+
   return {
     id: c.id,
     name: c.name,
@@ -73,5 +92,6 @@ export async function getCampaignSettings(
     isCreator,
     members,
     familiar,
+    ai,
   };
 }
