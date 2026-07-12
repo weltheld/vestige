@@ -183,18 +183,9 @@ export function NpcForm({
         />
       </label>
 
-      {footnotes.length > 0 && (
-        <div className="-mt-3 flex flex-col gap-1 rounded-md bg-cod-soft px-3.5 py-2.5">
-          <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-            Sources
-          </span>
-          {footnotes.map((f) => (
-            <span key={f.n} className="font-body text-[12px] text-ink-soft">
-              <span className="font-display font-semibold text-gold">[{f.n}]</span> {f.label}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* No legend UI here — the [n] badges on the "Appears in" list below
+          carry the source association. The legend still rides along in the
+          stored summary (re-attached on save) for the overview tooltips. */}
 
       <div className="flex items-center gap-3">
         <button
