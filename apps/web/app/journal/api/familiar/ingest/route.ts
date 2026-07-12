@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServiceRoleSupabase } from "@vestige/db/server";
+import {
+  parseIngestEntities,
+  seedCodexEntities,
+  linkifyEntities,
+} from "@/lib/journal/codex-ingest";
 
 /**
  * Recap ingestion endpoint for the self-hosted Familiar app.
@@ -16,7 +21,10 @@ import { getServiceRoleSupabase } from "@vestige/db/server";
  *     "summary":          string?  (markdown — the recap overview / events),
  *     "playerCharacters": string?  (markdown),
  *     "npcs":             string?  (markdown),
- *     "notes":            string?  (markdown — locations, loot, threads, …)
+ *     "notes":            string?  (markdown — locations, loot, threads, …),
+ *     "codexEntities":    [{name, kind: person|place|event, summary}]?
+ *                         — Familiar's first-pass extraction; seeds the
+ *                         campaign codex and links the names in the text.
  *   }
  *
  * Reachable at  <platform>/journal/api/familiar/ingest  (this app's basePath
@@ -64,6 +72,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Campaign not found." }, { status: 404 });
   }
 
+  // Codex first pass — resolve/create the entities Familiar extracted, then
+  // rewrite the recap text so each name is a [Name](codex:id) link (the same
+  // form the editor writes, so mentions are clickable and survive edits).
+  const entities = parseIngestEntities(body.codexEntities);
+  const resolvedEntities = await seedCodexEntities(
+    admin,
+    conn.campaign_id,
+    campaign.creator_id,
+    entities,
+  );
+  const { fields: linked, linkedIds } = linkifyEntities(
+    { summary: str(body.summary), npcs: str(body.npcs), notes: str(body.notes) },
+    resolvedEntities,
+  );
+
   const { data: session, error } = await admin
     .from("journal_sessions")
     .insert({
@@ -71,15 +94,24 @@ export async function POST(req: Request) {
       created_by: campaign.creator_id,
       title,
       date: str(body.date),
-      summary: str(body.summary),
+      summary: linked.summary,
       player_characters: str(body.playerCharacters),
-      npcs: str(body.npcs),
-      notes: str(body.notes),
+      npcs: linked.npcs,
+      notes: linked.notes,
     })
     .select("id")
     .single();
   if (error || !session) {
     return NextResponse.json({ error: "Could not create the session." }, { status: 500 });
+  }
+
+  // Mention rows for the entities we actually linked in the text — matches
+  // what syncNpcMentions would reconcile to on a later manual save.
+  if (linkedIds.length) {
+    await admin.from("npc_mentions").upsert(
+      linkedIds.map((npc_id) => ({ npc_id, session_id: session.id })),
+      { onConflict: "npc_id,session_id", ignoreDuplicates: true },
+    );
   }
 
   // Append a revision (the change log) + stamp the connection so the journal
@@ -95,5 +127,8 @@ export async function POST(req: Request) {
     .update({ last_recap_at: new Date().toISOString(), recap_count: conn.recap_count + 1 })
     .eq("campaign_id", conn.campaign_id);
 
-  return NextResponse.json({ ok: true, sessionId: session.id }, { status: 201 });
+  return NextResponse.json(
+    { ok: true, sessionId: session.id, codexEntities: resolvedEntities.length },
+    { status: 201 },
+  );
 }
