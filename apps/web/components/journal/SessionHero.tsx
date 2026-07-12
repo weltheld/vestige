@@ -57,14 +57,11 @@ export function SessionHero({
     return (
       <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl bg-cod-soft px-5 py-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
-            <span className="h-6 w-0.5 shrink-0 bg-gold" />
-            <h1 className="truncate font-display text-[22px] font-semibold tracking-[0.04em] text-ink">
-              {prefix && <span className="text-gold-soft">{prefix}</span>}
-              {title}
-            </h1>
-          </div>
-          <p className="mt-0.5 pl-3 font-body text-[12px] italic text-ink-soft">{subtitle}</p>
+          <h1 className="truncate font-display text-[22px] font-semibold tracking-[0.04em] text-ink">
+            {prefix && <span className="text-gold-soft">{prefix}</span>}
+            {title}
+          </h1>
+          <p className="mt-0.5 font-body text-[12px] italic text-ink-soft">{subtitle}</p>
         </div>
         {avatarGroup && <div className="shrink-0">{avatarGroup}</div>}
         {action && <div className="shrink-0">{action}</div>}

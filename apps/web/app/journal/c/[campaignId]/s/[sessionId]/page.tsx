@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
 import { Pencil } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember, getCampaignPlayers, isCampaignOwner } from "@/lib/journal/data";
@@ -42,7 +41,8 @@ export default async function SessionDetailPage({
   if (!session) notFound();
 
   const num = String(session.number).padStart(2, "0");
-  const subtitle = `${campaign.name} · ${session.date ? format(parseISO(session.date), "MMMM d, yyyy") : "Undated"}`;
+  // Date deliberately omitted — the sidebar's Session Info card shows it.
+  const subtitle = campaign.name;
   const pcAvatars = session.characters
     .filter((c) => c.role === "PC")
     .map((c) => c.portraitUrl)
