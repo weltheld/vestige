@@ -11,10 +11,10 @@ type Props = {
   extraCount?: number;
   /**
    * "campaign" (default) = the existing full-width banner, for the
-   * campaign-level cover on the session list. "session" = a smaller,
-   * fully-visible 4:3 thumbnail beside the title — used for an individual
-   * session's own cover, which is often a portrait/scene crop that gets
-   * badly cut off by the wide banner treatment.
+   * campaign-level cover on the session list. "session" = a compact title
+   * bar without the image — the session's image lives solely in the
+   * sidebar's "Session Image" card (next to its manage/upload link), so it
+   * isn't shown twice.
    */
   variant?: "campaign" | "session";
   /** Rendered top-right of the hero (e.g. the session's Edit button). */
@@ -55,26 +55,19 @@ export function SessionHero({
 
   if (variant === "session") {
     return (
-      <section className="relative flex flex-col gap-5 rounded-xl bg-cod-soft p-5 sm:flex-row sm:items-center">
-        {action && <div className="absolute right-5 top-5 z-10">{action}</div>}
-        <div className="aspect-[4/3] w-full max-w-[220px] shrink-0 overflow-hidden rounded-lg bg-ink">
-          {coverUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={coverUrl} alt="" className="h-full w-full object-contain" />
-          )}
-        </div>
-
+      <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl bg-cod-soft px-5 py-4">
         <div className="min-w-0 flex-1">
-          {avatarGroup && <div className="mb-3">{avatarGroup}</div>}
           <div className="flex items-center gap-1">
-            <span className="h-8 w-0.5 shrink-0 bg-gold" />
-            <h1 className="font-display text-[28px] font-semibold tracking-[0.04em] text-ink">
+            <span className="h-6 w-0.5 shrink-0 bg-gold" />
+            <h1 className="truncate font-display text-[22px] font-semibold tracking-[0.04em] text-ink">
               {prefix && <span className="text-gold-soft">{prefix}</span>}
               {title}
             </h1>
           </div>
-          <p className="mt-1 pl-3 font-body text-[13px] italic text-ink-soft">{subtitle}</p>
+          <p className="mt-0.5 pl-3 font-body text-[12px] italic text-ink-soft">{subtitle}</p>
         </div>
+        {avatarGroup && <div className="shrink-0">{avatarGroup}</div>}
+        {action && <div className="shrink-0">{action}</div>}
       </section>
     );
   }
