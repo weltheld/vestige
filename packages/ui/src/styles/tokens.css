@@ -4,6 +4,11 @@
    @vestige/config/tailwind-preset. */
 
 :root {
+  /* Tell the browser which scheme native widgets (select popups,
+     scrollbars, date pickers) should render in — overridden to dark by
+     each dark theme below, otherwise options can end up as light text
+     on the browser's default white popup. */
+  color-scheme: light;
   --parchment: #f4ecd8;
   --surface: #faf6ee;
   --ink: #2b2118;
@@ -29,6 +34,7 @@
    above. Accents are lifted so labels, buttons and the logo stay legible
    on the darker surfaces. */
 :root[data-theme="midnight"] {
+  color-scheme: dark;
   --parchment: #13110C;
   --surface: #1F1A13;
   --ink: #EEE5D5;
@@ -45,6 +51,7 @@
   --dm-gold: #D9B45A;
 }
 :root[data-theme="nebula"] {
+  color-scheme: dark;
   --parchment: #0B0F1E;
   --surface: #151B33;
   --ink: #E7ECFF;
@@ -61,6 +68,7 @@
   --dm-gold: #56D6EA;
 }
 :root[data-theme="ember"] {
+  color-scheme: dark;
   --parchment: #17110E;
   --surface: #241A15;
   --ink: #F3E4D1;
@@ -77,6 +85,7 @@
   --dm-gold: #E8A94B;
 }
 :root[data-theme="slate"] {
+  color-scheme: dark;
   --parchment: #13161A;
   --surface: #1D2127;
   --ink: #E8EDF1;
@@ -100,6 +109,13 @@ body {
   font-family: var(--font-body), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Native select popups can't be fully styled, but the browsers that do
+   honor option colors get the theme's surface/ink instead of defaults. */
+select option {
+  background: var(--surface);
+  color: var(--ink);
 }
 
 /* Primary action — solid wine stamp */
