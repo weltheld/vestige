@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { CalendarDays } from "lucide-react";
 import { format, parseISO, formatDistanceToNow } from "date-fns";
 import type { SessionDetail } from "@/lib/journal/session-detail";
-import { calendarCampaignHref, journal } from "@/lib/journal/links";
+import { journal } from "@/lib/journal/links";
 import { DeleteSessionButton } from "./DeleteSessionButton";
 
 function Card({
@@ -46,11 +45,9 @@ function Avatar({ url, name, size, ring }: { url: string | null; name: string; s
 export function SessionSidebar({
   session,
   campaignId,
-  campaignSlug,
 }: {
   session: SessionDetail;
   campaignId: string;
-  campaignSlug: string;
 }) {
   const dateLabel = session.date ? format(parseISO(session.date), "MMMM d, yyyy") : "Undated";
   const edited = formatDistanceToNow(parseISO(session.updatedAt), { addSuffix: true });
@@ -110,25 +107,6 @@ export function SessionSidebar({
         </Link>
       </Card>
 
-      {session.modulesEnabled.calendar && (
-        <Card label="Also in Calendar">
-          <div className="flex items-center gap-2.5">
-            <CalendarDays size={16} className="text-gold" />
-            <span className="flex flex-col">
-              <span className="font-display text-[13px] text-ink">Scheduling</span>
-              <span className="font-body text-[11px] text-muted">
-                Plan the next session in the Calendar.
-              </span>
-            </span>
-          </div>
-          <Link
-            href={calendarCampaignHref(campaignSlug)}
-            className="font-body text-[12px] text-ink-soft underline underline-offset-2"
-          >
-            Open in Calendar →
-          </Link>
-        </Card>
-      )}
     </aside>
   );
 }

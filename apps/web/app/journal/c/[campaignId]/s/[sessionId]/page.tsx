@@ -75,7 +75,7 @@ export default async function SessionDetailPage({
       />
 
       <div className="flex items-start gap-8">
-        <SessionSidebar session={session} campaignId={campaignId} campaignSlug={campaign.slug ?? ""} />
+        <SessionSidebar session={session} campaignId={campaignId} />
         <div className="min-w-0 flex-1">
           <SessionTabs
             revisionCount={revisions.length}
