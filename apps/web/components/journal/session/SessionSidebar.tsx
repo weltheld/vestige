@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { format, parseISO, formatDistanceToNow } from "date-fns";
 import type { SessionDetail } from "@/lib/journal/session-detail";
 import { calendarCampaignHref, journal } from "@/lib/journal/links";
@@ -67,44 +67,18 @@ export function SessionSidebar({
         <div>
           <p className="font-body text-[11px] text-muted">Chronicled by</p>
           <div className="mt-1 flex items-center gap-2">
-            <Avatar url={null} name={session.authorName} size={20} />
+            <Avatar url={session.authorAvatar} name={session.authorName} size={20} />
             <span className="font-body text-[14px] text-ink">{session.authorName}</span>
           </div>
         </div>
         <div className="h-px bg-hairline" />
-        <Link
-          href={journal.editSession(campaignId, session.id)}
-          className="font-body text-[12px] text-ink-soft underline underline-offset-2"
-        >
-          Edit session →
-        </Link>
+        {/* Editing moved to the prominent button in the hero; only the
+            destructive action stays tucked away here. */}
         <DeleteSessionButton campaignId={campaignId} sessionId={session.id} title={session.title} />
       </Card>
 
-      <Card label="In This Session" icon={<Users size={12} />}>
-        {session.characters.length === 0 ? (
-          <p className="font-body text-[12px] italic text-muted">No characters added yet.</p>
-        ) : (
-          session.characters.map((c) => (
-            <div key={c.id} className="flex items-center gap-2.5 py-1">
-              <Avatar url={c.portraitUrl} name={c.name} size={30} ring={c.role === "PC"} />
-              <span className="flex flex-col">
-                <span className="font-display text-[13px] text-ink">{c.name}</span>
-                <span className="font-body text-[10px] italic text-muted">
-                  {c.role === "PC" ? "Player Character" : "NPC"}
-                </span>
-              </span>
-            </div>
-          ))
-        )}
-        <div className="h-px bg-hairline" />
-        <Link
-          href={journal.editSession(campaignId, session.id)}
-          className="font-body text-[12px] text-ink-soft underline underline-offset-2"
-        >
-          + Add character
-        </Link>
-      </Card>
+      {/* The former "In This Session" card was redundant with the Player
+          Characters section of the recap itself, which now renders avatars. */}
 
       <Card label="Session Image">
         <div className="h-[140px] w-[240px] overflow-hidden rounded-lg bg-cod-soft">

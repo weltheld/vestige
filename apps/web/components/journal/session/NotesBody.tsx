@@ -4,7 +4,24 @@ import { NOTE_SECTIONS, blocksFor, excerpt } from "@/lib/journal/notes";
 import { journal } from "@/lib/journal/links";
 import { AnnotationThread } from "./AnnotationControls";
 
-export function NotesBody({ session, campaignId }: { session: SessionDetail; campaignId: string }) {
+export type NotesPlayer = {
+  userId: string;
+  characterName: string;
+  avatarUrl: string | null;
+  isDm: boolean;
+};
+
+export function NotesBody({
+  session,
+  campaignId,
+  players = [],
+}: {
+  session: SessionDetail;
+  campaignId: string;
+  /** Campaign players — lets the Player Characters section render avatar
+   *  chips instead of the raw markdown bullet list. */
+  players?: NotesPlayer[];
+}) {
   const text: Record<string, string | null> = {
     summary: session.summary,
     player_characters: session.playerCharacters,
@@ -38,6 +55,17 @@ export function NotesBody({ session, campaignId }: { session: SessionDetail; cam
                 <p className="font-body text-[15px] italic leading-[1.85] text-muted">
                   Nothing recorded here yet.
                 </p>
+              ) : key === "player_characters" ? (
+                // The stored markdown is a "- Name" list written by the
+                // editor's chip toggler — render it back as avatar chips.
+                <PlayerChips
+                  text={text[key] ?? ""}
+                  players={players}
+                  anchor={blocks[0]!.anchor}
+                  annotations={session.annotationsByAnchor[blocks[0]!.anchor] ?? []}
+                  campaignId={campaignId}
+                  sessionId={session.id}
+                />
               ) : (
                 blocks.map((b) => (
                   <AnnotatedParagraph
@@ -54,6 +82,70 @@ export function NotesBody({ session, campaignId }: { session: SessionDetail; cam
           </section>
         );
       })}
+    </div>
+  );
+}
+
+function PlayerChips({
+  text,
+  players,
+  anchor,
+  annotations,
+  campaignId,
+  sessionId,
+}: {
+  text: string;
+  players: NotesPlayer[];
+  anchor: string;
+  annotations: Annotation[];
+  campaignId: string;
+  sessionId: string;
+}) {
+  // "- Name" lines from the editor's chip toggler; anything else (freehand
+  // legacy text) falls back to a plain name chip without an avatar.
+  const names = text
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^-\s*/, "").trim())
+    .filter(Boolean);
+  const byName = new Map(players.map((p) => [p.characterName.toLowerCase(), p] as const));
+  const has = annotations.length > 0;
+
+  return (
+    <div className="group relative">
+      <div className={has ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3" : ""}>
+        <div className="flex flex-wrap gap-2">
+          {names.map((n) => {
+            const p = byName.get(n.toLowerCase());
+            return (
+              <span
+                key={n}
+                className="flex items-center gap-2 rounded-full border border-hairline bg-cod-soft py-1 pl-1 pr-3"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[11px] text-parchment ring-1 ring-gold/60">
+                  {p?.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    n.charAt(0).toUpperCase()
+                  )}
+                </span>
+                <span className="font-body text-[13px] text-ink">
+                  {n}
+                  {p?.isDm ? <span className="text-muted"> (DM)</span> : null}
+                </span>
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      <AnnotationThread
+        campaignId={campaignId}
+        sessionId={sessionId}
+        anchor={anchor}
+        excerpt={excerpt(names.join(", "), 60)}
+        annotations={annotations}
+      />
     </div>
   );
 }

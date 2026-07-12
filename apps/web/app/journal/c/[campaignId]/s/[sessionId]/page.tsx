@@ -1,10 +1,12 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
+import { Pencil } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
-import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
+import { getViewer, getCampaignIfMember, getCampaignPlayers } from "@/lib/journal/data";
 import { getSessionDetail } from "@/lib/journal/session-detail";
 import { getRevisions } from "@/lib/journal/session-threads";
-import { appHref } from "@/lib/journal/links";
+import { appHref, journal } from "@/lib/journal/links";
 import { SessionHero } from "@/components/journal/SessionHero";
 import { SessionSidebar } from "@/components/journal/session/SessionSidebar";
 import { SessionTabs } from "@/components/journal/session/SessionTabs";
@@ -26,9 +28,10 @@ export default async function SessionDetailPage({
 
   // Independent reads (revisions only needs the sessionId param) — fetched
   // together instead of as a waterfall.
-  const [session, revisions] = await Promise.all([
+  const [session, revisions, players] = await Promise.all([
     getSessionDetail(supabase, campaignId, sessionId),
     getRevisions(supabase, sessionId),
+    getCampaignPlayers(supabase, campaignId),
   ]);
   if (!session) notFound();
 
@@ -49,6 +52,15 @@ export default async function SessionDetailPage({
         subtitle={subtitle}
         avatars={pcAvatars}
         extraCount={session.characters.length > 5 ? session.characters.length - 5 : 0}
+        action={
+          <Link
+            href={journal.editSession(campaignId, session.id)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-wine px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+          >
+            <Pencil size={12} />
+            Edit session
+          </Link>
+        }
       />
 
       <div className="flex items-start gap-8">
@@ -56,7 +68,7 @@ export default async function SessionDetailPage({
         <div className="min-w-0 flex-1">
           <SessionTabs
             revisionCount={revisions.length}
-            recap={<NotesBody session={session} campaignId={campaignId} />}
+            recap={<NotesBody session={session} campaignId={campaignId} players={players} />}
             changelog={<ChangeLog revisions={revisions} />}
           />
         </div>

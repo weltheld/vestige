@@ -41,6 +41,7 @@ export type SessionDetail = {
    *  (the one shown at the hero/highest level), a pointer into this list. */
   images: SessionImage[];
   authorName: string;
+  authorAvatar: string | null;
   updatedAt: string;
   editorName: string | null;
   characters: SessionCharacter[];
@@ -158,6 +159,7 @@ export async function getSessionDetail(
     imageUrl: s.image_url,
     images: images ?? [],
     authorName: name(profById.get(s.created_by)),
+    authorAvatar: profById.get(s.created_by)?.avatar_url ?? null,
     updatedAt: s.updated_at,
     editorName: s.updated_by ? name(profById.get(s.updated_by)) : null,
     characters,

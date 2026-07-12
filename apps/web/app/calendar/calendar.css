@@ -52,55 +52,6 @@
   color: var(--ink-soft);
 }
 
-/* Indeterminate progress bar — a gold sliver that sweeps a track. Used
-   while a banner upload is in flight (Server Actions give no real byte
-   progress, so this signals "working" without a fake percentage). */
-.progress-track {
-  position: relative;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--hairline);
-}
-.progress-track::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  border-radius: 999px;
-  background: var(--dm-gold);
-  animation: progress-indeterminate 1.1s ease-in-out infinite;
-}
-@keyframes progress-indeterminate {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(350%);
-  }
-}
-
-/* Vote pop — a ring in the new vote's colour bursts out of the tile on
-   every click, so cycling yes → maybe → no lands with a bit of tactile
-   joy. Re-triggered by keying the overlay span on a per-click counter. */
-.vote-pop-ring {
-  animation: vote-pop-ring 0.35s ease-out forwards;
-}
-@keyframes vote-pop-ring {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--pop-color, var(--gold)) 60%, transparent);
-    opacity: 1;
-  }
-  100% {
-    box-shadow: 0 0 0 12px transparent;
-    opacity: 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .vote-pop-ring {
-    animation: none;
-  }
-}
-
 /* Month-change transition — the grid slides subtly in from the side you're
    navigating toward and fades in. Re-triggered by keying the grid wrapper
    on the month. */

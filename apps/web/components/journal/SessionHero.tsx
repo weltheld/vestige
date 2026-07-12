@@ -17,6 +17,8 @@ type Props = {
    * badly cut off by the wide banner treatment.
    */
   variant?: "campaign" | "session";
+  /** Rendered top-right of the hero (e.g. the session's Edit button). */
+  action?: React.ReactNode;
 };
 
 /** The Journal hero band — cover image + avatar group + pipe-prefixed
@@ -29,6 +31,7 @@ export function SessionHero({
   avatars = [],
   extraCount = 0,
   variant = "campaign",
+  action,
 }: Props) {
   const avatarGroup = (avatars.length > 0 || extraCount > 0) && (
     <div className="flex">
@@ -53,6 +56,7 @@ export function SessionHero({
   if (variant === "session") {
     return (
       <section className="relative flex flex-col gap-5 rounded-xl bg-cod-soft p-5 sm:flex-row sm:items-center">
+        {action && <div className="absolute right-5 top-5 z-10">{action}</div>}
         <div className="aspect-[4/3] w-full max-w-[220px] shrink-0 overflow-hidden rounded-lg bg-ink">
           {coverUrl && (
             // eslint-disable-next-line @next/next/no-img-element

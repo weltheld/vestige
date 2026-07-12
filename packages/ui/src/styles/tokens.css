@@ -125,3 +125,31 @@ body {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
+
+/* Indeterminate progress bar — a gold sliver sweeping a track. Used by the
+   ImageCropper while an upload is in flight (Server Actions expose no real
+   byte progress). Lived in Calendar's own stylesheet until the cropper
+   started being used from Journal too. */
+.progress-track {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--hairline);
+}
+.progress-track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: 999px;
+  background: var(--dm-gold);
+  animation: progress-indeterminate 1.1s ease-in-out infinite;
+}
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}

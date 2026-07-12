@@ -23,6 +23,10 @@ import dynamic from "next/dynamic";
 import { pickImageFile, uploadJournalImage } from "@/lib/journal/upload";
 import { createNpc } from "@/app/journal/c/[campaignId]/codex/actions";
 import type { MentionNpc } from "./MentionSuggestion";
+// Calendar's pan/zoom cropper — shared since the app merge. The session
+// cover renders in a fixed 4:3 card, so uploads get cropped to match
+// instead of letterboxing.
+import { ImageCropper } from "@/components/council/ImageCropper";
 
 // The tiptap editor stack is ~2/3 of this route's JS. Loading it lazily
 // (client-only) lets the page shell, sidebar, and title field paint first;
@@ -92,6 +96,7 @@ export function EditSessionClient({
   const [localSessionId, setLocalSessionId] = useState(sessionId);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverCropFile, setCoverCropFile] = useState<File | null>(null);
   const [savedAgo, setSavedAgo] = useState<string | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 });
@@ -163,8 +168,37 @@ export function EditSessionClient({
     }
   }
 
+  async function uploadCroppedCover(blob: Blob) {
+    setCoverCropFile(null);
+    setUploadingCover(true);
+    try {
+      const file = new File([blob], "session-cover.jpg", { type: "image/jpeg" });
+      const url = await uploadJournalImage(campaignId, file);
+      set({ image_url: url });
+      if (localSessionId) {
+        await addSessionImage(campaignId, localSessionId, url);
+        await setSessionCoverImage(campaignId, localSessionId, url);
+        router.refresh();
+      }
+    } finally {
+      setUploadingCover(false);
+    }
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-24 pt-6">
+      {coverCropFile && (
+        <ImageCropper
+          file={coverCropFile}
+          aspect={4 / 3}
+          viewWidth={336}
+          outputWidth={1200}
+          title="Position the session image"
+          hint="Drag to move, slide to zoom — cropped to the 4:3 card."
+          onCancel={() => setCoverCropFile(null)}
+          onConfirm={uploadCroppedCover}
+        />
+      )}
       {/* Hero edit dressing — a 4:3 thumbnail (fully visible, not cropped
           into an ultra-wide banner) beside the title/date fields. */}
       <section className="flex flex-col gap-5 sm:flex-row sm:items-start">
@@ -174,18 +208,9 @@ export function EditSessionClient({
           onClick={async () => {
             const file = await pickImageFile();
             if (!file) return;
-            setUploadingCover(true);
-            try {
-              const url = await uploadJournalImage(campaignId, file);
-              set({ image_url: url });
-              if (localSessionId) {
-                await addSessionImage(campaignId, localSessionId, url);
-                await setSessionCoverImage(campaignId, localSessionId, url);
-                router.refresh();
-              }
-            } finally {
-              setUploadingCover(false);
-            }
+            // Crop to the card's 4:3 before uploading, so the cover fills
+            // it instead of letterboxing.
+            setCoverCropFile(file);
           }}
           className="group relative aspect-[4/3] w-full max-w-[280px] shrink-0 overflow-hidden rounded-xl bg-ink disabled:opacity-70"
         >
