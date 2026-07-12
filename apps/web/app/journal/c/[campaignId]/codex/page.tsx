@@ -6,6 +6,7 @@ import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
 import { getNpcs, getMentionCounts } from "@/lib/journal/npcs";
 import { appHref, journal } from "@/lib/journal/links";
 import { NpcStatusLabel } from "@/components/journal/codex/NpcStatusLabel";
+import { SummaryWithFootnotes } from "@/components/journal/codex/SummaryWithFootnotes";
 import type { NpcKindDb } from "@vestige/db";
 
 const SECTIONS: Array<{ kind: NpcKindDb; heading: string }> = [
@@ -89,9 +90,16 @@ export default async function CodexPage({
                         </span>
                         <NpcStatusLabel status={npc.status} kind={npc.kind} />
                       </div>
-                      <p className="line-clamp-3 font-body text-[13px] leading-[1.7] text-ink-soft">
-                        {npc.summary || <span className="italic text-muted">No summary yet.</span>}
-                      </p>
+                      {npc.summary ? (
+                        <SummaryWithFootnotes
+                          summary={npc.summary}
+                          className="line-clamp-3 font-body text-[13px] leading-[1.7] text-ink-soft"
+                        />
+                      ) : (
+                        <p className="line-clamp-3 font-body text-[13px] leading-[1.7] text-ink-soft">
+                          <span className="italic text-muted">No summary yet.</span>
+                        </p>
+                      )}
                       <p className="mt-auto pt-1 font-body text-[11px] text-muted">
                         {count === 0
                           ? "Not mentioned yet"

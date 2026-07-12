@@ -8,6 +8,7 @@ import { getNpc, getNpcMentions } from "@/lib/journal/npcs";
 import { appHref, journal } from "@/lib/journal/links";
 import { NpcForm } from "@/components/journal/codex/NpcForm";
 import { DeleteNpcButton } from "@/components/journal/codex/DeleteNpcButton";
+import { parseFootnotes, footnoteForSession } from "@/lib/journal/codex-footnotes";
 
 // "Summarize from sessions" calls Claude from a server action invoked on
 // this page — give it more headroom than the default function timeout.
@@ -28,6 +29,9 @@ export default async function NpcDetailPage({
 
   const npc = await getNpc(supabase, npcId);
   if (!npc || npc.campaign_id !== campaignId) notFound();
+  // Footnote legend from the saved summary — used to badge the sessions
+  // below with the [n] their citations refer to.
+  const { notes } = parseFootnotes(npc.summary);
   const [mentions, isOwner] = await Promise.all([
     getNpcMentions(supabase, npcId),
     isCampaignOwner(supabase, viewer.id, campaignId),
@@ -67,27 +71,38 @@ export default async function NpcDetailPage({
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {mentions.map((m) => (
-              <li key={m.sessionId}>
-                <Link
-                  href={journal.session(campaignId, m.sessionId)}
-                  className="flex items-center gap-4 rounded-xl bg-cod-soft px-5 py-3.5 transition hover:brightness-[0.99]"
-                >
-                  <span className="h-3.5 w-0.5 shrink-0 bg-gold" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-display text-[15px] text-ink">
-                      {m.title}
+            {mentions.map((m) => {
+              const n = footnoteForSession(notes, m.title);
+              return (
+                <li key={m.sessionId}>
+                  <Link
+                    href={journal.session(campaignId, m.sessionId)}
+                    className="flex items-center gap-4 rounded-xl bg-cod-soft px-5 py-3.5 transition hover:brightness-[0.99]"
+                  >
+                    <span className="h-3.5 w-0.5 shrink-0 bg-gold" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-display text-[15px] text-ink">
+                        {m.title}
+                      </span>
+                      {m.date && (
+                        <span className="block font-body text-[11px] text-muted">
+                          {format(parseISO(m.date), "MMMM d, yyyy")}
+                        </span>
+                      )}
                     </span>
-                    {m.date && (
-                      <span className="block font-body text-[11px] text-muted">
-                        {format(parseISO(m.date), "MMMM d, yyyy")}
+                    {n !== null && (
+                      <span
+                        title={`Cited as [${n}] in the summary`}
+                        className="shrink-0 cursor-help rounded-md border border-hairline px-1.5 py-0.5 font-display text-[11px] font-semibold text-gold"
+                      >
+                        [{n}]
                       </span>
                     )}
-                  </span>
-                  <ChevronRight size={15} className="shrink-0 text-muted" />
-                </Link>
-              </li>
-            ))}
+                    <ChevronRight size={15} className="shrink-0 text-muted" />
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
