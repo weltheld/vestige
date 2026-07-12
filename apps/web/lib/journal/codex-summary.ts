@@ -132,8 +132,9 @@ async function draftWithGroq(
 }
 
 /** The provider + key to use for a campaign: its ACTIVE saved key (campaign
- *  settings, creator-only RLS row) first, then the deployment's env vars. */
-async function resolveProvider(
+ *  settings, creator-only RLS row) first, then the deployment's env vars.
+ *  Exported for the codex-extract flow, which spends the same key. */
+export async function resolveProvider(
   supabase: SB,
   campaignId: string,
 ): Promise<{ provider: AiProviderDb; apiKey: string } | null> {

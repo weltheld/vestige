@@ -3,7 +3,7 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { Pencil } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
-import { getViewer, getCampaignIfMember, getCampaignPlayers } from "@/lib/journal/data";
+import { getViewer, getCampaignIfMember, getCampaignPlayers, isCampaignOwner } from "@/lib/journal/data";
 import { getSessionDetail } from "@/lib/journal/session-detail";
 import { getRevisions } from "@/lib/journal/session-threads";
 import { appHref, journal } from "@/lib/journal/links";
@@ -12,6 +12,11 @@ import { SessionSidebar } from "@/components/journal/session/SessionSidebar";
 import { SessionTabs } from "@/components/journal/session/SessionTabs";
 import { NotesBody } from "@/components/journal/session/NotesBody";
 import { ChangeLog } from "@/components/journal/session/ChangeLog";
+import { ExtractCodexButton } from "@/components/journal/session/ExtractCodexButton";
+
+// "Add to Codex" runs an AI extraction via a server action invoked on this
+// page — give it more headroom than the default function timeout.
+export const maxDuration = 60;
 
 export default async function SessionDetailPage({
   params,
@@ -28,10 +33,11 @@ export default async function SessionDetailPage({
 
   // Independent reads (revisions only needs the sessionId param) — fetched
   // together instead of as a waterfall.
-  const [session, revisions, players] = await Promise.all([
+  const [session, revisions, players, isOwner] = await Promise.all([
     getSessionDetail(supabase, campaignId, sessionId),
     getRevisions(supabase, sessionId),
     getCampaignPlayers(supabase, campaignId),
+    isCampaignOwner(supabase, viewer.id, campaignId),
   ]);
   if (!session) notFound();
 
@@ -53,13 +59,18 @@ export default async function SessionDetailPage({
         avatars={pcAvatars}
         extraCount={session.characters.length > 5 ? session.characters.length - 5 : 0}
         action={
-          <Link
-            href={journal.editSession(campaignId, session.id)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-wine px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-          >
-            <Pencil size={12} />
-            Edit session
-          </Link>
+          <span className="flex items-center gap-2">
+            {isOwner && (
+              <ExtractCodexButton campaignId={campaignId} sessionId={session.id} />
+            )}
+            <Link
+              href={journal.editSession(campaignId, session.id)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-wine px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+            >
+              <Pencil size={12} />
+              Edit session
+            </Link>
+          </span>
         }
       />
 

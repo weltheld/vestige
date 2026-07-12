@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@vestige/db/server";
 import type { JournalCharacterRoleDb } from "@vestige/db";
 import { syncNpcMentions } from "@/lib/journal/npc-sync";
+import { isCampaignOwner } from "@/lib/journal/data";
+import { extractSessionEntities } from "@/lib/journal/codex-extract";
+import { seedCodexEntities, linkifyEntities } from "@/lib/journal/codex-ingest";
 
 export type SessionInput = {
   title: string;
@@ -240,4 +243,97 @@ export async function addAnnotation(
     after_value: { anchor, body },
   });
   revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
+}
+
+export type CodexExtractResult =
+  | { ok: true; created: number; linked: number; total: number }
+  | { ok: false; error: string };
+
+/** Extract people/places/events from a session's text and add them to the
+ *  campaign codex — the on-demand version of Familiar's ingest first pass.
+ *  Owner-only: each run spends the campaign's AI key. New entries are
+ *  created (existing summaries are never overwritten), the first occurrence
+ *  of each name in the session text becomes a [Name](codex:id) link, and
+ *  matching mention rows are inserted. */
+export async function extractCodexFromSession(
+  campaignId: string,
+  sessionId: string,
+): Promise<CodexExtractResult> {
+  const { supabase, userId } = await uid();
+  if (!(await isCampaignOwner(supabase, userId, campaignId))) {
+    return { ok: false, error: "Only the campaign owner can extract codex entries." };
+  }
+
+  const { data: session } = await supabase
+    .from("journal_sessions")
+    .select("id, campaign_id, title, summary, player_characters, npcs, notes")
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (!session || session.campaign_id !== campaignId) {
+    return { ok: false, error: "Session not found." };
+  }
+
+  const sessionText = [
+    `# ${session.title}`,
+    session.summary,
+    session.player_characters ? `## Player characters\n${session.player_characters}` : null,
+    session.npcs ? `## NPCs\n${session.npcs}` : null,
+    session.notes ? `## Notes\n${session.notes}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const extracted = await extractSessionEntities(supabase, campaignId, sessionText);
+  if (!extracted.ok) return extracted;
+  if (extracted.entities.length === 0) {
+    return { ok: false, error: "Nothing codex-worthy found in this session." };
+  }
+
+  // How many are genuinely new (before seeding creates them).
+  const { data: existing } = await supabase
+    .from("npcs")
+    .select("name")
+    .eq("campaign_id", campaignId);
+  const known = new Set((existing ?? []).map((n) => n.name.trim().toLowerCase()));
+  const created = extracted.entities.filter((e) => !known.has(e.name.toLowerCase())).length;
+
+  // The owner's own client passes the npcs RLS insert policy.
+  const resolved = await seedCodexEntities(supabase, campaignId, userId, extracted.entities);
+  if (resolved.length === 0) {
+    return { ok: false, error: "Could not create codex entries. Try again." };
+  }
+
+  const { fields: linked, linkedIds } = linkifyEntities(
+    { summary: session.summary, npcs: session.npcs, notes: session.notes },
+    resolved,
+  );
+  const { error: updateError } = await supabase
+    .from("journal_sessions")
+    .update({
+      summary: linked.summary,
+      npcs: linked.npcs,
+      notes: linked.notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", sessionId);
+  if (updateError) {
+    return { ok: false, error: "Codex entries were created, but linking the text failed." };
+  }
+  if (linkedIds.length) {
+    await supabase.from("npc_mentions").upsert(
+      linkedIds.map((npc_id) => ({ npc_id, session_id: sessionId })),
+      { onConflict: "npc_id,session_id", ignoreDuplicates: true },
+    );
+  }
+
+  await supabase.from("journal_session_revisions").insert({
+    session_id: sessionId,
+    author_id: userId,
+    action: "edited",
+    after_value: { source: "codex-extract", entities: resolved.length },
+  });
+
+  revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
+  revalidatePath(`/journal/c/${campaignId}/codex`);
+  return { ok: true, created, linked: linkedIds.length, total: resolved.length };
 }
