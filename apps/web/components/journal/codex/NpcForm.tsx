@@ -6,6 +6,15 @@ import { Sparkles, Loader2 } from "lucide-react";
 import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
 import { createNpc, updateNpc, summarizeNpc } from "@/app/journal/c/[campaignId]/codex/actions";
 import { journal } from "@/lib/journal/links";
+import { parseFootnotes, type Footnote } from "@/lib/journal/codex-footnotes";
+
+/** Storage keeps body + legend in one text column; the form edits only the
+ *  body and re-attaches the legend on save. */
+function joinFootnotes(body: string, notes: Footnote[]): string {
+  const text = body.trim();
+  if (!text || notes.length === 0) return text;
+  return `${text}\n\n—\n${notes.map((f) => `[${f.n}] ${f.label}`).join("\n")}`;
+}
 
 const KIND_OPTIONS: Array<{ value: NpcKindDb; label: string }> = [
   { value: "person", label: "Person" },
@@ -34,8 +43,12 @@ export function NpcForm({
   canSummarize?: boolean;
 }) {
   const router = useRouter();
+  const parsed = parseFootnotes(initial?.summary ?? null);
   const [name, setName] = useState(initial?.name ?? "");
-  const [summary, setSummary] = useState(initial?.summary ?? "");
+  // The textarea holds only the summary body; the footnote legend is shown
+  // read-only below it and re-attached on save.
+  const [summary, setSummary] = useState(parsed.body);
+  const [footnotes, setFootnotes] = useState<Footnote[]>(parsed.notes);
   const [status, setStatus] = useState<NpcStatusDb>(initial?.status ?? "unknown");
   const [kind, setKind] = useState<NpcKindDb>(initial?.kind ?? "person");
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +66,7 @@ export function NpcForm({
     setNotice(null);
     startTransition(async () => {
       try {
-        const input = { name, summary: summary.trim() || null, status, kind };
+        const input = { name, summary: joinFootnotes(summary, footnotes) || null, status, kind };
         if (npcId) {
           await updateNpc(campaignId, npcId, input);
           setNotice("Saved.");
@@ -81,7 +94,9 @@ export function NpcForm({
         return;
       }
       // Draft only — lands in the textarea for review; Save persists it.
-      setSummary(result.summary);
+      const draft = parseFootnotes(result.summary);
+      setSummary(draft.body);
+      setFootnotes(draft.notes);
       setNotice("Summary drafted from the sessions below — review and save.");
     } finally {
       setSummarizing(false);
@@ -162,11 +177,24 @@ export function NpcForm({
         <textarea
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
-          rows={5}
+          rows={7}
           placeholder="Who or what this is, why it matters, what the party knows."
           className="rounded-md border border-hairline bg-transparent px-3 py-2.5 font-body text-[15px] leading-[1.7] text-ink outline-none transition focus:border-gold"
         />
       </label>
+
+      {footnotes.length > 0 && (
+        <div className="-mt-3 flex flex-col gap-1 rounded-md bg-cod-soft px-3.5 py-2.5">
+          <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+            Sources
+          </span>
+          {footnotes.map((f) => (
+            <span key={f.n} className="font-body text-[12px] text-ink-soft">
+              <span className="font-display font-semibold text-gold">[{f.n}]</span> {f.label}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         <button
