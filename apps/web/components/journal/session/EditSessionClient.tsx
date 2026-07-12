@@ -85,7 +85,14 @@ export function EditSessionClient({
   const [npcs, setNpcs] = useState<MentionNpc[]>(initialNpcs);
   const handleCreateNpc = async (name: string): Promise<MentionNpc | null> => {
     try {
-      const { id } = await createNpc(campaignId, { name, summary: null, status: "unknown" });
+      // Entities created mid-writing default to a person — the common case;
+      // the kind can be changed on the codex entry afterwards.
+      const { id } = await createNpc(campaignId, {
+        name,
+        summary: null,
+        status: "unknown",
+        kind: "person",
+      });
       const npc = { id, name };
       setNpcs((prev) => [...prev, npc].sort((a, b) => a.name.localeCompare(b.name)));
       return npc;

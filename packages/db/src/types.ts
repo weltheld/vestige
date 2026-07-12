@@ -129,6 +129,7 @@ export type JournalCharacterRow = {
 };
 
 export type NpcStatusDb = "alive" | "dead" | "unknown";
+export type NpcKindDb = "person" | "place" | "event";
 
 export type NpcRow = {
   id: string;
@@ -136,6 +137,7 @@ export type NpcRow = {
   name: string;
   summary: string | null;
   status: NpcStatusDb;
+  kind: NpcKindDb;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -443,6 +445,7 @@ export type Database = {
           name: string;
           summary?: string | null;
           status?: NpcStatusDb;
+          kind?: NpcKindDb;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;

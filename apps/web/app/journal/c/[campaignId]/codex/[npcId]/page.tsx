@@ -9,6 +9,10 @@ import { appHref, journal } from "@/lib/journal/links";
 import { NpcForm } from "@/components/journal/codex/NpcForm";
 import { DeleteNpcButton } from "@/components/journal/codex/DeleteNpcButton";
 
+// "Summarize from sessions" calls Claude from a server action invoked on
+// this page — give it more headroom than the default function timeout.
+export const maxDuration = 60;
+
 export default async function NpcDetailPage({
   params,
 }: {
@@ -40,7 +44,7 @@ export default async function NpcDetailPage({
           <NpcForm
             campaignId={campaignId}
             npcId={npc.id}
-            initial={{ name: npc.name, summary: npc.summary, status: npc.status }}
+            initial={{ name: npc.name, summary: npc.summary, status: npc.status, kind: npc.kind }}
           />
         </div>
       </div>

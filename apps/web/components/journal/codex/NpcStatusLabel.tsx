@@ -1,4 +1,4 @@
-import type { NpcStatusDb } from "@vestige/db";
+import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
 
 const LABELS: Record<NpcStatusDb, string> = {
   alive: "Alive",
@@ -7,9 +7,16 @@ const LABELS: Record<NpcStatusDb, string> = {
 };
 
 /** Quiet, text-only status label — a library catalogue note, deliberately
- *  not a traffic-light badge. Dead entries get a strikethrough name treatment
- *  elsewhere; here the word alone carries the meaning. */
-export function NpcStatusLabel({ status }: { status: NpcStatusDb }) {
+ *  not a traffic-light badge. Alive/dead only means something for people;
+ *  places and events show nothing (their kind is the section heading). */
+export function NpcStatusLabel({
+  status,
+  kind = "person",
+}: {
+  status: NpcStatusDb;
+  kind?: NpcKindDb;
+}) {
+  if (kind !== "person") return null;
   return (
     <span className="shrink-0 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
       {LABELS[status]}
