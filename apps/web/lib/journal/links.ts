@@ -21,4 +21,7 @@ export const journal = {
   session: (id: string, sessionId: string) => `/journal/c/${id}/s/${sessionId}`,
   editSession: (id: string, sessionId: string) => `/journal/c/${id}/s/${sessionId}/edit`,
   settings: (id: string) => `/journal/c/${id}/settings`,
+  codex: (id: string) => `/journal/c/${id}/codex`,
+  newNpc: (id: string) => `/journal/c/${id}/codex/new`,
+  npc: (id: string, npcId: string) => `/journal/c/${id}/codex/${npcId}`,
 };

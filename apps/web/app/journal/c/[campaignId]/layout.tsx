@@ -43,6 +43,7 @@ export default async function CampaignLayout({
         currentCampaign={campaign}
         campaigns={campaigns}
         journalHref={journal.campaign(campaignId)}
+        codexHref={journal.codex(campaignId)}
         calendarHref={campaign.slug ? calendarCampaignHref(campaign.slug) : undefined}
         manageHref={`/app/c/${campaignId}/manage`}
         // Same-app relative link — renders as a true Next.js <Link> and can

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CalendarDays, ScrollText, LogOut, Pencil, ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { CalendarDays, ScrollText, Library, LogOut, Pencil, ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
@@ -23,7 +24,7 @@ export type { HeaderCampaign };
 type Props = {
   user: VestigeHeaderUser;
   /** Which module tab is active. `null` = neither (e.g. the campaign list). */
-  currentModule?: "calendar" | "journal" | null;
+  currentModule?: "calendar" | "journal" | "codex" | null;
   /** The active campaign — renders the campaign-selector pill when present. */
   currentCampaign?: HeaderCampaign | null;
   /** The user's campaigns (each with a precomputed `href`), for the dropdown. */
@@ -31,6 +32,7 @@ type Props = {
   /** Cross-app module links. */
   calendarHref?: string;
   journalHref?: string;
+  codexHref?: string;
   /** "Manage this campaign" target in the selector dropdown. */
   manageHref?: string;
   /** "Campaign settings" target in the selector dropdown (name, cover,
@@ -53,9 +55,20 @@ export function VestigeHeader({
   campaigns = [],
   calendarHref,
   journalHref,
+  codexHref,
   manageHref,
   settingsHref,
 }: Props) {
+  // Codex is a coequal module tab but its routes live inside the journal
+  // section — the journal layout passes currentModule="journal" for all of
+  // them. Deriving the codex active-state from the pathname (client-side,
+  // updates on soft navigation) avoids restructuring the journal layout.
+  const pathname = usePathname();
+  const activeModule =
+    currentModule === "journal" && /\/codex(\/|$)/.test(pathname ?? "")
+      ? "codex"
+      : currentModule;
+
   async function signOut() {
     await getBrowserSupabase().auth.signOut();
     window.location.assign("/");
@@ -83,14 +96,20 @@ export function VestigeHeader({
             <ModuleTab
               icon={<CalendarDays size={14} />}
               label="Calendar"
-              active={currentModule === "calendar"}
+              active={activeModule === "calendar"}
               href={calendarHref}
             />
             <ModuleTab
               icon={<ScrollText size={14} />}
               label="Journal"
-              active={currentModule === "journal"}
+              active={activeModule === "journal"}
               href={journalHref}
+            />
+            <ModuleTab
+              icon={<Library size={14} />}
+              label="Codex"
+              active={activeModule === "codex"}
+              href={codexHref}
             />
           </div>
         </nav>
@@ -100,14 +119,20 @@ export function VestigeHeader({
             <ModuleIconTab
               icon={<CalendarDays size={18} />}
               label="Calendar"
-              active={currentModule === "calendar"}
+              active={activeModule === "calendar"}
               href={calendarHref}
             />
             <ModuleIconTab
               icon={<ScrollText size={18} />}
               label="Journal"
-              active={currentModule === "journal"}
+              active={activeModule === "journal"}
               href={journalHref}
+            />
+            <ModuleIconTab
+              icon={<Library size={18} />}
+              label="Codex"
+              active={activeModule === "codex"}
+              href={codexHref}
             />
           </div>
         </nav>

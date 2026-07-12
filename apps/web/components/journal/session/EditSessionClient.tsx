@@ -21,6 +21,8 @@ import {
 } from "@/app/journal/c/[campaignId]/s/actions";
 import dynamic from "next/dynamic";
 import { pickImageFile, uploadJournalImage } from "@/lib/journal/upload";
+import { createNpc } from "@/app/journal/c/[campaignId]/codex/actions";
+import type { MentionNpc } from "./MentionSuggestion";
 
 // The tiptap editor stack is ~2/3 of this route's JS. Loading it lazily
 // (client-only) lets the page shell, sidebar, and title field paint first;
@@ -50,6 +52,8 @@ type Props = {
   chroniclerName: string;
   modulesCalendar: boolean;
   players: EditPlayer[];
+  /** Campaign NPCs for the editors' @-mention dropdown. */
+  npcs?: MentionNpc[];
 };
 
 const PLACEHOLDERS: Record<string, string> = {
@@ -68,9 +72,23 @@ export function EditSessionClient({
   chroniclerName,
   modulesCalendar,
   players,
+  npcs: initialNpcs = [],
 }: Props) {
   const router = useRouter();
   const [fields, setFields] = useState<SessionInput>(initial);
+  // Grows when a new NPC is created from the @-mention dropdown, so it's
+  // immediately mentionable again without a reload.
+  const [npcs, setNpcs] = useState<MentionNpc[]>(initialNpcs);
+  const handleCreateNpc = async (name: string): Promise<MentionNpc | null> => {
+    try {
+      const { id } = await createNpc(campaignId, { name, summary: null, status: "unknown" });
+      const npc = { id, name };
+      setNpcs((prev) => [...prev, npc].sort((a, b) => a.name.localeCompare(b.name)));
+      return npc;
+    } catch {
+      return null;
+    }
+  };
   const [localSessionId, setLocalSessionId] = useState(sessionId);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -385,6 +403,8 @@ export function EditSessionClient({
                     value={(fields[key] as string | null) ?? ""}
                     onChange={(md) => set({ [key]: md } as Partial<SessionInput>)}
                     placeholder={PLACEHOLDERS[key]!}
+                    npcs={npcs}
+                    onCreateNpc={handleCreateNpc}
                   />
                 )}
               </section>

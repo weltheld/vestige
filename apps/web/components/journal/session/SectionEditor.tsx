@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -16,28 +16,61 @@ import {
   Link as LinkIcon,
 } from "lucide-react";
 import { pickImageFile, uploadJournalImage } from "@/lib/journal/upload";
+import {
+  buildMentionExtension,
+  MentionDropdown,
+  type MentionDropdownHandle,
+  type MentionNpc,
+  type MentionState,
+} from "./MentionSuggestion";
 
 export function SectionEditor({
   campaignId,
   value,
   onChange,
   placeholder,
+  npcs = [],
+  onCreateNpc,
 }: {
   campaignId: string;
   value: string;
   onChange: (markdown: string) => void;
   placeholder: string;
+  /** Campaign NPCs for the @-mention dropdown. */
+  npcs?: MentionNpc[];
+  /** Creates an NPC (server action) and returns it, or null on failure. */
+  onCreateNpc?: (name: string) => Promise<MentionNpc | null>;
 }) {
   const [focused, setFocused] = useState(false);
+  const [mention, setMention] = useState<MentionState | null>(null);
+  const [creating, setCreating] = useState(false);
+  const dropdownRef = useRef<MentionDropdownHandle | null>(null);
+
+  // The suggestion extension is created once but must always see the
+  // freshest NPC list (it grows when "Create ..." is used mid-session).
+  const npcsRef = useRef(npcs);
+  npcsRef.current = npcs;
+
+  const [mentionExtension] = useState(() =>
+    buildMentionExtension({
+      getNpcs: () => npcsRef.current,
+      onState: setMention,
+      onKeyDown: (event) => dropdownRef.current?.onKeyDown(event) ?? false,
+    }),
+  );
 
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit,
-      Link.configure({ openOnClick: false }),
+      // protocols: the Link extension strips hrefs with unknown schemes in
+      // parseHTML/renderHTML — without "codex" every NPC mention would be
+      // silently destroyed the next time the editor loads.
+      Link.configure({ openOnClick: false, protocols: ["codex"] }),
       Image,
       Placeholder.configure({ placeholder }),
       Markdown.configure({ html: false }),
+      mentionExtension,
     ],
     content: value,
     onUpdate: ({ editor }) => onChange(editor.storage.markdown.getMarkdown()),
@@ -46,10 +79,22 @@ export function SectionEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-[100px] w-full font-body text-[15px] leading-[1.85] text-ink outline-none [&_p.is-editor-empty:first-child::before]:text-muted [&_p.is-editor-empty:first-child::before]:italic [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:h-0 [&_p.is-editor-empty:first-child::before]:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gold [&_blockquote]:pl-3 [&_blockquote]:italic",
+          "min-h-[100px] w-full font-body text-[15px] leading-[1.85] text-ink outline-none [&_p.is-editor-empty:first-child::before]:text-muted [&_p.is-editor-empty:first-child::before]:italic [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:h-0 [&_p.is-editor-empty:first-child::before]:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gold [&_blockquote]:pl-3 [&_blockquote]:italic [&_a]:text-wine [&_a]:underline [&_a]:decoration-wine/40 [&_a]:underline-offset-2",
       },
     },
   });
+
+  async function createFromQuery(name: string) {
+    if (!onCreateNpc || !mention) return;
+    setCreating(true);
+    try {
+      const npc = await onCreateNpc(name);
+      // mention may have been re-rendered while awaiting — use latest state.
+      if (npc) mention.command(npc);
+    } finally {
+      setCreating(false);
+    }
+  }
 
   return (
     <div
@@ -57,6 +102,14 @@ export function SectionEditor({
     >
       {focused && editor && <Toolbar editor={editor} campaignId={campaignId} />}
       <EditorContent editor={editor} />
+      {mention && (
+        <MentionDropdown
+          ref={dropdownRef}
+          state={mention}
+          creating={creating}
+          onCreate={createFromQuery}
+        />
+      )}
     </div>
   );
 }

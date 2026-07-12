@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember, getCampaignPlayers } from "@/lib/journal/data";
+import { getNpcs } from "@/lib/journal/npcs";
 import { appHref } from "@/lib/journal/links";
 import { EditSessionClient } from "@/components/journal/session/EditSessionClient";
 
@@ -22,13 +23,17 @@ export default async function NewSessionPage({
     .eq("id", campaignId)
     .maybeSingle();
   const calendar = (c?.modules_enabled as { calendar?: boolean })?.calendar ?? true;
-  const players = await getCampaignPlayers(supabase, campaignId);
+  const [players, npcs] = await Promise.all([
+    getCampaignPlayers(supabase, campaignId),
+    getNpcs(supabase, campaignId),
+  ]);
 
   return (
     <EditSessionClient
       campaignId={campaignId}
       sessionId={null}
       players={players}
+      npcs={npcs.map((n) => ({ id: n.id, name: n.name }))}
       initial={{ title: "", date: null, summary: "", player_characters: "", npcs: "", notes: "" }}
       characters={[]}
       images={[]}

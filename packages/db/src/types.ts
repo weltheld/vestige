@@ -128,6 +128,25 @@ export type JournalCharacterRow = {
   created_at: string;
 };
 
+export type NpcStatusDb = "alive" | "dead" | "unknown";
+
+export type NpcRow = {
+  id: string;
+  campaign_id: string;
+  name: string;
+  summary: string | null;
+  status: NpcStatusDb;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NpcMentionRow = {
+  npc_id: string;
+  session_id: string;
+  created_at: string;
+};
+
 export type JournalSessionCharacterRow = {
   session_id: string;
   character_id: string;
@@ -414,6 +433,32 @@ export type Database = {
         Relationships: [
           Rel<"journal_session_characters_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
           Rel<"journal_session_characters_character_id_fkey", ["character_id"], "journal_characters", ["id"], false>,
+        ];
+      };
+      npcs: {
+        Row: NpcRow;
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          name: string;
+          summary?: string | null;
+          status?: NpcStatusDb;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<NpcRow>;
+        Relationships: [
+          Rel<"npcs_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+        ];
+      };
+      npc_mentions: {
+        Row: NpcMentionRow;
+        Insert: { npc_id: string; session_id: string; created_at?: string };
+        Update: Partial<NpcMentionRow>;
+        Relationships: [
+          Rel<"npc_mentions_npc_id_fkey", ["npc_id"], "npcs", ["id"], false>,
+          Rel<"npc_mentions_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
         ];
       };
       journal_annotations: {

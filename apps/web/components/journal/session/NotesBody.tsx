@@ -1,5 +1,7 @@
+import Link from "next/link";
 import type { SessionDetail, Annotation } from "@/lib/journal/session-detail";
 import { NOTE_SECTIONS, blocksFor, excerpt } from "@/lib/journal/notes";
+import { journal } from "@/lib/journal/links";
 import { AnnotationThread } from "./AnnotationControls";
 
 export function NotesBody({ session, campaignId }: { session: SessionDetail; campaignId: string }) {
@@ -74,7 +76,9 @@ function AnnotatedParagraph({
   return (
     <div className="group relative">
       <div className={has ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3" : ""}>
-        <p className="font-body text-[15px] leading-[1.85] text-ink">{text}</p>
+        <p className="font-body text-[15px] leading-[1.85] text-ink">
+          {renderCodexMentions(text, campaignId)}
+        </p>
       </div>
 
       <AnnotationThread
@@ -86,4 +90,32 @@ function AnnotatedParagraph({
       />
     </div>
   );
+}
+
+// The editor writes NPC mentions as markdown links "[Name](codex:<uuid>)".
+// The read view renders stored text verbatim (no markdown parsing), so this
+// single pattern gets special-cased into a quiet wine link to the codex —
+// everything else stays plain text, as before.
+const CODEX_MENTION_RE =
+  /\[([^\]]+)\]\(codex:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/g;
+
+function renderCodexMentions(text: string, campaignId: string): React.ReactNode {
+  if (!text.includes("](codex:")) return text;
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(CODEX_MENTION_RE)) {
+    if (m.index! > last) parts.push(text.slice(last, m.index));
+    parts.push(
+      <Link
+        key={`${m.index}-${m[2]}`}
+        href={journal.npc(campaignId, m[2].toLowerCase())}
+        className="text-wine underline decoration-wine/40 underline-offset-2 transition hover:decoration-wine"
+      >
+        {m[1]}
+      </Link>,
+    );
+    last = m.index! + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
 }

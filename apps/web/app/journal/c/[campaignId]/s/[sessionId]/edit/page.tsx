@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember, getCampaignPlayers } from "@/lib/journal/data";
+import { getNpcs } from "@/lib/journal/npcs";
 import { getSessionDetail } from "@/lib/journal/session-detail";
 import { appHref } from "@/lib/journal/links";
 import { EditSessionClient } from "@/components/journal/session/EditSessionClient";
@@ -19,13 +20,17 @@ export default async function EditSessionPage({
 
   const s = await getSessionDetail(supabase, campaignId, sessionId);
   if (!s) notFound();
-  const players = await getCampaignPlayers(supabase, campaignId);
+  const [players, npcs] = await Promise.all([
+    getCampaignPlayers(supabase, campaignId),
+    getNpcs(supabase, campaignId),
+  ]);
 
   return (
     <EditSessionClient
       campaignId={campaignId}
       sessionId={sessionId}
       players={players}
+      npcs={npcs.map((n) => ({ id: n.id, name: n.name }))}
       initial={{
         title: s.title,
         date: s.date,

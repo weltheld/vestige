@@ -1,4 +1,4 @@
-import { CalendarDays, ScrollText } from "lucide-react";
+import { CalendarDays, ScrollText, Library } from "lucide-react";
 import { Crest } from "./Crest";
 import { ProfileDialog } from "./ProfileDialog";
 import { CampaignSwitcher, type SwitcherCampaign } from "./CampaignSwitcher";
@@ -71,6 +71,13 @@ export function PlatformHeader({
               <ScrollText size={14} />
               Journal
             </Link>
+            <Link
+              href={campaign ? `/journal/c/${campaign.id}/codex` : "/journal/codex"}
+              className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
+            >
+              <Library size={14} />
+              Codex
+            </Link>
           </div>
         </nav>
 
@@ -90,6 +97,14 @@ export function PlatformHeader({
               className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
             >
               <ScrollText size={18} />
+            </Link>
+            <Link
+              href={campaign ? `/journal/c/${campaign.id}/codex` : "/journal/codex"}
+              aria-label="Codex"
+              title="Codex"
+              className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
+            >
+              <Library size={18} />
             </Link>
           </div>
         </nav>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@vestige/db/server";
 import type { JournalCharacterRoleDb } from "@vestige/db";
+import { syncNpcMentions } from "@/lib/journal/npc-sync";
 
 export type SessionInput = {
   title: string;
@@ -39,6 +40,12 @@ export async function createSession(campaignId: string, input: SessionInput) {
     action: "created",
     after_value: input,
   });
+  await syncNpcMentions(supabase, data.id, [
+    input.summary,
+    input.player_characters,
+    input.npcs,
+    input.notes,
+  ]);
   revalidatePath(`/journal/c/${campaignId}`);
   return data.id;
 }
@@ -78,7 +85,14 @@ export async function saveSession(
       after_value: input,
     });
   }
+  await syncNpcMentions(supabase, sessionId, [
+    input.summary,
+    input.player_characters,
+    input.npcs,
+    input.notes,
+  ]);
   revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
+  revalidatePath(`/journal/c/${campaignId}/codex`);
 }
 
 export async function addCharacter(
