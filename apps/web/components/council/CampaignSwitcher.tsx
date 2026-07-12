@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Check, SlidersHorizontal } from "lucide-react";
 
 export type SwitcherCampaign = {
   id: string;
@@ -75,24 +75,15 @@ export function CampaignSwitcher({
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
 
           <DropdownMenu.Item asChild>
-            {/* Campaign settings lives in Journal (name/cover/members/
-                Familiar) — same app now, so a soft navigation. */}
+            {/* The tabbed campaign Settings layer lives in Journal (campaign,
+                players & invites, Familiar, Codex) — same app now, so a soft
+                navigation. */}
             <Link
               href={`/journal/c/${current.id}/settings`}
               className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
             >
               <SlidersHorizontal size={13} className="text-ink-soft" />
-              Campaign settings
-            </Link>
-          </DropdownMenu.Item>
-
-          <DropdownMenu.Item asChild>
-            <Link
-              href={`/app/c/${current.id}/manage`}
-              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-            >
-              <Settings2 size={13} className="text-ink-soft" />
-              Manage this campaign
+              Settings
             </Link>
           </DropdownMenu.Item>
         </DropdownMenu.Content>

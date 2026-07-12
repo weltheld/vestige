@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Check, SlidersHorizontal } from "lucide-react";
 
 export type HeaderCampaign = {
   id: string;
@@ -21,9 +21,10 @@ export type HeaderCampaign = {
 type Props = {
   current: HeaderCampaign;
   campaigns: HeaderCampaign[];
-  /** Optional "Manage this campaign" link (the platform invite/party screen). */
+  /** @deprecated merged into settingsHref — ignored. */
   manageHref?: string;
-  /** Optional "Campaign settings" link (name, cover, members, Familiar). */
+  /** The tabbed campaign Settings layer (campaign, players & invites,
+   *  Familiar, Codex). */
   settingsHref?: string;
 };
 
@@ -31,12 +32,7 @@ type Props = {
  * The campaign-switch pill + dropdown shown in the Vestige header. Lets the
  * user jump between their campaigns from anywhere in a module.
  */
-export function CampaignSelector({
-  current,
-  campaigns,
-  manageHref,
-  settingsHref,
-}: Props) {
+export function CampaignSelector({ current, campaigns, settingsHref }: Props) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
@@ -99,19 +95,7 @@ export function CampaignSelector({
                 className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
               >
                 <SlidersHorizontal size={13} className="text-muted" />
-                Campaign settings
-              </Link>
-            </DropdownMenu.Item>
-          )}
-
-          {manageHref && (
-            <DropdownMenu.Item asChild>
-              <Link
-                href={manageHref}
-                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
-              >
-                <Settings2 size={13} className="text-muted" />
-                Manage this campaign
+                Settings
               </Link>
             </DropdownMenu.Item>
           )}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ScrollText, Library, LogOut, Pencil, ChevronDown, Check, Settings2, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, ScrollText, Library, LogOut, Pencil, ChevronDown, Check, SlidersHorizontal } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
@@ -33,11 +33,12 @@ type Props = {
   calendarHref?: string;
   journalHref?: string;
   codexHref?: string;
-  /** "Manage this campaign" target in the selector dropdown. */
+  /** @deprecated merged into settingsHref — ignored. */
   manageHref?: string;
-  /** "Campaign settings" target in the selector dropdown (name, cover,
-   *  members, Familiar). Relative hrefs render as a soft-navigable <Link>,
-   *  so within Journal this opens as a blurred-overlay layer. */
+  /** "Settings" target in the selector dropdown — the tabbed campaign
+   *  Settings layer (campaign, players & invites, Familiar, Codex).
+   *  Relative hrefs render as a soft-navigable <Link>, so within Journal
+   *  this opens as a blurred-overlay layer. */
   settingsHref?: string;
 };
 
@@ -56,7 +57,6 @@ export function VestigeHeader({
   calendarHref,
   journalHref,
   codexHref,
-  manageHref,
   settingsHref,
 }: Props) {
   // Codex is a coequal module tab but its routes live inside the journal
@@ -146,7 +146,6 @@ export function VestigeHeader({
             <CampaignSelector
               current={currentCampaign}
               campaigns={campaigns.length ? campaigns : [currentCampaign]}
-              manageHref={manageHref}
               settingsHref={settingsHref}
             />
           </div>
@@ -157,7 +156,6 @@ export function VestigeHeader({
           onSignOut={signOut}
           currentCampaign={currentCampaign}
           campaigns={campaigns.length ? campaigns : currentCampaign ? [currentCampaign] : []}
-          manageHref={manageHref}
           settingsHref={settingsHref}
         />
       </div>
@@ -178,14 +176,12 @@ function ProfileMenu({
   onSignOut,
   currentCampaign,
   campaigns,
-  manageHref,
   settingsHref,
 }: {
   user: VestigeHeaderUser;
   onSignOut: () => void;
   currentCampaign?: HeaderCampaign | null;
   campaigns: HeaderCampaign[];
-  manageHref?: string;
   settingsHref?: string;
 }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -247,18 +243,7 @@ function ProfileMenu({
                     className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
                   >
                     <SlidersHorizontal size={13} className="text-muted" />
-                    Campaign settings
-                  </Link>
-                </DropdownMenu.Item>
-              )}
-              {manageHref && (
-                <DropdownMenu.Item asChild>
-                  <Link
-                    href={manageHref}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
-                  >
-                    <Settings2 size={13} className="text-muted" />
-                    Manage this campaign
+                    Settings
                   </Link>
                 </DropdownMenu.Item>
               )}

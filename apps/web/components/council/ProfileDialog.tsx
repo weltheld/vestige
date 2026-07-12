@@ -98,22 +98,14 @@ export function ProfileDialog({
                   );
                 })}
                 <DropdownMenu.Item asChild>
-                  {/* Campaign settings lives in Journal — same app now. */}
+                  {/* The tabbed campaign Settings layer lives in Journal —
+                      same app now. */}
                   <Link
                     href={`/journal/c/${campaign.id}/settings`}
                     className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
                   >
                     <SlidersHorizontal size={13} className="text-ink-soft" />
-                    Campaign settings
-                  </Link>
-                </DropdownMenu.Item>
-                <DropdownMenu.Item asChild>
-                  <Link
-                    href={`/app/c/${campaign.id}/manage`}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-                  >
-                    <Settings2 size={13} className="text-ink-soft" />
-                    Manage this campaign
+                    Settings
                   </Link>
                 </DropdownMenu.Item>
                 <DropdownMenu.Separator className="my-1 h-px bg-hairline" />

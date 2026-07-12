@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
 import { getCampaignSettings } from "@/lib/journal/campaign-settings";
-import { appHref, journal } from "@/lib/journal/links";
+import { getManageData } from "@/lib/manage";
+import { appHref, journal, WEB_URL } from "@/lib/journal/links";
 import { SettingsClient } from "@/components/journal/settings/SettingsClient";
 
 /**
@@ -24,11 +25,18 @@ export default async function CampaignSettingsModal({
   const member = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!member) redirect(appHref());
 
-  const settings = await getCampaignSettings(supabase, campaignId, viewer.id);
+  const [settings, manage] = await Promise.all([
+    getCampaignSettings(supabase, campaignId, viewer.id),
+    getManageData(supabase, campaignId, viewer.id),
+  ]);
   // Fall back to the campaign page rather than notFound() — this segment
   // shares the page's not-found boundary, and a hard 404 here would be an
   // odd way to lose the whole underlying page over a settings-only issue.
-  if (!settings) redirect(journal.campaign(campaignId));
+  if (!settings || !manage) redirect(journal.campaign(campaignId));
 
-  return <SettingsClient settings={settings} variant="modal" />;
+  const magicLink = `${WEB_URL}/calendar/login?next=/g/${manage.slug}`;
+
+  return (
+    <SettingsClient settings={settings} manage={manage} magicLink={magicLink} variant="modal" />
+  );
 }

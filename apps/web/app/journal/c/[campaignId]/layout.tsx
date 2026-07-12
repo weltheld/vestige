@@ -45,7 +45,6 @@ export default async function CampaignLayout({
         journalHref={journal.campaign(campaignId)}
         codexHref={journal.codex(campaignId)}
         calendarHref={campaign.slug ? calendarCampaignHref(campaign.slug) : undefined}
-        manageHref={`/app/c/${campaignId}/manage`}
         // Same-app relative link — renders as a true Next.js <Link> and can
         // be intercepted as the blurred-overlay modal.
         settingsHref={journal.settings(campaignId)}
