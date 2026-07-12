@@ -22,7 +22,6 @@ import type {
 } from "@/lib/calendar/types";
 import { cn } from "@/lib/calendar/utils";
 import { getBrowserSupabase } from "@vestige/db/client";
-import { uploadBannerAction } from "@/app/calendar/g/[slug]/bannerActions";
 import {
   removeMemberAction,
   setMemberDmAction,
@@ -285,30 +284,6 @@ export function GroupViewClient(props: Props) {
     },
     [supabase, group.id, group.viableWeekdays],
   );
-
-  const handleUploadBanner = useCallback(
-    async (blob: Blob, original?: Blob) => {
-      const fd = new FormData();
-      fd.append("file", blob, "banner.jpg");
-      if (original) fd.append("original", original, "original");
-      const result = await uploadBannerAction(group.id, fd);
-      if (!result.ok) throw new Error(result.error);
-      setGroup((g) => ({ ...g, bannerUrl: result.url }));
-    },
-    [group.id],
-  );
-
-  const bannerOriginalUrl = supabase.storage
-    .from("banners")
-    .getPublicUrl(`${group.id}/original`).data.publicUrl;
-
-  const handleRemoveBanner = useCallback(async () => {
-    setGroup((g) => ({ ...g, bannerUrl: undefined }));
-    await supabase
-      .from("campaigns")
-      .update({ banner_url: null })
-      .eq("id", group.id);
-  }, [supabase, group.id]);
 
   const handleSetMemberDm = useCallback(
     async (userId: string, isDm: boolean) => {
@@ -578,11 +553,7 @@ export function GroupViewClient(props: Props) {
             members={members}
             creatorId={group.creatorId}
             viableWeekdays={group.viableWeekdays}
-            bannerUrl={group.bannerUrl}
-            bannerOriginalUrl={bannerOriginalUrl}
             onToggleWeekday={handleToggleWeekday}
-            onUploadBanner={handleUploadBanner}
-            onRemoveBanner={handleRemoveBanner}
             onSetMemberDm={handleSetMemberDm}
             onRemoveMember={handleRemoveMember}
           />
@@ -664,11 +635,7 @@ function SettingsDialog({
   members,
   creatorId,
   viableWeekdays,
-  bannerUrl,
-  bannerOriginalUrl,
   onToggleWeekday,
-  onUploadBanner,
-  onRemoveBanner,
   onSetMemberDm,
   onRemoveMember,
 }: {
@@ -676,11 +643,7 @@ function SettingsDialog({
   members: MemberWithUser[];
   creatorId: string;
   viableWeekdays: Weekday[];
-  bannerUrl?: string;
-  bannerOriginalUrl?: string;
   onToggleWeekday: (w: Weekday) => void;
-  onUploadBanner: (blob: Blob, original?: Blob) => Promise<void>;
-  onRemoveBanner: () => void;
   onSetMemberDm: (userId: string, isDm: boolean) => void;
   onRemoveMember: (userId: string) => void;
 }) {
@@ -696,11 +659,7 @@ function SettingsDialog({
           members={members}
           creatorId={creatorId}
           viableWeekdays={viableWeekdays}
-          bannerUrl={bannerUrl}
-          bannerOriginalUrl={bannerOriginalUrl}
           onToggleWeekday={onToggleWeekday}
-          onUploadBanner={onUploadBanner}
-          onRemoveBanner={onRemoveBanner}
           onSetMemberDm={onSetMemberDm}
           onRemoveMember={onRemoveMember}
           onClose={onClose}

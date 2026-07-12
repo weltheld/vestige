@@ -29,6 +29,17 @@ export async function setCampaignCover(campaignId: string, url: string) {
   revalidatePath(`/journal/c/${campaignId}/settings`);
 }
 
+/** Clear the campaign banner (RLS: only the creator can update campaigns). */
+export async function removeCampaignBanner(campaignId: string) {
+  const supabase = await sb();
+  const { error } = await supabase
+    .from("campaigns")
+    .update({ banner_url: null })
+    .eq("id", campaignId);
+  if (error) throw error;
+  revalidatePath(`/journal/c/${campaignId}/settings`);
+}
+
 export async function setMemberDm(campaignId: string, userId: string, isDm: boolean) {
   const supabase = await sb();
   const { error } = await supabase

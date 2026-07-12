@@ -138,7 +138,9 @@ export function ImageCropper({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    // z-[70]: must layer above the settings overlay (z-[60]), which can
+    // open the cropper from its Campaign tab.
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <button
         aria-label="Cancel"
         className="absolute inset-0 bg-ink/50 backdrop-blur-sm"

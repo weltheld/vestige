@@ -1,19 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-  Crop,
-  ImagePlus,
-  Pencil,
-  Swords,
-  Trash2,
-  VenetianMask,
-  X,
-} from "lucide-react";
+import { useState } from "react";
+import { Pencil, Swords, Trash2, VenetianMask, X } from "lucide-react";
 import type { Member, User, Weekday } from "@/lib/calendar/types";
 import { cn } from "@/lib/calendar/utils";
 import { Avatar } from "./Avatar";
-import { ImageCropper } from "./ImageCropper";
 
 type MemberWithUser = Member & { user: User };
 
@@ -31,11 +22,7 @@ type Props = {
   members: MemberWithUser[];
   creatorId: string;
   viableWeekdays: Weekday[];
-  bannerUrl?: string;
-  bannerOriginalUrl?: string;
   onToggleWeekday: (w: Weekday) => void;
-  onUploadBanner: (blob: Blob, original?: Blob) => Promise<void>;
-  onRemoveBanner: () => void;
   onSetMemberDm: (userId: string, isDm: boolean) => void;
   onRemoveMember: (userId: string) => void;
   /** Not needed when embedded (no title/close row is rendered). */
@@ -46,105 +33,23 @@ type Props = {
   embedded?: boolean;
 };
 
-// Desktop shows the banner as a compact 4:3 thumbnail (mobile keeps the
-// full-width strip, cropped from this same source via object-cover).
-const BANNER_ASPECT = 4 / 3;
+// Campaign banner management moved to the merged Settings dialog's Campaign
+// tab (Journal) — poll settings keeps only poll concerns.
 
 export function OwnerSettings({
   members,
   creatorId,
   viableWeekdays,
-  bannerUrl,
-  bannerOriginalUrl,
   onToggleWeekday,
-  onUploadBanner,
-  onRemoveBanner,
   onSetMemberDm,
   onRemoveMember,
   onClose,
   embedded = false,
 }: Props) {
   const viable = new Set(viableWeekdays);
-  const fileInput = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [cropFile, setCropFile] = useState<File | null>(null);
-  // The full image to also store on confirm (only for a fresh upload).
-  const [pendingOriginal, setPendingOriginal] = useState<Blob | null>(null);
-
-  function onPickBanner(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setUploadError("Please choose an image file.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError("Image must be 5 MB or smaller.");
-      return;
-    }
-    setUploadError(null);
-    setPendingOriginal(file);
-    setCropFile(file);
-  }
-
-  // Re-open the cropper on the previously uploaded image (no re-upload).
-  async function onAdjustCrop() {
-    setUploadError(null);
-    try {
-      let res = bannerOriginalUrl
-        ? await fetch(bannerOriginalUrl, { cache: "no-store" })
-        : null;
-      if ((!res || !res.ok) && bannerUrl) {
-        res = await fetch(bannerUrl, { cache: "no-store" });
-      }
-      if (!res || !res.ok) throw new Error("Could not load the image.");
-      const blob = await res.blob();
-      const file = new File([blob], "banner-source", {
-        type: blob.type || "image/jpeg",
-      });
-      setPendingOriginal(null); // original already stored
-      setCropFile(file);
-    } catch (err) {
-      setUploadError(
-        err instanceof Error ? err.message : "Could not load the image.",
-      );
-    }
-  }
-
-  async function onCropConfirm(blob: Blob) {
-    setUploading(true);
-    try {
-      await onUploadBanner(blob, pendingOriginal ?? undefined);
-      setCropFile(null);
-      setPendingOriginal(null);
-    } catch (err) {
-      setUploadError(
-        err instanceof Error ? err.message : "Upload failed. Try again.",
-      );
-    } finally {
-      setUploading(false);
-    }
-  }
 
   return (
     <div className={cn("flex h-full flex-col", !embedded && "p-5")}>
-      {cropFile && (
-        <ImageCropper
-          file={cropFile}
-          aspect={BANNER_ASPECT}
-          viewWidth={400}
-          outputWidth={1600}
-          title="Frame your banner"
-          hint="Drag to move, slide to zoom. Shown as a compact image in your campaign header."
-          onCancel={() => {
-            setCropFile(null);
-            setPendingOriginal(null);
-          }}
-          onConfirm={onCropConfirm}
-        />
-      )}
       {!embedded && (
         <>
           <div className="flex items-start justify-between">
@@ -198,82 +103,6 @@ export function OwnerSettings({
         </ul>
       </section>
 
-      <div className="my-4 h-px bg-hairline" />
-
-      <section>
-        <p className="small-caps">Campaign Banner</p>
-        <div className="mt-2">
-          {/* Preview mirrors the 4:3 crop actually shown in the campaign
-              header, so what you frame is what you get. */}
-          {bannerUrl ? (
-            <div className="relative aspect-[4/3] w-full max-w-[220px] overflow-hidden rounded-md border border-hairline">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={bannerUrl}
-                alt="Campaign banner"
-                className="h-full w-full object-cover"
-              />
-              {uploading && (
-                <div className="absolute inset-0 flex items-end bg-ink/30 p-2">
-                  <div className="progress-track h-1.5 w-full" role="progressbar" aria-label="Saving banner" />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex aspect-[4/3] w-full max-w-[220px] items-center justify-center rounded-md border border-dashed border-hairline bg-surface/60 text-xs text-ink-soft">
-              {uploading ? "Saving…" : "No banner yet"}
-            </div>
-          )}
-
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={onPickBanner}
-          />
-
-          <div className="mt-2 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInput.current?.click()}
-              disabled={uploading}
-              title={bannerUrl ? "Replace image" : "Upload image"}
-              aria-label={bannerUrl ? "Replace image" : "Upload image"}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface/60 text-ink hover:bg-parchment disabled:opacity-50"
-            >
-              <ImagePlus className="h-4 w-4" />
-            </button>
-            {bannerUrl && (
-              <button
-                type="button"
-                onClick={onAdjustCrop}
-                disabled={uploading}
-                title="Adjust crop"
-                aria-label="Adjust crop"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface/60 text-ink hover:bg-parchment disabled:opacity-50"
-              >
-                <Crop className="h-4 w-4" />
-              </button>
-            )}
-            {bannerUrl && (
-              <button
-                type="button"
-                onClick={onRemoveBanner}
-                disabled={uploading}
-                title="Remove image"
-                aria-label="Remove image"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline bg-surface/60 text-vote-no hover:bg-parchment disabled:opacity-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          {uploadError && (
-            <p className="mt-2 text-xs text-vote-no">{uploadError}</p>
-          )}
-        </div>
-      </section>
     </div>
   );
 }

@@ -2,17 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, ImagePlus, Loader2, Copy, Check, VenetianMask, LogOut } from "lucide-react";
+import { X, ImagePlus, Loader2, Copy, Check, VenetianMask, LogOut, Crop, Trash2 } from "lucide-react";
+import { getBrowserSupabase } from "@vestige/db/client";
 import type { CampaignSettings } from "@/lib/journal/campaign-settings";
 import type { ManageData } from "@/lib/manage";
 import { journal } from "@/lib/journal/links";
 import {
   renameCampaign,
-  setCampaignCover,
+  removeCampaignBanner,
   setMemberDm,
   deleteCampaign,
   leaveCampaign,
 } from "@/app/journal/c/[campaignId]/settings/actions";
+import { uploadBannerAction } from "@/app/calendar/g/[slug]/bannerActions";
 import {
   sendInvite,
   cancelInvite,
@@ -20,9 +22,13 @@ import {
   addExistingMember,
   removeMember,
 } from "@/app/app/c/[campaignId]/manage/actions";
-import { pickImageFile, uploadCampaignBanner } from "@/lib/journal/upload";
+import { pickImageFile } from "@/lib/journal/upload";
+import { ImageCropper } from "@/components/council/ImageCropper";
 import { FamiliarSettings } from "./FamiliarSettings";
 import { AiKeySettings } from "./AiKeySettings";
+
+// Same 4:3 frame the campaign header displays — what you crop is what shows.
+const BANNER_ASPECT = 4 / 3;
 
 type TabKey = "campaign" | "players" | "familiar" | "codex";
 
@@ -150,20 +156,69 @@ function CampaignTab({ settings }: { settings: CampaignSettings }) {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  // The full image to also store on confirm (only for a fresh upload) — kept
+  // server-side so "Adjust crop" can re-frame later without re-uploading.
+  const [pendingOriginal, setPendingOriginal] = useState<Blob | null>(null);
 
-  async function changeCover() {
+  async function pickBanner() {
     const file = await pickImageFile();
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setCoverError("Image must be 5 MB or smaller.");
+      return;
+    }
     setCoverError(null);
+    setPendingOriginal(file);
+    setCropFile(file);
+  }
+
+  // Re-open the cropper on the previously uploaded full image (no re-upload).
+  async function adjustCrop() {
+    setCoverError(null);
+    const originalUrl = getBrowserSupabase()
+      .storage.from("banners")
+      .getPublicUrl(`${id}/original`).data.publicUrl;
+    try {
+      let res = await fetch(originalUrl, { cache: "no-store" });
+      if (!res.ok && coverUrl) res = await fetch(coverUrl, { cache: "no-store" });
+      if (!res.ok) throw new Error("Could not load the image.");
+      const blob = await res.blob();
+      setPendingOriginal(null); // original already stored
+      setCropFile(new File([blob], "banner-source", { type: blob.type || "image/jpeg" }));
+    } catch (err) {
+      setCoverError(err instanceof Error ? err.message : "Could not load the image.");
+    }
+  }
+
+  async function onCropConfirm(blob: Blob) {
     setUploadingCover(true);
     try {
-      const url = await uploadCampaignBanner(id, file);
-      await setCampaignCover(id, url);
-      setCoverUrl(url);
+      const fd = new FormData();
+      fd.append("file", blob, "banner.jpg");
+      if (pendingOriginal) fd.append("original", pendingOriginal, "original");
+      const result = await uploadBannerAction(id, fd);
+      if (!result.ok) throw new Error(result.error);
+      setCoverUrl(result.url);
+      setCropFile(null);
+      setPendingOriginal(null);
+      router.refresh();
     } catch (err) {
       setCoverError(err instanceof Error ? err.message : "Upload failed. Please try again.");
     } finally {
       setUploadingCover(false);
+    }
+  }
+
+  async function removeBanner() {
+    if (!window.confirm("Remove the campaign banner?")) return;
+    setCoverError(null);
+    try {
+      await removeCampaignBanner(id);
+      setCoverUrl(null);
+      router.refresh();
+    } catch (err) {
+      setCoverError(err instanceof Error ? err.message : "Could not remove the banner.");
     }
   }
 
@@ -201,34 +256,75 @@ function CampaignTab({ settings }: { settings: CampaignSettings }) {
 
       <section className="flex flex-col gap-3">
         <SectionLabel>Campaign banner</SectionLabel>
+        {cropFile && (
+          <ImageCropper
+            file={cropFile}
+            aspect={BANNER_ASPECT}
+            viewWidth={400}
+            outputWidth={1600}
+            title="Frame your banner"
+            hint="Drag to move, slide to zoom. Shown as a compact image in your campaign header."
+            onCancel={() => {
+              setCropFile(null);
+              setPendingOriginal(null);
+            }}
+            onConfirm={onCropConfirm}
+          />
+        )}
         <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            disabled={!isCreator || uploadingCover}
-            onClick={changeCover}
-            className="group relative flex h-[120px] w-[200px] items-center justify-center overflow-hidden rounded-lg border border-hairline bg-cod-soft disabled:cursor-default"
-          >
-            {coverUrl && (
+          {/* Preview mirrors the 4:3 crop the campaign header shows. */}
+          <div className="relative flex aspect-[4/3] w-full max-w-[200px] items-center justify-center overflow-hidden rounded-lg border border-hairline bg-cod-soft">
+            {coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={coverUrl} alt="" className="h-full w-full object-cover" />
-            )}
-            {uploadingCover ? (
-              <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/50 text-[12px] text-white">
-                <Loader2 size={15} className="animate-spin" /> Uploading…
-              </div>
-            ) : !coverUrl && isCreator ? (
-              <span className="flex flex-col items-center gap-1 text-muted">
-                <ImagePlus size={20} />
-                <span className="font-body text-[11px] italic">Add a banner</span>
-              </span>
             ) : (
-              isCreator && (
-                <div className="absolute inset-0 hidden items-center justify-center gap-1.5 bg-black/40 text-[12px] text-white group-hover:flex">
-                  <ImagePlus size={14} /> Change
-                </div>
-              )
+              <span className="font-body text-[11px] italic text-muted">No banner yet</span>
             )}
-          </button>
+            {uploadingCover && (
+              <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/50 text-[12px] text-white">
+                <Loader2 size={15} className="animate-spin" /> Saving…
+              </div>
+            )}
+          </div>
+
+          {isCreator && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={pickBanner}
+                disabled={uploadingCover}
+                title={coverUrl ? "Replace image" : "Upload image"}
+                aria-label={coverUrl ? "Replace image" : "Upload image"}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline text-ink transition hover:bg-cod-soft disabled:opacity-50"
+              >
+                <ImagePlus size={16} />
+              </button>
+              {coverUrl && (
+                <button
+                  type="button"
+                  onClick={adjustCrop}
+                  disabled={uploadingCover}
+                  title="Adjust crop"
+                  aria-label="Adjust crop"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline text-ink transition hover:bg-cod-soft disabled:opacity-50"
+                >
+                  <Crop size={16} />
+                </button>
+              )}
+              {coverUrl && (
+                <button
+                  type="button"
+                  onClick={removeBanner}
+                  disabled={uploadingCover}
+                  title="Remove image"
+                  aria-label="Remove image"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-hairline text-vote-no transition hover:bg-cod-soft disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          )}
           {coverError && <p className="font-body text-[12px] text-vote-no">{coverError}</p>}
         </div>
       </section>
