@@ -120,7 +120,7 @@ async function draftWithGroq(
   }
 }
 
-/** The provider + key to use for a campaign: its own saved key (campaign
+/** The provider + key to use for a campaign: its ACTIVE saved key (campaign
  *  settings, creator-only RLS row) first, then the deployment's env vars. */
 async function resolveProvider(
   supabase: SB,
@@ -128,10 +128,15 @@ async function resolveProvider(
 ): Promise<{ provider: AiProviderDb; apiKey: string } | null> {
   const { data } = await supabase
     .from("campaign_ai_settings")
-    .select("provider, api_key")
+    .select("provider, anthropic_key, groq_key")
     .eq("campaign_id", campaignId)
     .maybeSingle();
-  if (data?.api_key) return { provider: data.provider, apiKey: data.api_key };
+  const activeKey = data
+    ? data.provider === "anthropic"
+      ? data.anthropic_key
+      : data.groq_key
+    : null;
+  if (data && activeKey) return { provider: data.provider, apiKey: activeKey };
   if (process.env.ANTHROPIC_API_KEY) {
     return { provider: "anthropic", apiKey: process.env.ANTHROPIC_API_KEY };
   }

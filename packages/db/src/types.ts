@@ -184,8 +184,10 @@ export type AiProviderDb = "anthropic" | "groq";
 
 export type CampaignAiSettingsRow = {
   campaign_id: string;
+  /** Which provider is ACTIVE for summaries (both keys can be stored). */
   provider: AiProviderDb;
-  api_key: string;
+  anthropic_key: string | null;
+  groq_key: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -553,7 +555,8 @@ export type Database = {
         Insert: {
           campaign_id: string;
           provider: AiProviderDb;
-          api_key: string;
+          anthropic_key?: string | null;
+          groq_key?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -14,9 +14,14 @@ export type SettingsMember = {
   characterName: string | null;
 };
 
-/** The stored key never leaves the server in full — only a masked preview
- *  (provider + last 4 chars) reaches the settings UI. */
-export type AiKeySettings = { provider: AiProviderDb; keyPreview: string };
+/** Stored keys never leave the server in full — only masked previews
+ *  (last 4 chars) reach the settings UI. `active` is which provider the
+ *  summarize button currently uses. */
+export type AiKeySettings = {
+  active: AiProviderDb;
+  anthropicPreview: string | null;
+  groqPreview: string | null;
+};
 
 export type CampaignSettings = {
   id: string;
@@ -73,11 +78,16 @@ export async function getCampaignSettings(
   if (isCreator) {
     const { data: aiRow } = await supabase
       .from("campaign_ai_settings")
-      .select("provider, api_key")
+      .select("provider, anthropic_key, groq_key")
       .eq("campaign_id", campaignId)
       .maybeSingle();
     if (aiRow) {
-      ai = { provider: aiRow.provider, keyPreview: `····${aiRow.api_key.slice(-4)}` };
+      const preview = (key: string | null) => (key ? `····${key.slice(-4)}` : null);
+      ai = {
+        active: aiRow.provider,
+        anthropicPreview: preview(aiRow.anthropic_key),
+        groqPreview: preview(aiRow.groq_key),
+      };
     }
   }
 

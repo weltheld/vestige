@@ -98,8 +98,16 @@ function aiKeyError(error: { code?: string; message: string }): AiKeyResult {
   return { ok: false, error: "Could not save the key. Try again." };
 }
 
-/** Save the campaign's AI provider + key for Codex summaries. Creator-only
- *  via RLS (campaign_ai_settings policies) — a non-creator's upsert fails. */
+const KEY_COLUMN: Record<AiProviderDb, "anthropic_key" | "groq_key"> = {
+  anthropic: "anthropic_key",
+  groq: "groq_key",
+};
+
+/** Save one provider's key. Both providers' keys can be stored side by
+ *  side; `provider` on the row tracks which one is ACTIVE. Saving a key
+ *  makes its provider active only when the row is new (first key wins the
+ *  default) — otherwise the current active choice is respected. Creator-
+ *  only via RLS (campaign_ai_settings policies). */
 export async function saveCampaignAiKey(
   campaignId: string,
   provider: AiProviderDb,
@@ -108,23 +116,84 @@ export async function saveCampaignAiKey(
   const key = apiKey.trim();
   if (!key) return { ok: false, error: "An API key is required." };
   const supabase = await sb();
-  const { error } = await supabase
+
+  const { data: existing, error: readError } = await supabase
     .from("campaign_ai_settings")
-    .upsert(
-      { campaign_id: campaignId, provider, api_key: key, updated_at: new Date().toISOString() },
-      { onConflict: "campaign_id" },
-    );
+    .select("provider")
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+  if (readError) return aiKeyError(readError);
+
+  const keyPatch =
+    provider === "anthropic" ? { anthropic_key: key } : { groq_key: key };
+  const { error } = await supabase.from("campaign_ai_settings").upsert(
+    {
+      campaign_id: campaignId,
+      provider: existing?.provider ?? provider,
+      ...keyPatch,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "campaign_id" },
+  );
   if (error) return aiKeyError(error);
   revalidatePath(`/journal/c/${campaignId}/settings`);
   return { ok: true };
 }
 
-export async function removeCampaignAiKey(campaignId: string): Promise<AiKeyResult> {
+/** Switch which stored key the summarize button uses. */
+export async function setActiveAiProvider(
+  campaignId: string,
+  provider: AiProviderDb,
+): Promise<AiKeyResult> {
   const supabase = await sb();
+  const { data: row, error: readError } = await supabase
+    .from("campaign_ai_settings")
+    .select("anthropic_key, groq_key")
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+  if (readError) return aiKeyError(readError);
+  if (!row?.[KEY_COLUMN[provider]]) {
+    return { ok: false, error: "Save a key for this provider first." };
+  }
   const { error } = await supabase
     .from("campaign_ai_settings")
-    .delete()
+    .update({ provider, updated_at: new Date().toISOString() })
     .eq("campaign_id", campaignId);
+  if (error) return aiKeyError(error);
+  revalidatePath(`/journal/c/${campaignId}/settings`);
+  return { ok: true };
+}
+
+/** Remove one provider's key. If it was the active one and the other key
+ *  exists, the other becomes active; with no keys left the row is deleted. */
+export async function removeCampaignAiKey(
+  campaignId: string,
+  provider: AiProviderDb,
+): Promise<AiKeyResult> {
+  const supabase = await sb();
+  const { data: row, error: readError } = await supabase
+    .from("campaign_ai_settings")
+    .select("provider, anthropic_key, groq_key")
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+  if (readError) return aiKeyError(readError);
+  if (!row) return { ok: true };
+
+  const other: AiProviderDb = provider === "anthropic" ? "groq" : "anthropic";
+  const otherKey = row[KEY_COLUMN[other]];
+
+  const clearPatch =
+    provider === "anthropic" ? { anthropic_key: null } : { groq_key: null };
+  const { error } = otherKey
+    ? await supabase
+        .from("campaign_ai_settings")
+        .update({
+          ...clearPatch,
+          provider: row.provider === provider ? other : row.provider,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("campaign_id", campaignId)
+    : await supabase.from("campaign_ai_settings").delete().eq("campaign_id", campaignId);
   if (error) return aiKeyError(error);
   revalidatePath(`/journal/c/${campaignId}/settings`);
   return { ok: true };
