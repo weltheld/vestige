@@ -80,14 +80,16 @@ async function getJournalActivity(
 ): Promise<ActivityItem[]> {
   const items: ActivityItem[] = [];
   if (journalIds.length > 0) {
+    // Over-fetch: edits collapse to one line per person per day below, so
+    // `limit` raw rows would under-fill the feed on busy days.
     const { data: revisions } = await supabase
       .from("journal_session_revisions")
       .select(
-        "id, action, author_id, created_at, journal_sessions!inner(id, campaign_id, title)",
+        "id, action, author_id, created_at, after_value, journal_sessions!inner(id, campaign_id, title)",
       )
       .in("journal_sessions.campaign_id", journalIds)
       .order("created_at", { ascending: false })
-      .limit(limit);
+      .limit(limit * 10);
 
     const authorIds = [...new Set((revisions ?? []).map((r) => r.author_id))];
     const { data: profiles } = authorIds.length
@@ -100,20 +102,34 @@ async function getJournalActivity(
       action: JournalRevisionActionDb;
       author_id: string;
       created_at: string;
+      after_value: { source?: string } | null;
       journal_sessions: { id: string; campaign_id: string; title: string };
     };
+    // At most ONE journal-edit line and ONE codex-update line per person
+    // per day — autosaves and repeated tweaks otherwise flood the feed.
+    // Rows arrive newest-first, so the kept entry is the day's latest.
+    const seenEdits = new Set<string>();
     for (const r of (revisions ?? []) as unknown as Row[]) {
       const campaignId = r.journal_sessions.campaign_id;
+      const isCodex = r.after_value?.source === "codex-extract";
+      if (r.action === "edited") {
+        const key = `${r.author_id}:${r.created_at.slice(0, 10)}:${isCodex ? "codex" : "edit"}`;
+        if (seenEdits.has(key)) continue;
+        seenEdits.add(key);
+      }
       items.push({
         id: `journal:${r.id}`,
         module: "journal",
         campaignName: nameById.get(campaignId) ?? "Unknown campaign",
-        description: `${describeRevision(r.action)} in "${r.journal_sessions.title}"`,
+        description: isCodex
+          ? `updated the codex from "${r.journal_sessions.title}"`
+          : `${describeRevision(r.action)} in "${r.journal_sessions.title}"`,
         actorName: name(profById.get(r.author_id)),
         avatarUrl: null,
         createdAt: r.created_at,
         href: `/journal/c/${campaignId}/s/${r.journal_sessions.id}`,
       });
+      if (items.length >= limit) break;
     }
   }
   return items;
