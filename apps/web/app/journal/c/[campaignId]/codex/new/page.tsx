@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
 import { appHref, journal } from "@/lib/journal/links";
+import { getMentionTargets } from "@/lib/journal/mention-targets";
 import { NpcForm } from "@/components/journal/codex/NpcForm";
 
 export default async function NewNpcPage({
@@ -19,6 +20,8 @@ export default async function NewNpcPage({
   const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!campaign) redirect(appHref());
 
+  const mentionTargets = await getMentionTargets(supabase, campaignId);
+
   return (
     <main className="mx-auto flex w-full max-w-[640px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8">
       <div>
@@ -31,7 +34,7 @@ export default async function NewNpcPage({
         </Link>
         <h1 className="mt-2 font-display text-3xl text-ink">New entry</h1>
       </div>
-      <NpcForm campaignId={campaignId} />
+      <NpcForm campaignId={campaignId} mentionTargets={mentionTargets} />
     </main>
   );
 }

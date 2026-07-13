@@ -9,10 +9,19 @@ import {
 import { createPortal } from "react-dom";
 import { Extension } from "@tiptap/react";
 import Suggestion, { type SuggestionProps } from "@tiptap/suggestion";
-import { UserRound, Plus, Loader2 } from "lucide-react";
+import { UserRound, BookOpen, Plus, Loader2 } from "lucide-react";
 
-/** The minimal NPC shape the editor needs for @-mentions. */
-export type MentionNpc = { id: string; name: string };
+/** A mention target: a codex entry (default) or a journal session. The type
+ *  decides the link protocol the mention is written with — codex:<id> or
+ *  session:<id> — and the dropdown icon. `label`, when set, is what the
+ *  dropdown displays (e.g. a session title with its date); `name` is the
+ *  text inserted into the prose. */
+export type MentionNpc = {
+  id: string;
+  name: string;
+  type?: "codex" | "session";
+  label?: string;
+};
 
 export type MentionState = {
   query: string;
@@ -64,7 +73,12 @@ export function buildMentionExtension(opts: {
                 {
                   type: "text",
                   text: props.name,
-                  marks: [{ type: "link", attrs: { href: `codex:${props.id}` } }],
+                  marks: [
+                    {
+                      type: "link",
+                      attrs: { href: `${props.type === "session" ? "session" : "codex"}:${props.id}` },
+                    },
+                  ],
                 },
                 { type: "text", text: " " },
               ])
@@ -74,7 +88,11 @@ export function buildMentionExtension(opts: {
             const q = query.trim().toLowerCase();
             return opts
               .getNpcs()
-              .filter((n) => n.name.toLowerCase().includes(q))
+              .filter(
+                (n) =>
+                  n.name.toLowerCase().includes(q) ||
+                  (n.label ?? "").toLowerCase().includes(q),
+              )
               .slice(0, 8);
           },
           render: () => ({
@@ -109,14 +127,16 @@ export const MentionDropdown = forwardRef<
   MentionDropdownHandle,
   {
     state: MentionState;
-    /** Creates the NPC, then inserts its mention. */
-    onCreate: (name: string) => void;
-    creating: boolean;
+    /** Creates the NPC, then inserts its mention. Omit to hide the
+     *  "Create …" row (e.g. the codex summary editor only links). */
+    onCreate?: (name: string) => void;
+    creating?: boolean;
   }
->(function MentionDropdown({ state, onCreate, creating }, ref) {
+>(function MentionDropdown({ state, onCreate, creating = false }, ref) {
   const [active, setActive] = useState(0);
   const query = state.query.trim();
   const canCreate =
+    !!onCreate &&
     query.length > 0 &&
     !state.items.some((n) => n.name.toLowerCase() === query.toLowerCase());
   const total = state.items.length + (canCreate ? 1 : 0);
@@ -125,7 +145,7 @@ export const MentionDropdown = forwardRef<
 
   function choose(index: number) {
     if (index < state.items.length) state.command(state.items[index]);
-    else if (canCreate) onCreate(query);
+    else if (canCreate) onCreate!(query);
   }
 
   useImperativeHandle(ref, () => ({
@@ -169,8 +189,12 @@ export const MentionDropdown = forwardRef<
           onMouseEnter={() => setActive(i)}
           className={`${row} ${i === active ? "bg-cod-soft" : ""}`}
         >
-          <UserRound size={13} className="shrink-0 text-muted" />
-          <span className="truncate">{n.name}</span>
+          {n.type === "session" ? (
+            <BookOpen size={13} className="shrink-0 text-muted" />
+          ) : (
+            <UserRound size={13} className="shrink-0 text-muted" />
+          )}
+          <span className="truncate">{n.label ?? n.name}</span>
         </button>
       ))}
       {canCreate && (

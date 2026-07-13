@@ -6,6 +6,7 @@ import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
 import { NpcForm } from "./NpcForm";
 import { DeleteNpcButton } from "./DeleteNpcButton";
 import { SummaryWithFootnotes } from "./SummaryWithFootnotes";
+import type { MentionNpc } from "../session/MentionSuggestion";
 
 const KIND_LABEL: Record<NpcKindDb, string> = {
   person: "Person",
@@ -31,6 +32,7 @@ export function NpcEntry({
   campaignId,
   npc,
   canSummarize,
+  mentionTargets = [],
 }: {
   campaignId: string;
   npc: {
@@ -42,6 +44,8 @@ export function NpcEntry({
     image_url: string | null;
   };
   canSummarize: boolean;
+  /** Codex entries + sessions for the summary's @-mention crosslinking. */
+  mentionTargets?: MentionNpc[];
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -59,6 +63,7 @@ export function NpcEntry({
             imageUrl: npc.image_url,
           }}
           canSummarize={canSummarize}
+          mentionTargets={mentionTargets}
           onSaved={() => setEditing(false)}
           onCancel={() => setEditing(false)}
         />
@@ -102,6 +107,7 @@ export function NpcEntry({
       {npc.summary ? (
         <SummaryWithFootnotes
           summary={npc.summary}
+          campaignId={campaignId}
           className="whitespace-pre-line font-body text-[15px] leading-[1.8] text-ink"
         />
       ) : (

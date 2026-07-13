@@ -66,7 +66,7 @@ export function SectionEditor({
       // protocols: the Link extension strips hrefs with unknown schemes in
       // parseHTML/renderHTML — without "codex" every NPC mention would be
       // silently destroyed the next time the editor loads.
-      Link.configure({ openOnClick: false, protocols: ["codex"] }),
+      Link.configure({ openOnClick: false, protocols: ["codex", "session"] }),
       Image,
       Placeholder.configure({ placeholder }),
       Markdown.configure({ html: false }),

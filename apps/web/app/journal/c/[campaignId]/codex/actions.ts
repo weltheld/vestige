@@ -27,6 +27,27 @@ async function uid() {
   return { supabase, userId: user.id };
 }
 
+const SESSION_LINK_RE =
+  /\]\(session:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/g;
+
+/** Sessions crosslinked in a summary count as "Appears in" — upsert their
+ *  mention rows. Additive only (never deletes): mentions from extraction and
+ *  the journal editor must survive a summary edit that drops a link.
+ *  Best-effort; RLS rejects sessions from other campaigns. */
+async function syncSessionLinks(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+  npcId: string,
+  summary: string | null,
+) {
+  if (!summary) return;
+  const ids = [...new Set([...summary.matchAll(SESSION_LINK_RE)].map((m) => m[1].toLowerCase()))];
+  if (ids.length === 0) return;
+  await supabase.from("npc_mentions").upsert(
+    ids.map((session_id) => ({ npc_id: npcId, session_id })),
+    { onConflict: "npc_id,session_id", ignoreDuplicates: true },
+  );
+}
+
 /** Create an NPC (RLS allows any campaign member). Returns the id so the
  *  editor's @-mention dropdown can insert a mention right away. */
 export async function createNpc(
@@ -50,6 +71,7 @@ export async function createNpc(
     .select("id")
     .single();
   if (error) throw error;
+  await syncSessionLinks(supabase, data.id, input.summary);
   revalidatePath(journal.codex(campaignId));
   return { id: data.id };
 }
@@ -70,6 +92,7 @@ export async function updateNpc(campaignId: string, npcId: string, input: NpcInp
     })
     .eq("id", npcId);
   if (error) throw error;
+  await syncSessionLinks(supabase, npcId, input.summary);
   revalidatePath(journal.codex(campaignId));
   revalidatePath(journal.npc(campaignId, npcId));
 }

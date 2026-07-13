@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember, isCampaignOwner } from "@/lib/journal/data";
 import { getNpc, getNpcMentions } from "@/lib/journal/npcs";
+import { getMentionTargets } from "@/lib/journal/mention-targets";
 import { appHref, journal } from "@/lib/journal/links";
 import { NpcEntry } from "@/components/journal/codex/NpcEntry";
 import { parseFootnotes, footnoteForSession } from "@/lib/journal/codex-footnotes";
@@ -31,9 +32,10 @@ export default async function NpcDetailPage({
   // Footnote legend from the saved summary — used to badge the sessions
   // below with the [n] their citations refer to.
   const { notes } = parseFootnotes(npc.summary);
-  const [mentions, isOwner] = await Promise.all([
+  const [mentions, isOwner, mentionTargets] = await Promise.all([
     getNpcMentions(supabase, npcId),
     isCampaignOwner(supabase, viewer.id, campaignId),
+    getMentionTargets(supabase, campaignId, npcId),
   ]);
 
   return (
@@ -58,6 +60,7 @@ export default async function NpcDetailPage({
               image_url: npc.image_url,
             }}
             canSummarize={isOwner}
+            mentionTargets={mentionTargets}
           />
         </div>
       </div>

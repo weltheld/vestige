@@ -14,6 +14,8 @@ import {
 import { journal } from "@/lib/journal/links";
 import { parseFootnotes, type Footnote } from "@/lib/journal/codex-footnotes";
 import { uploadJournalImage, pickImageFile } from "@/lib/journal/upload";
+import { SummaryEditor } from "./SummaryEditor";
+import type { MentionNpc } from "../session/MentionSuggestion";
 
 /** Storage keeps body + legend in one text column; the form edits only the
  *  body and re-attaches the legend on save. */
@@ -49,11 +51,14 @@ export function NpcForm({
   npcId,
   initial,
   canSummarize = false,
+  mentionTargets = [],
   onSaved,
   onCancel,
 }: {
   campaignId: string;
   npcId?: string;
+  /** Codex entries + sessions offered by the summary's @-mention dropdown. */
+  mentionTargets?: MentionNpc[];
   initial?: {
     name: string;
     summary: string | null;
@@ -75,6 +80,14 @@ export function NpcForm({
   // read-only below it and re-attached on save.
   const [summary, setSummary] = useState(parsed.body);
   const [footnotes, setFootnotes] = useState<Footnote[]>(parsed.notes);
+  // The tiptap editor owns its content after mount — bump this key to remount
+  // it whenever the summary is replaced programmatically (AI draft, SRD/wiki
+  // lookup) so the new text actually shows up.
+  const [editorKey, setEditorKey] = useState(0);
+  const replaceSummary = (text: string) => {
+    setSummary(text);
+    setEditorKey((k) => k + 1);
+  };
   const [status, setStatus] = useState<NpcStatusDb>(initial?.status ?? "unknown");
   const [kind, setKind] = useState<NpcKindDb>(initial?.kind ?? "person");
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
@@ -129,9 +142,9 @@ export function NpcForm({
         setError(result.error);
         return;
       }
-      // Draft only — lands in the textarea for review; Save persists it.
+      // Draft only — lands in the editor for review; Save persists it.
       const draft = parseFootnotes(result.summary);
-      setSummary(draft.body);
+      replaceSummary(draft.body);
       setFootnotes(draft.notes);
       setNotice("Summary drafted from the sessions below — review and save.");
     } finally {
@@ -170,7 +183,7 @@ export function NpcForm({
       }
       // Drop the SRD description into the summary body for review — it's
       // never saved until the user hits Save.
-      setSummary(res.match.description);
+      replaceSummary(res.match.description);
       setNotice(`Filled from ${res.match.source} (“${res.match.name}”) — review and save.`);
     } finally {
       setEnriching(null);
@@ -191,7 +204,7 @@ export function NpcForm({
         setError(res.error);
         return;
       }
-      setSummary(res.match.description);
+      replaceSummary(res.match.description);
       setNotice(`Filled from ${res.match.source} (“${res.match.name}”) — review and save.`);
     } finally {
       setEnriching(null);
@@ -286,7 +299,7 @@ export function NpcForm({
         </div>
       </div>
 
-      <label className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5">
         <span className="flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
           Summary
           <button
@@ -335,14 +348,14 @@ export function NpcForm({
             </button>
           )}
         </span>
-        <textarea
+        <SummaryEditor
+          key={editorKey}
           value={summary}
-          onChange={(e) => setSummary(e.target.value)}
-          rows={7}
+          onChange={setSummary}
           placeholder="Who or what this is, why it matters, what the party knows."
-          className="rounded-md border border-hairline bg-transparent px-3 py-2.5 font-body text-[15px] leading-[1.7] text-ink outline-none transition focus:border-gold"
+          targets={mentionTargets}
         />
-      </label>
+      </div>
 
       {/* No legend UI here — the [n] badges on the "Appears in" list below
           carry the source association. The legend still rides along in the
