@@ -85,7 +85,7 @@ export default async function AppHome() {
           <h1 className="font-display text-2xl font-bold leading-snug text-ink sm:text-[28px]">
             Welcome back, {firstName}!
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <JoinCampaignForm />
             {/* Cross-zone (Calendar owns campaign creation) — plain <a>, not
                 next/link's <Link>, which only soft-navigates within its own
@@ -94,7 +94,7 @@ export default async function AppHome() {
                 it was dropped when that page was ported here. */}
             <a
               href="/calendar/new"
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-hairline bg-surface px-3 font-display text-xs font-semibold tracking-wider uppercase text-ink-soft transition-colors hover:bg-cod-soft hover:text-ink"
+              className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-md border border-hairline bg-surface px-3 font-display text-xs font-semibold tracking-wider uppercase text-ink-soft transition-colors hover:bg-cod-soft hover:text-ink"
             >
               <VenetianMask className="h-3.5 w-3.5 text-gold" />
               Host a new campaign
