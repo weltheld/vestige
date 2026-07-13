@@ -13,7 +13,7 @@ import type { NpcKindDb } from "@vestige/db";
  * suggestion, never an error the user has to act on.
  */
 
-const BASE = "https://api.open5e.com";
+const BASE = "https://api.open5e.com/v1";
 
 export type SrdMatch = {
   name: string;
