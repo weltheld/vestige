@@ -7,6 +7,7 @@ import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
 import { journal } from "@/lib/journal/links";
 import { draftEntitySummary } from "@/lib/journal/codex-summary";
 import { lookupSrd, type SrdMatch } from "@/lib/journal/open5e";
+import { lookupCriticalRole, type WikiMatch } from "@/lib/journal/criticalrole";
 import { isCampaignOwner } from "@/lib/journal/data";
 
 export type NpcInput = {
@@ -121,6 +122,23 @@ export async function enrichFromSrd(
   const match = await lookupSrd(kind, name);
   if (!match) {
     return { ok: false, error: `No SRD ${kind} found matching “${name.trim()}”.` };
+  }
+  return { ok: true, match };
+}
+
+export type WikiEnrichResult =
+  | { ok: true; match: WikiMatch }
+  | { ok: false; error: string };
+
+/** Look up a Wildemount/Exandria entry on the Critical Role wiki and return a
+ *  description candidate for the form (never auto-saved). Works for any kind —
+ *  the wiki covers people, places, events, items, and creatures. Free public
+ *  API, so any signed-in member may use it. */
+export async function enrichFromWiki(name: string): Promise<WikiEnrichResult> {
+  await uid(); // require a signed-in member
+  const match = await lookupCriticalRole(name);
+  if (!match) {
+    return { ok: false, error: `Nothing found on the Critical Role wiki for “${name.trim()}”.` };
   }
   return { ok: true, match };
 }

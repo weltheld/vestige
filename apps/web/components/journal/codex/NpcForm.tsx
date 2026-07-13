@@ -2,13 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Loader2, ImagePlus, BookOpen, X } from "lucide-react";
+import { Sparkles, Loader2, ImagePlus, BookOpen, ScrollText, X } from "lucide-react";
 import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
 import {
   createNpc,
   updateNpc,
   summarizeNpc,
   enrichFromSrd,
+  enrichFromWiki,
 } from "@/app/journal/c/[campaignId]/codex/actions";
 import { journal } from "@/lib/journal/links";
 import { parseFootnotes, type Footnote } from "@/lib/journal/codex-footnotes";
@@ -82,7 +83,7 @@ export function NpcForm({
   const [pending, startTransition] = useTransition();
   const [summarizing, setSummarizing] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [enriching, setEnriching] = useState(false);
+  const [enriching, setEnriching] = useState<"srd" | "wiki" | null>(null);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -160,7 +161,7 @@ export function NpcForm({
     }
     setError(null);
     setNotice(null);
-    setEnriching(true);
+    setEnriching("srd");
     try {
       const res = await enrichFromSrd(kind, name);
       if (!res.ok) {
@@ -172,7 +173,28 @@ export function NpcForm({
       setSummary(res.match.description);
       setNotice(`Filled from ${res.match.source} (“${res.match.name}”) — review and save.`);
     } finally {
-      setEnriching(false);
+      setEnriching(null);
+    }
+  }
+
+  async function lookUpWiki() {
+    if (!name.trim()) {
+      setError("Enter a name first.");
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    setEnriching("wiki");
+    try {
+      const res = await enrichFromWiki(name);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setSummary(res.match.description);
+      setNotice(`Filled from ${res.match.source} (“${res.match.name}”) — review and save.`);
+    } finally {
+      setEnriching(null);
     }
   }
 
@@ -267,20 +289,34 @@ export function NpcForm({
       <label className="flex flex-col gap-1.5">
         <span className="flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
           Summary
+          <button
+            type="button"
+            disabled={!!enriching || pending}
+            onClick={lookUpWiki}
+            title="Fill the summary from the Critical Role wiki (Exandria / Wildemount lore)"
+            className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-2.5 py-1 font-display text-[10px] font-semibold uppercase tracking-wider text-ink-soft transition hover:bg-cod-soft hover:text-ink disabled:opacity-60"
+          >
+            {enriching === "wiki" ? (
+              <Loader2 size={11} className="animate-spin" />
+            ) : (
+              <ScrollText size={11} className="text-gold" />
+            )}
+            {enriching === "wiki" ? "Looking up…" : "Critical Role wiki"}
+          </button>
           {SRD_KINDS.has(kind) && (
             <button
               type="button"
-              disabled={enriching || pending}
+              disabled={!!enriching || pending}
               onClick={lookUpSrd}
               title="Fill the summary from the 5e SRD (Open5e)"
               className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-2.5 py-1 font-display text-[10px] font-semibold uppercase tracking-wider text-ink-soft transition hover:bg-cod-soft hover:text-ink disabled:opacity-60"
             >
-              {enriching ? (
+              {enriching === "srd" ? (
                 <Loader2 size={11} className="animate-spin" />
               ) : (
                 <BookOpen size={11} className="text-gold" />
               )}
-              {enriching ? "Looking up…" : "Look up in SRD"}
+              {enriching === "srd" ? "Looking up…" : "SRD"}
             </button>
           )}
           {npcId && canSummarize && (
