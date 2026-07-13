@@ -41,12 +41,14 @@ export function JoinCampaignForm() {
         className="flex h-9 items-center gap-1.5 rounded-md border border-hairline bg-surface pl-2.5 pr-1.5 transition-colors focus-within:border-gold"
       >
         <KeyRound className="h-3.5 w-3.5 shrink-0 text-gold" />
+        {/* w-16 on mobile so this form + "Host a new campaign" share one
+            row on a 375px screen; the 6-char code still fits. */}
         <input
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="Join code"
           maxLength={8}
-          className="h-full w-20 bg-transparent font-mono text-xs uppercase tracking-widest text-ink outline-none placeholder:font-body placeholder:text-[11px] placeholder:normal-case placeholder:tracking-normal placeholder:text-muted"
+          className="h-full w-16 bg-transparent font-mono text-xs uppercase tracking-widest text-ink outline-none placeholder:font-body placeholder:text-[11px] placeholder:normal-case placeholder:tracking-normal placeholder:text-muted sm:w-20"
         />
         <button
           type="submit"
