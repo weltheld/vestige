@@ -303,7 +303,7 @@ export async function extractCodexFromSession(
     return { ok: false, error: "Could not create codex entries. Try again." };
   }
 
-  const { fields: linked, linkedIds } = linkifyEntities(
+  const { fields: linked } = linkifyEntities(
     { summary: session.summary, npcs: session.npcs, notes: session.notes },
     resolved,
   );
@@ -319,9 +319,14 @@ export async function extractCodexFromSession(
   if (updateError) {
     return { ok: false, error: "Codex entries were created, but linking the text failed." };
   }
-  if (linkedIds.length) {
+  // Record a mention for EVERY entity extracted from this session — that's
+  // its "Appears in" provenance. This is independent of linkifyEntities,
+  // which only produces an in-text hyperlink when it can match the name
+  // verbatim; an entity the AI found but couldn't string-match still belongs
+  // to this session and must show up under "Appears in".
+  if (resolved.length) {
     await supabase.from("npc_mentions").upsert(
-      linkedIds.map((npc_id) => ({ npc_id, session_id: sessionId })),
+      resolved.map((e) => ({ npc_id: e.id, session_id: sessionId })),
       { onConflict: "npc_id,session_id", ignoreDuplicates: true },
     );
   }
@@ -335,5 +340,5 @@ export async function extractCodexFromSession(
 
   revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
   revalidatePath(`/journal/c/${campaignId}/codex`);
-  return { ok: true, created, linked: linkedIds.length, total: resolved.length };
+  return { ok: true, created, linked: resolved.length, total: resolved.length };
 }

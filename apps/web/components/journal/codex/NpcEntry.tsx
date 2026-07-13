@@ -11,7 +11,10 @@ const KIND_LABEL: Record<NpcKindDb, string> = {
   person: "Person",
   place: "Place",
   event: "Event",
+  item: "Item",
+  creature: "Creature",
 };
+const STATUS_KINDS = new Set<NpcKindDb>(["person", "creature"]);
 const STATUS_LABEL: Record<NpcStatusDb, string> = {
   alive: "Alive",
   dead: "Dead",
@@ -30,7 +33,14 @@ export function NpcEntry({
   canSummarize,
 }: {
   campaignId: string;
-  npc: { id: string; name: string; summary: string | null; status: NpcStatusDb; kind: NpcKindDb };
+  npc: {
+    id: string;
+    name: string;
+    summary: string | null;
+    status: NpcStatusDb;
+    kind: NpcKindDb;
+    image_url: string | null;
+  };
   canSummarize: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -41,7 +51,13 @@ export function NpcEntry({
         <NpcForm
           campaignId={campaignId}
           npcId={npc.id}
-          initial={{ name: npc.name, summary: npc.summary, status: npc.status, kind: npc.kind }}
+          initial={{
+            name: npc.name,
+            summary: npc.summary,
+            status: npc.status,
+            kind: npc.kind,
+            imageUrl: npc.image_url,
+          }}
           canSummarize={canSummarize}
           onSaved={() => setEditing(false)}
           onCancel={() => setEditing(false)}
@@ -53,7 +69,7 @@ export function NpcEntry({
     );
   }
 
-  const meta = [KIND_LABEL[npc.kind], npc.kind === "person" ? STATUS_LABEL[npc.status] : null]
+  const meta = [KIND_LABEL[npc.kind], STATUS_KINDS.has(npc.kind) ? STATUS_LABEL[npc.status] : null]
     .filter(Boolean)
     .join(" · ");
 
@@ -75,6 +91,13 @@ export function NpcEntry({
           Edit entry
         </button>
       </div>
+
+      {npc.image_url && (
+        <figure className="overflow-hidden rounded-lg border border-hairline bg-cod-soft">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={npc.image_url} alt={npc.name} className="max-h-80 w-full object-cover" />
+        </figure>
+      )}
 
       {npc.summary ? (
         <SummaryWithFootnotes

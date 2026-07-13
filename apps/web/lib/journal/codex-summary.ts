@@ -11,6 +11,8 @@ const KIND_NOUN: Record<NpcKindDb, string> = {
   person: "character (NPC)",
   place: "place",
   event: "event",
+  item: "item",
+  creature: "creature",
 };
 
 const SYSTEM_PROMPT =

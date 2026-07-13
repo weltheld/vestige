@@ -2,11 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, ImagePlus, BookOpen, X } from "lucide-react";
 import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
-import { createNpc, updateNpc, summarizeNpc } from "@/app/journal/c/[campaignId]/codex/actions";
+import {
+  createNpc,
+  updateNpc,
+  summarizeNpc,
+  enrichFromSrd,
+} from "@/app/journal/c/[campaignId]/codex/actions";
 import { journal } from "@/lib/journal/links";
 import { parseFootnotes, type Footnote } from "@/lib/journal/codex-footnotes";
+import { uploadJournalImage, pickImageFile } from "@/lib/journal/upload";
 
 /** Storage keeps body + legend in one text column; the form edits only the
  *  body and re-attaches the legend on save. */
@@ -20,7 +26,14 @@ const KIND_OPTIONS: Array<{ value: NpcKindDb; label: string }> = [
   { value: "person", label: "Person" },
   { value: "place", label: "Place" },
   { value: "event", label: "Event" },
+  { value: "item", label: "Item" },
+  { value: "creature", label: "Creature" },
 ];
+
+/** Kinds that exist in the 5e SRD, so an "Look up in SRD" enrichment button
+ *  is worth offering. */
+const SRD_KINDS = new Set<NpcKindDb>(["item", "creature"]);
+const STATUS_KINDS = new Set<NpcKindDb>(["person", "creature"]);
 
 const STATUS_OPTIONS: Array<{ value: NpcStatusDb; label: string }> = [
   { value: "alive", label: "Alive" },
@@ -40,7 +53,13 @@ export function NpcForm({
 }: {
   campaignId: string;
   npcId?: string;
-  initial?: { name: string; summary: string | null; status: NpcStatusDb; kind: NpcKindDb };
+  initial?: {
+    name: string;
+    summary: string | null;
+    status: NpcStatusDb;
+    kind: NpcKindDb;
+    imageUrl: string | null;
+  };
   /** Only the campaign owner may trigger the paid AI summarize action. */
   canSummarize?: boolean;
   /** Called after a successful in-place save (detail page returns to view mode). */
@@ -57,10 +76,13 @@ export function NpcForm({
   const [footnotes, setFootnotes] = useState<Footnote[]>(parsed.notes);
   const [status, setStatus] = useState<NpcStatusDb>(initial?.status ?? "unknown");
   const [kind, setKind] = useState<NpcKindDb>(initial?.kind ?? "person");
+  const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [summarizing, setSummarizing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [enriching, setEnriching] = useState(false);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +94,13 @@ export function NpcForm({
     setNotice(null);
     startTransition(async () => {
       try {
-        const input = { name, summary: joinFootnotes(summary, footnotes) || null, status, kind };
+        const input = {
+          name,
+          summary: joinFootnotes(summary, footnotes) || null,
+          status,
+          kind,
+          imageUrl,
+        };
         if (npcId) {
           await updateNpc(campaignId, npcId, input);
           setNotice("Saved.");
@@ -110,6 +138,44 @@ export function NpcForm({
     }
   }
 
+  async function chooseImage() {
+    const file = await pickImageFile();
+    if (!file) return;
+    setError(null);
+    setUploading(true);
+    try {
+      const url = await uploadJournalImage(campaignId, file);
+      setImageUrl(url);
+    } catch {
+      setError("Image upload failed. Try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function lookUpSrd() {
+    if (!name.trim()) {
+      setError("Enter a name first.");
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    setEnriching(true);
+    try {
+      const res = await enrichFromSrd(kind, name);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      // Drop the SRD description into the summary body for review — it's
+      // never saved until the user hits Save.
+      setSummary(res.match.description);
+      setNotice(`Filled from ${res.match.source} (“${res.match.name}”) — review and save.`);
+    } finally {
+      setEnriching(false);
+    }
+  }
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
       <label className="flex flex-col gap-1.5">
@@ -142,7 +208,7 @@ export function NpcForm({
           </select>
         </label>
 
-        {kind === "person" && (
+        {STATUS_KINDS.has(kind) && (
           <label className="flex w-40 flex-col gap-1.5">
             <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
               Status
@@ -162,9 +228,61 @@ export function NpcForm({
         )}
       </div>
 
+      <div className="flex flex-col gap-1.5">
+        <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+          Image
+        </span>
+        <div className="flex items-center gap-3">
+          <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border border-hairline bg-cod-soft">
+            {imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <ImagePlus size={20} className="text-muted" />
+            )}
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={chooseImage}
+              className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 font-display text-[10px] font-semibold uppercase tracking-wider text-ink-soft transition hover:bg-cod-soft hover:text-ink disabled:opacity-60"
+            >
+              {uploading ? <Loader2 size={11} className="animate-spin" /> : <ImagePlus size={11} />}
+              {uploading ? "Uploading…" : imageUrl ? "Replace" : "Upload image"}
+            </button>
+            {imageUrl && !uploading && (
+              <button
+                type="button"
+                onClick={() => setImageUrl(null)}
+                className="inline-flex items-center gap-1 font-body text-[12px] text-ink-soft transition hover:text-vote-no"
+              >
+                <X size={12} /> Remove
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <label className="flex flex-col gap-1.5">
-        <span className="flex items-center font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+        <span className="flex items-center gap-2 font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
           Summary
+          {SRD_KINDS.has(kind) && (
+            <button
+              type="button"
+              disabled={enriching || pending}
+              onClick={lookUpSrd}
+              title="Fill the summary from the 5e SRD (Open5e)"
+              className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-2.5 py-1 font-display text-[10px] font-semibold uppercase tracking-wider text-ink-soft transition hover:bg-cod-soft hover:text-ink disabled:opacity-60"
+            >
+              {enriching ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (
+                <BookOpen size={11} className="text-gold" />
+              )}
+              {enriching ? "Looking up…" : "Look up in SRD"}
+            </button>
+          )}
           {npcId && canSummarize && (
             <button
               type="button"

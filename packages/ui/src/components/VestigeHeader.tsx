@@ -43,9 +43,10 @@ type Props = {
 };
 
 /**
- * The unified Vestige platform header — shared by apps/web, apps/journal, and
- * apps/calendar (Council of Days). Built on Council of Days' own AppHeader
- * structure (crest + wordmark, plain hairline border, profile chip, sign-out)
+ * The unified Vestige platform header — shared across the platform's app, journal
+ * and (legacy-ported) calendar views, all served from apps/web. Built on Council
+ * of Days' own AppHeader structure (crest + wordmark, plain hairline border,
+ * profile chip, sign-out)
  * with the platform-level additions: a module switcher with an active state
  * per app, and the cross-campaign selector.
  */

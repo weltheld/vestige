@@ -13,6 +13,8 @@ const SECTIONS: Array<{ kind: NpcKindDb; heading: string }> = [
   { kind: "person", heading: "People" },
   { kind: "place", heading: "Places" },
   { kind: "event", heading: "Events" },
+  { kind: "creature", heading: "Creatures" },
+  { kind: "item", heading: "Items" },
 ];
 
 export default async function CodexPage({
@@ -42,7 +44,7 @@ export default async function CodexPage({
           </p>
           <h1 className="font-display text-3xl text-ink">Codex</h1>
           <p className="mt-1 font-body text-[13px] text-ink-soft">
-            The people, places, and events of your campaign — {npcs.length}{" "}
+            The people, places, events, creatures, and items of your campaign — {npcs.length}{" "}
             {npcs.length === 1 ? "entry" : "entries"}.
           </p>
         </div>
@@ -83,9 +85,18 @@ export default async function CodexPage({
                       href={journal.npc(campaignId, npc.id)}
                       className="flex flex-col gap-2 rounded-xl bg-cod-soft px-5 py-[18px] transition hover:brightness-[0.99]"
                     >
-                      <div className="flex items-baseline justify-between gap-3">
-                        <span className="flex items-center gap-2.5 truncate">
-                          <span className="h-3.5 w-0.5 shrink-0 bg-gold" />
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex min-w-0 items-center gap-2.5">
+                          {npc.image_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={npc.image_url}
+                              alt=""
+                              className="h-8 w-8 shrink-0 rounded-md object-cover"
+                            />
+                          ) : (
+                            <span className="h-3.5 w-0.5 shrink-0 bg-gold" />
+                          )}
                           <span className="truncate font-display text-lg text-ink">{npc.name}</span>
                         </span>
                         <NpcStatusLabel status={npc.status} kind={npc.kind} />

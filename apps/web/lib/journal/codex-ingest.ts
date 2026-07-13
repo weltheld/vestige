@@ -8,7 +8,7 @@ type SB = SupabaseClient<Database>;
 /** What Familiar sends per extracted entity. */
 export type IngestCodexEntity = { name: string; kind: NpcKindDb; summary: string };
 
-const KINDS = new Set<string>(["person", "place", "event"]);
+const KINDS = new Set<string>(["person", "place", "event", "item", "creature"]);
 const MAX_ENTITIES = 20;
 
 /** Validate the raw `codexEntities` array from the ingest body. */

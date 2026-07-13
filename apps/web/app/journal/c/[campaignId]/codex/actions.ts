@@ -6,6 +6,7 @@ import { getServerSupabase } from "@vestige/db/server";
 import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
 import { journal } from "@/lib/journal/links";
 import { draftEntitySummary } from "@/lib/journal/codex-summary";
+import { lookupSrd, type SrdMatch } from "@/lib/journal/open5e";
 import { isCampaignOwner } from "@/lib/journal/data";
 
 export type NpcInput = {
@@ -13,6 +14,7 @@ export type NpcInput = {
   summary: string | null;
   status: NpcStatusDb;
   kind: NpcKindDb;
+  imageUrl: string | null;
 };
 
 async function uid() {
@@ -41,6 +43,7 @@ export async function createNpc(
       summary: input.summary?.trim() || null,
       status: input.status,
       kind: input.kind,
+      image_url: input.imageUrl?.trim() || null,
       created_by: userId,
     })
     .select("id")
@@ -61,6 +64,7 @@ export async function updateNpc(campaignId: string, npcId: string, input: NpcInp
       summary: input.summary?.trim() || null,
       status: input.status,
       kind: input.kind,
+      image_url: input.imageUrl?.trim() || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", npcId);
@@ -97,6 +101,28 @@ export async function summarizeNpc(
     return { ok: false, error: "Entry not found." };
   }
   return draftEntitySummary(supabase, npc, campaignId);
+}
+
+export type EnrichResult =
+  | { ok: true; match: SrdMatch }
+  | { ok: false; error: string };
+
+/** Look up an item/creature in the Open5e SRD and return a description
+ *  candidate for the form to drop into the summary field (never auto-saved).
+ *  Free public API — no key, so any campaign member may use it. */
+export async function enrichFromSrd(
+  kind: NpcKindDb,
+  name: string,
+): Promise<EnrichResult> {
+  if (kind !== "item" && kind !== "creature") {
+    return { ok: false, error: "SRD lookup is only available for items and creatures." };
+  }
+  await uid(); // require a signed-in member
+  const match = await lookupSrd(kind, name);
+  if (!match) {
+    return { ok: false, error: `No SRD ${kind} found matching “${name.trim()}”.` };
+  }
+  return { ok: true, match };
 }
 
 /** Delete an NPC (mentions cascade). Existing [Name](codex:id) links in

@@ -1,5 +1,6 @@
 // Canonical Supabase types for the Vestige platform (promoted Council of Days
-// project). Hand-maintained for now — matches apps/calendar/supabase/migrations.
+// project). Hand-maintained for now — matches supabase/migrations/ (+ the
+// migrations-calendar-legacy/ originals).
 //
 // To regenerate from the live schema once the M7 Journal migration lands:
 //   pnpm dlx supabase gen types typescript --linked > packages/db/src/types.ts
@@ -129,7 +130,7 @@ export type JournalCharacterRow = {
 };
 
 export type NpcStatusDb = "alive" | "dead" | "unknown";
-export type NpcKindDb = "person" | "place" | "event";
+export type NpcKindDb = "person" | "place" | "event" | "item" | "creature";
 
 export type NpcRow = {
   id: string;
@@ -138,6 +139,7 @@ export type NpcRow = {
   summary: string | null;
   status: NpcStatusDb;
   kind: NpcKindDb;
+  image_url: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -458,6 +460,7 @@ export type Database = {
           summary?: string | null;
           status?: NpcStatusDb;
           kind?: NpcKindDb;
+          image_url?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;

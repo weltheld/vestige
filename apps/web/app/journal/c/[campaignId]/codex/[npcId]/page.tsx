@@ -55,6 +55,7 @@ export default async function NpcDetailPage({
               summary: npc.summary,
               status: npc.status,
               kind: npc.kind,
+              image_url: npc.image_url,
             }}
             canSummarize={isOwner}
           />

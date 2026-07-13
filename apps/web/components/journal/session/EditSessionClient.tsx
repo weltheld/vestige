@@ -91,6 +91,7 @@ export function EditSessionClient({
         name,
         summary: null,
         status: "unknown",
+        imageUrl: null,
         kind: "person",
       });
       const npc = { id, name };

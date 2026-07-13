@@ -19,17 +19,19 @@ const MAX_ENTITIES = 15;
  */
 
 function buildPrompt(sessionText: string): string {
-  return `You maintain the codex of a Dungeons & Dragons campaign — a reference of the campaign's notable people, places, and events.
+  return `You maintain the codex of a Dungeons & Dragons campaign — a reference of the campaign's notable people, places, events, items, and creatures.
 
 Read the session write-up below and extract the codex-worthy entities:
 - "person": named characters — NPCs the party met or learned about, AND the player characters themselves when the write-up says something worth recording about them.
 - "place": named locations that matter to the story (towns, dungeons, landmarks — not generic rooms).
 - "event": named or clearly significant events (a battle, a ritual, a festival), if any.
+- "item": notable objects — magic items, artifacts, quest items, distinctive loot (not generic gear or coins).
+- "creature": named or notable monsters/beasts encountered (a specific dragon, a boss, a recurring foe — not generic mooks unless they matter).
 
 For each entity write a 1-2 sentence factual summary using ONLY information stated in the write-up — no interpretation, no invented details. Write summaries in the same language as the write-up. Only include entities actually worth remembering; fewer is better than padded. At most ${MAX_ENTITIES}.
 
 Respond with ONLY a JSON array, no prose, no code fences:
-[{"name": "...", "kind": "person|place|event", "summary": "..."}]
+[{"name": "...", "kind": "person|place|event|item|creature", "summary": "..."}]
 If nothing qualifies, respond with [].
 
 Session write-up:
@@ -57,7 +59,14 @@ function parseEntities(text: string): IngestCodexEntity[] {
     if (typeof item !== "object" || item === null) continue;
     const { name, kind, summary } = item as Record<string, unknown>;
     if (typeof name !== "string" || !name.trim() || name.trim().length > 80) continue;
-    if (kind !== "person" && kind !== "place" && kind !== "event") continue;
+    if (
+      kind !== "person" &&
+      kind !== "place" &&
+      kind !== "event" &&
+      kind !== "item" &&
+      kind !== "creature"
+    )
+      continue;
     const key = name.trim().toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
