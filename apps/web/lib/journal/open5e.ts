@@ -27,6 +27,22 @@ type Open5eList<T> = { results?: T[] };
 type MonsterResult = { name: string; desc?: string; type?: string; alignment?: string; document__title?: string };
 type MagicItemResult = { name: string; desc?: string; type?: string; rarity?: string; document__title?: string };
 
+/**
+ * Open5e's `?search=` is full-text (it matches description text too, so
+ * searching "goblin" can rank "Abominable Beauty" — whose desc mentions
+ * goblins — above the actual "Goblin"). Re-rank by NAME match: exact wins,
+ * then name-contains-query, then the API's own order.
+ */
+function pickByName<T extends { name: string }>(results: T[], query: string): T | null {
+  if (results.length === 0) return null;
+  const q = query.trim().toLowerCase();
+  return (
+    results.find((r) => r.name.trim().toLowerCase() === q) ??
+    results.find((r) => r.name.toLowerCase().includes(q)) ??
+    results[0]
+  );
+}
+
 function firstSentences(text: string, max = 600): string {
   const clean = text.replace(/\s+/g, " ").trim();
   return clean.length > max ? `${clean.slice(0, max).trimEnd()}…` : clean;
@@ -59,8 +75,8 @@ export async function lookupSrd(kind: NpcKindDb, rawName: string): Promise<SrdMa
   const q = encodeURIComponent(name);
 
   if (kind === "creature") {
-    const data = await getJson<Open5eList<MonsterResult>>(`${BASE}/monsters/?search=${q}&limit=1`);
-    const hit = data?.results?.[0];
+    const data = await getJson<Open5eList<MonsterResult>>(`${BASE}/monsters/?search=${q}&limit=15`);
+    const hit = pickByName(data?.results ?? [], name);
     if (!hit?.desc && !hit?.type) return null;
     const meta = [hit.type, hit.alignment].filter(Boolean).join(", ");
     const body = hit.desc?.trim() || (meta ? `${hit.name} — ${meta}.` : "");
@@ -73,8 +89,8 @@ export async function lookupSrd(kind: NpcKindDb, rawName: string): Promise<SrdMa
   }
 
   if (kind === "item") {
-    const data = await getJson<Open5eList<MagicItemResult>>(`${BASE}/magicitems/?search=${q}&limit=1`);
-    const hit = data?.results?.[0];
+    const data = await getJson<Open5eList<MagicItemResult>>(`${BASE}/magicitems/?search=${q}&limit=15`);
+    const hit = pickByName(data?.results ?? [], name);
     if (!hit?.desc) return null;
     return {
       name: hit.name,
