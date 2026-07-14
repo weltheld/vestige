@@ -84,7 +84,11 @@ export function VestigeHeader({
           className="flex min-w-0 items-center gap-2.5"
         >
           <PlatformCrest size={38} />
-          <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
+          {/* The wordmark yields entirely on narrow screens — below ~480px
+              the crest + module tabs + profile chip fill the row, and a
+              truncated "Vest…" reads worse than no word at all. The crest
+              alone stays as the home affordance (aria-label above). */}
+          <span className="hidden truncate font-display text-base font-bold text-ink min-[480px]:inline sm:text-xl">
             Vestige
           </span>
         </Link>

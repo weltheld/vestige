@@ -44,7 +44,10 @@ export function PlatformHeader({
           className="flex min-w-0 items-center gap-2.5"
         >
           <Crest size={38} />
-          <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
+          {/* Wordmark yields entirely on narrow screens (same rule as
+              @vestige/ui's VestigeHeader — keep in sync): below ~480px the
+              crest + tabs + profile chip fill the row. */}
+          <span className="hidden truncate font-display text-base font-bold text-ink min-[480px]:inline sm:text-xl">
             Vestige
           </span>
         </Link>
