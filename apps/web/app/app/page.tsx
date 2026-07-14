@@ -59,7 +59,7 @@ export default async function AppHome() {
   }));
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col pb-[calc(58px+env(safe-area-inset-bottom))] lg:pb-0">
       <VestigeHeader
         user={{ label, avatarUrl: profile?.avatar_url ?? null }}
         calendarHref={defaultCampaign?.slug ? `/calendar/g/${defaultCampaign.slug}` : undefined}

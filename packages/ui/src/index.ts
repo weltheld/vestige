@@ -7,6 +7,7 @@ export {
   type VestigeHeaderCampaign,
 } from "./components/VestigeHeader";
 export { CampaignSelector, type HeaderCampaign } from "./components/CampaignSelector";
+export { ModuleBottomNav, type BottomNavModule } from "./components/ModuleBottomNav";
 export { PageTitle } from "./components/PageTitle";
 export { HeroBand } from "./components/HeroBand";
 export { SidebarCard } from "./components/SidebarCard";

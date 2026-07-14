@@ -8,6 +8,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
 import { CampaignSelector, type HeaderCampaign } from "./CampaignSelector";
+import { ModuleBottomNav } from "./ModuleBottomNav";
 import { ThemePicker } from "./ThemePicker";
 import { ProfileEditDialog } from "./ProfileEditDialog";
 
@@ -76,6 +77,7 @@ export function VestigeHeader({
   }
 
   return (
+    <>
     <header className="border-b border-hairline bg-parchment">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
         <Link
@@ -119,28 +121,9 @@ export function VestigeHeader({
           </div>
         </nav>
 
-        <nav aria-label="Modules" className="ml-2 flex lg:hidden">
-          <div className={SEGMENT_TRACK}>
-            <ModuleIconTab
-              icon={<CalendarDays size={18} />}
-              label="Calendar"
-              active={activeModule === "calendar"}
-              href={calendarHref}
-            />
-            <ModuleIconTab
-              icon={<ScrollText size={18} />}
-              label="Journal"
-              active={activeModule === "journal"}
-              href={journalHref}
-            />
-            <ModuleIconTab
-              icon={<Library size={18} />}
-              label="Codex"
-              active={activeModule === "codex"}
-              href={codexHref}
-            />
-          </div>
-        </nav>
+        {/* Mobile/tablet: the module tabs live in a sticky bottom nav
+            (rendered below), keeping this header row for the crest, campaign
+            switcher and profile. */}
 
         <div className="flex-1" />
 
@@ -165,6 +148,13 @@ export function VestigeHeader({
         />
       </div>
     </header>
+    <ModuleBottomNav
+      active={activeModule}
+      calendarHref={calendarHref}
+      journalHref={journalHref}
+      codexHref={codexHref}
+    />
+    </>
   );
 }
 
@@ -342,31 +332,3 @@ function ModuleTab({
   );
 }
 
-function ModuleIconTab({
-  icon,
-  label,
-  active,
-  href,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  href?: string;
-}) {
-  const className = [
-    "flex h-9 w-11 items-center justify-center rounded-lg transition",
-    active ? SEGMENT_ACTIVE : SEGMENT_INACTIVE,
-  ].join(" ");
-  if (href) {
-    return (
-      <Link href={href} aria-label={label} title={label} aria-current={active ? "page" : undefined} className={className}>
-        {icon}
-      </Link>
-    );
-  }
-  return (
-    <span aria-label={label} title={label} aria-current={active ? "page" : undefined} className={className}>
-      {icon}
-    </span>
-  );
-}

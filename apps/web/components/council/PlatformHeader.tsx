@@ -81,33 +81,8 @@ export function PlatformHeader({
           </div>
         </nav>
 
-        <nav aria-label="Modules" className="ml-2 flex lg:hidden">
-          <div className="inline-flex items-center gap-0.5 rounded-xl border border-hairline bg-[color-mix(in_srgb,var(--ink)_6%,var(--surface))] p-[3px]">
-            <span
-              aria-label="Calendar"
-              title="Calendar"
-              className="flex h-9 w-11 items-center justify-center rounded-lg bg-surface text-wine shadow-[0_1px_2px_rgba(43,33,24,0.14)]"
-            >
-              <CalendarDays size={18} />
-            </span>
-            <Link
-              href="/journal"
-              aria-label="Journal"
-              title="Journal"
-              className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
-            >
-              <ScrollText size={18} />
-            </Link>
-            <Link
-              href={campaign ? `/journal/c/${campaign.id}/codex` : "/journal/codex"}
-              aria-label="Codex"
-              title="Codex"
-              className="flex h-9 w-11 items-center justify-center rounded-lg text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
-            >
-              <Library size={18} />
-            </Link>
-          </div>
-        </nav>
+        {/* Mobile/tablet: module tabs live in the sticky bottom nav
+            (rendered by GroupViewClient), so this row stays uncluttered. */}
 
         <div className="flex-1" />
 

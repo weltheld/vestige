@@ -36,7 +36,7 @@ export default async function CampaignLayout({
     .eq("id", viewer.id);
 
   return (
-    <div className="flex min-h-screen flex-col bg-parchment">
+    <div className="flex min-h-screen flex-col bg-parchment pb-[calc(58px+env(safe-area-inset-bottom))] lg:pb-0">
       <VestigeHeader
         user={{ label: viewer.label, avatarUrl: viewer.avatarUrl }}
         currentModule="journal"

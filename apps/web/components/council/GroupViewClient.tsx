@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Settings2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ModuleBottomNav } from "@vestige/ui";
 import { PlatformHeader } from "@/components/council/PlatformHeader";
 import { PlatformFooter } from "@/components/council/PlatformFooter";
 import { CalendarPanel } from "@/components/council/CalendarPanel";
@@ -395,7 +396,7 @@ export function GroupViewClient(props: Props) {
         `bg-scene-${group.background}`,
       )}
     >
-      <div className="relative flex min-h-screen flex-col">
+      <div className="relative flex min-h-screen flex-col pb-[calc(58px+env(safe-area-inset-bottom))] lg:pb-0">
         <PlatformHeader
           firstName={firstName}
           email={props.currentUser.email}
@@ -545,6 +546,13 @@ export function GroupViewClient(props: Props) {
         </main>
 
         <PlatformFooter />
+
+        <ModuleBottomNav
+          active="calendar"
+          calendarHref={`/calendar/g/${group.slug}`}
+          journalHref={`/journal/c/${group.id}`}
+          codexHref={`/journal/c/${group.id}/codex`}
+        />
 
         {/* Triggered from the sidebar (desktop) or the profile menu (mobile). */}
         {settingsOpen && isCreator && (
