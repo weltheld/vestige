@@ -85,35 +85,51 @@ export default async function AppHome() {
           <h1 className="font-display text-2xl font-bold leading-snug text-ink sm:text-[28px]">
             Welcome back, {firstName}!
           </h1>
-          <div className="flex flex-wrap items-center gap-2">
-            <JoinCampaignForm />
-            {/* Cross-zone (Calendar owns campaign creation) — plain <a>, not
-                next/link's <Link>, which only soft-navigates within its own
-                app's route manifest. Restores the "Host a new campaign" entry
-                point that existed on Calendar's own retired /home dashboard;
-                it was dropped when that page was ported here. */}
-            <a
-              href="/calendar/new"
-              className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-md border border-hairline bg-surface px-3 font-display text-xs font-semibold tracking-wider uppercase text-ink-soft transition-colors hover:bg-cod-soft hover:text-ink"
-            >
-              <VenetianMask className="h-3.5 w-3.5 text-gold" />
-              Host a new campaign
-            </a>
-          </div>
+          {/* Join/host actions sit beside the greeting on sm+; on mobile they
+              move below the Upcoming rail instead of wrapping under the
+              heading (see the second CampaignActions below). */}
+          <CampaignActions className="hidden sm:flex" />
         </div>
         {campaigns.length === 0 ? (
-          <p className="font-body text-ink-soft">
-            You don&rsquo;t have any campaigns yet. Once you&rsquo;re added to one,
-            it&rsquo;ll show up here.
-          </p>
+          <div className="flex flex-col gap-5">
+            <p className="font-body text-ink-soft">
+              You don&rsquo;t have any campaigns yet. Once you&rsquo;re added to one,
+              it&rsquo;ll show up here.
+            </p>
+            <CampaignActions className="flex sm:hidden" />
+          </div>
         ) : (
           <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
             <UpcomingRail slots={upcoming} />
+            {/* Mobile-only: after the last upcoming campaign, before the
+                activity feed (the grid is single-column below lg). */}
+            <CampaignActions className="flex sm:hidden" />
             <RecentActivity items={activity} />
           </div>
         )}
       </main>
       <PlatformFooter />
+    </div>
+  );
+}
+
+/** Join-by-code + host-a-campaign entry points. Rendered twice with
+ *  complementary visibility: beside the greeting on sm+, and below the
+ *  Upcoming rail on mobile (where the header row has no width to spare). */
+function CampaignActions({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex-wrap items-center gap-2 ${className}`}>
+      <JoinCampaignForm />
+      {/* Cross-zone (Calendar owns campaign creation) — plain <a>, not
+          next/link's <Link>, which only soft-navigates within its own app's
+          route manifest. */}
+      <a
+        href="/calendar/new"
+        className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-md border border-hairline bg-surface px-3 font-display text-xs font-semibold tracking-wider uppercase text-ink-soft transition-colors hover:bg-cod-soft hover:text-ink"
+      >
+        <VenetianMask className="h-3.5 w-3.5 text-gold" />
+        Host a new campaign
+      </a>
     </div>
   );
 }
