@@ -36,16 +36,12 @@ export default async function CodexPage({
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8">
+    <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-            {campaign.name}
-          </p>
           <h1 className="font-display text-3xl text-ink">Codex</h1>
           <p className="mt-1 font-body text-[13px] text-ink-soft">
-            The people, places, events, creatures, and items of your campaign — {npcs.length}{" "}
-            {npcs.length === 1 ? "entry" : "entries"}.
+            The people, places, events, creatures, and items of your campaign.
           </p>
         </div>
         <Link
@@ -76,7 +72,7 @@ export default async function CodexPage({
                   {heading}
                 </h2>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {entries.map((npc) => {
                   const count = mentionCounts.get(npc.id) ?? 0;
                   return (

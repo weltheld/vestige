@@ -3,13 +3,11 @@ import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
-import { getCampaignHeader, getSessions } from "@/lib/journal/sessions";
+import { getSessions } from "@/lib/journal/sessions";
 import { getFamiliarStatus } from "@/lib/journal/familiar";
 import { appHref, journal } from "@/lib/journal/links";
-import { SessionHero, startedSubtitle } from "@/components/journal/SessionHero";
 import { SessionCard } from "@/components/journal/SessionCard";
 import { FamiliarCard } from "@/components/journal/FamiliarCard";
-import { CampaignSidebar } from "@/components/journal/CampaignSidebar";
 
 export default async function SessionListPage({
   params,
@@ -24,76 +22,46 @@ export default async function SessionListPage({
   const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!campaign) redirect(appHref());
 
-  const [header, sessions, familiarStatus] = await Promise.all([
-    getCampaignHeader(supabase, campaignId, { name: campaign.name, coverUrl: campaign.imageUrl }),
+  const [sessions, familiarStatus] = await Promise.all([
     getSessions(supabase, campaignId),
     getFamiliarStatus(campaignId),
   ]);
-  const extraCount = header.memberAvatars.length > 5 ? header.memberAvatars.length - 5 : 0;
-
-  const sessionList =
-    sessions.length === 0 ? (
-      <div className="flex flex-col items-center gap-4 rounded-xl bg-cod-soft px-6 py-20 text-center">
-        <BookOpen size={60} className="text-muted" strokeWidth={1.25} />
-        <p className="font-body text-[15px] text-ink-soft">No sessions yet</p>
-      </div>
-    ) : (
-      <div className="flex flex-col gap-3">
-        {sessions.map((s) => (
-          <SessionCard key={s.id} session={s} href={journal.session(campaignId, s.id)} />
-        ))}
-      </div>
-    );
 
   return (
-    <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-6 sm:px-8 lg:flex-row lg:items-start lg:gap-8 lg:px-12">
-      {/* Desktop: campaign-image sidebar (mirrors Calendar's), sessions in
-          the remaining column. Below lg, this is hidden in favor of the
-          full-width banner + stacked layout beneath. */}
-      <CampaignSidebar
-        campaignId={campaignId}
-        name={header.name}
-        coverUrl={header.coverUrl}
-        memberAvatars={header.memberAvatars}
-        extraCount={extraCount}
-        sessionCount={header.sessionCount}
-        familiarStatus={familiarStatus}
-      />
-
-      <div className="flex min-w-0 flex-1 flex-col gap-6">
-        {/* Mobile/tablet: the sidebar above is hidden, so the banner + new-
-            session row live here instead, same as before this change. */}
-        <div className="lg:hidden">
-          <SessionHero
-            title={header.name}
-            coverUrl={header.coverUrl}
-            subtitle={startedSubtitle(header.sessionCount, header.startedAt)}
-            avatars={header.memberAvatars}
-            extraCount={extraCount}
-          />
-        </div>
-
-        <div className="flex items-center justify-between lg:hidden">
-          <p className="font-body text-[13px] text-ink-soft">
-            {header.sessionCount} {header.sessionCount === 1 ? "session" : "sessions"}
+    // Same shell as the Codex page — full page width, header row with the
+    // primary action on the right, content sections below. The campaign name
+    // lives in the platform header's campaign switcher, so it isn't repeated
+    // here (and the old image sidebar/banner is gone with it).
+    <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl text-ink">Journal</h1>
+          <p className="mt-1 font-body text-[13px] text-ink-soft">
+            The written chronicle of your campaign, one entry per session.
           </p>
-          <Link
-            href={journal.newSession(campaignId)}
-            className="rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-          >
-            + New session
-          </Link>
         </div>
-
-        {sessionList}
-
-        {/* Mobile/tablet: the compact card (the full promo lives in the
-            desktop sidebar). Keeps the journal feed the focus on small
-            screens. */}
-        <div className="lg:hidden">
-          <FamiliarCard campaignId={campaignId} status={familiarStatus} compact />
-        </div>
+        <Link
+          href={journal.newSession(campaignId)}
+          className="rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+        >
+          + New session
+        </Link>
       </div>
+
+      {sessions.length === 0 ? (
+        <div className="flex flex-col items-center gap-4 rounded-xl bg-cod-soft px-6 py-20 text-center">
+          <BookOpen size={60} className="text-muted" strokeWidth={1.25} />
+          <p className="font-body text-[15px] text-ink-soft">No sessions yet</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {sessions.map((s) => (
+            <SessionCard key={s.id} session={s} href={journal.session(campaignId, s.id)} />
+          ))}
+        </div>
+      )}
+
+      <FamiliarCard status={familiarStatus} />
     </main>
   );
 }
