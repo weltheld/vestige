@@ -29,6 +29,8 @@ export type CampaignSettings = {
   coverUrl: string | null;
   modulesEnabled: { calendar: boolean; journal: boolean };
   isCreator: boolean;
+  /** Weekdays the calendar offers for voting (0 = Sunday … 6 = Saturday). */
+  viableWeekdays: number[];
   members: SettingsMember[];
   /** Familiar ingest token + status — creator only (the token is a secret). */
   familiar: FamiliarConnection | null;
@@ -51,7 +53,7 @@ export async function getCampaignSettings(
 ): Promise<CampaignSettings | null> {
   const { data: c } = await supabase
     .from("campaigns")
-    .select("id, name, banner_url, modules_enabled, creator_id")
+    .select("id, name, banner_url, modules_enabled, creator_id, viable_weekdays")
     .eq("id", campaignId)
     .maybeSingle();
   if (!c) return null;
@@ -100,6 +102,7 @@ export async function getCampaignSettings(
       journal: true,
     },
     isCreator,
+    viableWeekdays: c.viable_weekdays ?? [],
     members,
     familiar,
     ai,

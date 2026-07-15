@@ -7,7 +7,7 @@ import { ModuleBottomNav } from "@vestige/ui";
 import { PlatformHeader } from "@/components/council/PlatformHeader";
 import { PlatformFooter } from "@/components/council/PlatformFooter";
 import { CalendarPanel } from "@/components/council/CalendarPanel";
-import { OwnerSettings, Switch } from "@/components/council/OwnerSettings";
+import { Switch } from "@/components/council/OwnerSettings";
 import { QuickFillBar } from "@/components/council/QuickFillBar";
 import { BannerParty } from "@/components/council/BannerParty";
 import { CharacterDialog } from "@/components/council/CharacterDialog";
@@ -23,10 +23,6 @@ import type {
 } from "@/lib/calendar/types";
 import { cn } from "@/lib/calendar/utils";
 import { getBrowserSupabase } from "@vestige/db/client";
-import {
-  removeMemberAction,
-  setMemberDmAction,
-} from "@/app/calendar/g/[slug]/roleActions";
 import { setSessionAction } from "@/app/calendar/g/[slug]/sessionActions";
 
 type MemberWithUser = Member & { user: User };
@@ -51,7 +47,6 @@ export function GroupViewClient(props: Props) {
   const searchParams = useSearchParams();
   const [group, setGroup] = useState(props.group);
   const [votes, setVotes] = useState<Vote[]>(props.votes);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [characterOpen, setCharacterOpen] = useState(false);
   const [bestDayIso, setBestDayIso] = useState<string | null>(null);
   const [currentMonthDays, setCurrentMonthDays] = useState<CalendarDay[]>(
@@ -153,12 +148,13 @@ export function GroupViewClient(props: Props) {
     props.currentUser.email?.split("@")[0] ||
     "Adventurer";
 
-  // Deep link from the home card's "Edit" button opens Poll Settings.
+  // Deep link from the home card's "Edit" button — poll settings live in
+  // the platform Settings layer now, so forward there.
   useEffect(() => {
     if (isCreator && searchParams.get("settings") === "open") {
-      setSettingsOpen(true);
+      router.replace(`/journal/c/${group.id}/settings`);
     }
-  }, [isCreator, searchParams]);
+  }, [isCreator, searchParams, router, group.id]);
 
   const [members, setMembers] = useState(props.members);
   useEffect(() => setMembers(props.members), [props.members]);
@@ -272,49 +268,8 @@ export function GroupViewClient(props: Props) {
     [supabase, group.id, props.currentUser.id],
   );
 
-  const handleToggleWeekday = useCallback(
-    async (w: Weekday) => {
-      const next = group.viableWeekdays.includes(w)
-        ? group.viableWeekdays.filter((x) => x !== w)
-        : ([...group.viableWeekdays, w].sort() as Weekday[]);
-      setGroup((g) => ({ ...g, viableWeekdays: next }));
-      await supabase
-        .from("campaigns")
-        .update({ viable_weekdays: next })
-        .eq("id", group.id);
-    },
-    [supabase, group.id, group.viableWeekdays],
-  );
-
-  const handleSetMemberDm = useCallback(
-    async (userId: string, isDm: boolean) => {
-      setMembers((prev) =>
-        prev.map((m) => (m.userId === userId ? { ...m, isDm } : m)),
-      );
-      const result = await setMemberDmAction(group.id, userId, isDm);
-      if (!result.ok) {
-        // Revert on failure.
-        setMembers((prev) =>
-          prev.map((m) => (m.userId === userId ? { ...m, isDm: !isDm } : m)),
-        );
-      }
-    },
-    [group.id],
-  );
-
-  const handleRemoveMember = useCallback(
-    async (userId: string) => {
-      const prev = members;
-      setMembers((cur) => cur.filter((m) => m.userId !== userId));
-      const result = await removeMemberAction(group.id, userId);
-      if (!result.ok) {
-        setMembers(prev); // revert
-      } else {
-        router.refresh();
-      }
-    },
-    [group.id, members, router],
-  );
+  // Weekday viability + member roles are edited in the platform Settings
+  // layer (Poll / Players & Invites tabs) — no local handlers here anymore.
 
   // QuickFill handlers for use in the sidebar (need current month days).
   const handleBulkFillFromSidebar = useCallback(
@@ -405,7 +360,10 @@ export function GroupViewClient(props: Props) {
           avatarUrl={props.currentUser.avatarUrl}
           campaign={{ id: group.id, slug: group.slug, name: group.name, imageUrl: group.bannerUrl ?? null }}
           campaigns={props.switcherCampaigns}
-          onOpenPollSettings={isCreator ? () => setSettingsOpen(true) : undefined}
+          // Poll settings live in the platform Settings layer now (Poll tab).
+          onOpenPollSettings={
+            isCreator ? () => router.push(`/journal/c/${group.id}/settings`) : undefined
+          }
         />
 
         <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col lg:grid lg:grid-cols-[280px_1fr]">
@@ -476,11 +434,13 @@ export function GroupViewClient(props: Props) {
               {isCreator && (
                 <button
                   type="button"
-                  onClick={() => setSettingsOpen(true)}
+                  // Poll settings moved into the platform Settings layer
+                  // (Poll tab) — one settings surface for everything.
+                  onClick={() => router.push(`/journal/c/${group.id}/settings`)}
                   className="flex w-full items-center gap-1.5 rounded-md border border-hairline/60 bg-surface/60 px-3 py-2 text-left text-sm text-ink hover:bg-parchment"
                 >
                   <Settings2 className="h-3.5 w-3.5 text-ink-soft" />
-                  Poll settings
+                  Settings
                 </button>
               )}
             </div>
@@ -554,18 +514,6 @@ export function GroupViewClient(props: Props) {
           codexHref={`/journal/c/${group.id}/codex`}
         />
 
-        {/* Triggered from the sidebar (desktop) or the profile menu (mobile). */}
-        {settingsOpen && isCreator && (
-          <SettingsDialog
-            onClose={() => setSettingsOpen(false)}
-            members={members}
-            creatorId={group.creatorId}
-            viableWeekdays={group.viableWeekdays}
-            onToggleWeekday={handleToggleWeekday}
-            onSetMemberDm={handleSetMemberDm}
-            onRemoveMember={handleRemoveMember}
-          />
-        )}
       </div>
 
       {characterOpen && (
@@ -638,41 +586,3 @@ function RefreshOnFocus({ onFocus }: { onFocus: () => void }) {
   return null;
 }
 
-function SettingsDialog({
-  onClose,
-  members,
-  creatorId,
-  viableWeekdays,
-  onToggleWeekday,
-  onSetMemberDm,
-  onRemoveMember,
-}: {
-  onClose: () => void;
-  members: MemberWithUser[];
-  creatorId: string;
-  viableWeekdays: Weekday[];
-  onToggleWeekday: (w: Weekday) => void;
-  onSetMemberDm: (userId: string, isDm: boolean) => void;
-  onRemoveMember: (userId: string) => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8">
-      <button
-        aria-label="Close settings"
-        onClick={onClose}
-        className="fixed inset-0 bg-ink/50 backdrop-blur-sm"
-      />
-      <div className="relative w-full max-w-[560px] rounded-xl border border-hairline bg-surface shadow-parchment">
-        <OwnerSettings
-          members={members}
-          creatorId={creatorId}
-          viableWeekdays={viableWeekdays}
-          onToggleWeekday={onToggleWeekday}
-          onSetMemberDm={onSetMemberDm}
-          onRemoveMember={onRemoveMember}
-          onClose={onClose}
-        />
-      </div>
-    </div>
-  );
-}

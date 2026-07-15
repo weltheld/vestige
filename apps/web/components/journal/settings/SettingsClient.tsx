@@ -11,9 +11,11 @@ import {
   renameCampaign,
   removeCampaignBanner,
   setMemberDm,
+  setViableWeekdays,
   deleteCampaign,
   leaveCampaign,
 } from "@/app/journal/c/[campaignId]/settings/actions";
+import { Switch } from "@/components/council/OwnerSettings";
 import { uploadBannerAction } from "@/app/calendar/g/[slug]/bannerActions";
 import {
   sendInvite,
@@ -30,7 +32,7 @@ import { AiKeySettings } from "./AiKeySettings";
 // Same 4:3 frame the campaign header displays — what you crop is what shows.
 const BANNER_ASPECT = 4 / 3;
 
-type TabKey = "campaign" | "players" | "familiar" | "codex";
+type TabKey = "campaign" | "players" | "poll" | "familiar" | "codex";
 
 type Props = {
   settings: CampaignSettings;
@@ -62,6 +64,7 @@ export function SettingsClient({ settings, manage, magicLink, variant = "page" }
   const TABS: Array<{ key: TabKey; label: string; creatorOnly?: boolean }> = [
     { key: "campaign", label: "Campaign" },
     { key: "players", label: "Players & Invites" },
+    { key: "poll", label: "Poll", creatorOnly: true },
     { key: "familiar", label: "Familiar", creatorOnly: true },
     { key: "codex", label: "Codex", creatorOnly: true },
   ];
@@ -112,6 +115,9 @@ export function SettingsClient({ settings, manage, magicLink, variant = "page" }
         {tab === "campaign" && <CampaignTab settings={settings} />}
         {tab === "players" && (
           <PlayersTab settings={settings} manage={manage} magicLink={magicLink} />
+        )}
+        {tab === "poll" && isCreator && (
+          <PollTab campaignId={id} initialWeekdays={settings.viableWeekdays} />
         )}
         {tab === "familiar" && isCreator && settings.familiar && (
           <FamiliarSettings campaignId={id} connection={settings.familiar} />
@@ -617,6 +623,62 @@ function PlayersTab({
           {notice}
         </p>
       )}
+    </div>
+  );
+}
+
+/* ─── Poll tab ──────────────────────────────────────────────────────── */
+
+const WEEKDAYS: Array<{ label: string; value: number }> = [
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+  { label: "Sunday", value: 0 },
+];
+
+/** The Calendar module's poll configuration — which weekdays the calendar
+ *  offers for voting. Moved here from Calendar's own Poll-settings dialog
+ *  (roles moved to Players & Invites). Optimistic: the switch flips at
+ *  once and reverts if the save fails. */
+function PollTab({
+  campaignId,
+  initialWeekdays,
+}: {
+  campaignId: string;
+  initialWeekdays: number[];
+}) {
+  const [viable, setViable] = useState<number[]>(initialWeekdays);
+
+  async function toggle(w: number) {
+    const next = viable.includes(w) ? viable.filter((x) => x !== w) : [...viable, w].sort();
+    setViable(next);
+    try {
+      await setViableWeekdays(campaignId, next);
+    } catch {
+      setViable(viable);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <SectionLabel>Viable weekdays</SectionLabel>
+      <p className="-mt-1 font-body text-[12px] leading-[1.5] text-ink-soft">
+        The days your group can play — the Calendar only offers these for
+        voting.
+      </p>
+      <ul className="flex flex-col gap-1.5">
+        {WEEKDAYS.map(({ label, value }) => (
+          <li key={value}>
+            <label className="flex cursor-pointer items-center justify-between rounded-md border border-hairline bg-cod-soft px-3 py-2">
+              <span className="font-body text-[14px] text-ink">{label}</span>
+              <Switch checked={viable.includes(value)} onChange={() => toggle(value)} />
+            </label>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

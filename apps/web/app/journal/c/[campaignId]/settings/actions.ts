@@ -22,6 +22,19 @@ export async function renameCampaign(campaignId: string, name: string) {
   revalidatePath(`/journal/c/${campaignId}/settings`);
 }
 
+/** Which weekdays the calendar offers for voting (0 = Sunday … 6 = Saturday).
+ *  Creator-only via the campaigns RLS update policy. */
+export async function setViableWeekdays(campaignId: string, weekdays: number[]) {
+  const supabase = await sb();
+  const next = [...new Set(weekdays)].filter((w) => w >= 0 && w <= 6).sort();
+  const { error } = await supabase
+    .from("campaigns")
+    .update({ viable_weekdays: next })
+    .eq("id", campaignId);
+  if (error) throw error;
+  revalidatePath(`/journal/c/${campaignId}/settings`);
+}
+
 export async function setCampaignCover(campaignId: string, url: string) {
   const supabase = await sb();
   const { error } = await supabase.from("campaigns").update({ banner_url: url }).eq("id", campaignId);
