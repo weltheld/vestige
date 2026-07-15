@@ -19,6 +19,14 @@ type Props = {
   viableWeekdays: Weekday[];
   onApply: (weekdays: Weekday[], value: VoteValue) => void;
   onReset: () => void;
+  /** "Party votes" chip — whether everyone's votes show on the days. */
+  showVotes: boolean;
+  onToggleVotes: () => void;
+  /** "Campaign votes" chip — overlay of the viewer's votes from their other
+   *  campaigns. Hidden entirely when they have none (`alignAvailable`). */
+  showAlign: boolean;
+  onToggleAlign: () => void;
+  alignAvailable: boolean;
   className?: string;
 };
 
@@ -26,6 +34,11 @@ export function QuickFillBar({
   viableWeekdays,
   onApply,
   onReset,
+  showVotes,
+  onToggleVotes,
+  showAlign,
+  onToggleAlign,
+  alignAvailable,
   className,
 }: Props) {
   const [selected, setSelected] = useState<Set<Weekday>>(new Set());
@@ -59,13 +72,13 @@ export function QuickFillBar({
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-1.5 text-gold">
           <Wand2 className="h-3.5 w-3.5" />
-          <span className="small-caps">Quick fill</span>
+          <span className="small-caps">Quick actions</span>
         </span>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          aria-label="Toggle quick fill"
+          aria-label="Toggle quick actions"
           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-ink-soft hover:bg-parchment hover:text-ink sm:hidden"
         >
           <ChevronDown
@@ -125,6 +138,20 @@ export function QuickFillBar({
           <RotateCcw className="h-3.5 w-3.5" />
           Reset month
         </button>
+
+        {/* View filters — what the calendar days display. Same chip
+            typography as the fill buttons above. */}
+        <div className="-mx-3 border-t border-hairline/70 px-3 pt-2.5">
+          <p className="mb-1.5 text-[10px] font-display font-semibold uppercase tracking-[0.1em] text-ink-soft/80">
+            Show on calendar
+          </p>
+          <div className="grid grid-cols-2 gap-1.5">
+            <FilterChip label="Party votes" active={showVotes} onToggle={onToggleVotes} />
+            {alignAvailable && (
+              <FilterChip label="Campaign votes" active={showAlign} onToggle={onToggleAlign} />
+            )}
+          </div>
+        </div>
       </div>
 
       {confirmReset && (
@@ -174,6 +201,40 @@ export function QuickFillBar({
         </div>
       )}
     </div>
+  );
+}
+
+/** A toggleable view-filter chip — FillButton's typography, with a dot that
+ *  reads as the on/off state (green when active, hollow when not). */
+function FilterChip({
+  label,
+  active,
+  onToggle,
+}: {
+  label: string;
+  active: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={active}
+      className={cn(
+        "inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md border px-1 text-[11px] font-display tracking-wide uppercase transition",
+        active
+          ? "border-vote-yes/60 bg-vote-yes/10 text-vote-yes"
+          : "border-hairline text-ink-soft hover:bg-parchment hover:text-ink",
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          active ? "bg-vote-yes" : "border border-ink-soft/50",
+        )}
+      />
+      <span className="truncate">{label}</span>
+    </button>
   );
 }
 

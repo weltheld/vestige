@@ -7,7 +7,6 @@ import { ModuleBottomNav } from "@vestige/ui";
 import { PlatformHeader } from "@/components/council/PlatformHeader";
 import { PlatformFooter } from "@/components/council/PlatformFooter";
 import { CalendarPanel } from "@/components/council/CalendarPanel";
-import { Switch } from "@/components/council/OwnerSettings";
 import { QuickFillBar } from "@/components/council/QuickFillBar";
 import { BannerParty } from "@/components/council/BannerParty";
 import { CharacterDialog } from "@/components/council/CharacterDialog";
@@ -425,11 +424,12 @@ export function GroupViewClient(props: Props) {
                 viableWeekdays={group.viableWeekdays}
                 onApply={handleBulkFillFromSidebar}
                 onReset={handleResetFromSidebar}
+                showVotes={showVotes}
+                onToggleVotes={() => setShowVotes((v) => !v)}
+                showAlign={showAlign}
+                onToggleAlign={() => setShowAlign((v) => !v)}
+                alignAvailable={alignCampaignCount > 0}
               />
-              <VotesToggle showVotes={showVotes} onToggle={() => setShowVotes((v) => !v)} />
-              {alignCampaignCount > 0 && (
-                <AlignToggle active={showAlign} onToggle={() => setShowAlign((v) => !v)} />
-              )}
 
               {isCreator && (
                 <button
@@ -471,15 +471,14 @@ export function GroupViewClient(props: Props) {
                     viableWeekdays={group.viableWeekdays}
                     onApply={handleBulkFillFromSidebar}
                     onReset={handleResetFromSidebar}
+                    showVotes={showVotes}
+                    onToggleVotes={() => setShowVotes((v) => !v)}
+                    showAlign={showAlign}
+                    onToggleAlign={() => setShowAlign((v) => !v)}
+                    alignAvailable={alignCampaignCount > 0}
                   />
                 }
               />
-              <div className="flex flex-col gap-4 px-4 pb-4 sm:px-5">
-                <VotesToggle showVotes={showVotes} onToggle={() => setShowVotes((v) => !v)} />
-                {alignCampaignCount > 0 && (
-                  <AlignToggle active={showAlign} onToggle={() => setShowAlign((v) => !v)} />
-                )}
-              </div>
             </div>
             {/* Desktop calendar (no QuickFillBar inside) */}
             <div className="hidden lg:flex lg:flex-col lg:flex-1">
@@ -541,35 +540,8 @@ function currentUserMatches(myId: string, creatorId: string) {
   return myId === creatorId;
 }
 
-// Sidebar toggles reuse the weekday-toggle row design from Poll Settings —
-// a labelled row with the same Switch on the right, no subline.
-function ToggleRow({
-  label,
-  active,
-  onToggle,
-}: {
-  label: string;
-  active: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-hairline/60 bg-surface/60 px-3 py-2">
-      <span className="text-sm text-ink">{label}</span>
-      <Switch checked={active} onChange={onToggle} />
-    </label>
-  );
-}
-
-// `showVotes` (true = votes visible) is inverted here since the switch now
-// reads as "Hide party votes" — off by default, matching the previous
-// default of votes being visible.
-function VotesToggle({ showVotes, onToggle }: { showVotes: boolean; onToggle: () => void }) {
-  return <ToggleRow label="Hide party votes" active={!showVotes} onToggle={onToggle} />;
-}
-
-function AlignToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
-  return <ToggleRow label="Align with other campaigns" active={active} onToggle={onToggle} />;
-}
+// The party-votes / campaign-votes view toggles live inside QuickFillBar's
+// "Show on calendar" chips now (positive semantics: on = visible).
 
 function RefreshOnFocus({ onFocus }: { onFocus: () => void }) {
   useEffect(() => {
