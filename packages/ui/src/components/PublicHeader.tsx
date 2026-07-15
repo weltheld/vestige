@@ -39,12 +39,20 @@ export function PublicHeader({ current = null }: { current?: "calendar" | "journ
         </nav>
       </div>
 
-      <Link
-        href="/signin"
-        className="font-display text-xs font-semibold tracking-[0.08em] text-wine hover:opacity-80"
-      >
-        SIGN IN
-      </Link>
+      <div className="flex items-center gap-5 sm:gap-7">
+        <Link
+          href="/getting-started"
+          className="hidden font-display text-xs font-semibold tracking-[0.08em] text-ink-soft hover:text-wine min-[420px]:block"
+        >
+          GETTING STARTED
+        </Link>
+        <Link
+          href="/signin"
+          className="font-display text-xs font-semibold tracking-[0.08em] text-wine hover:opacity-80"
+        >
+          SIGN IN
+        </Link>
+      </div>
     </header>
   );
 }

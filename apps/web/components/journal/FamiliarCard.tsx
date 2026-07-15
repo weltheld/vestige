@@ -47,12 +47,20 @@ export function FamiliarCard({
             <Download size={11} />
             Get it
           </a>
-          <Link
-            href={journal.settings(campaignId)}
-            className="font-body text-[10px] text-ink-soft underline underline-offset-2 hover:text-ink"
-          >
-            {status.connected || status.verified ? "Manage →" : "Connect →"}
-          </Link>
+          <span className="flex items-center gap-2.5">
+            <Link
+              href="/getting-started"
+              className="font-body text-[10px] text-ink-soft underline underline-offset-2 hover:text-ink"
+            >
+              Guide
+            </Link>
+            <Link
+              href={journal.settings(campaignId)}
+              className="font-body text-[10px] text-ink-soft underline underline-offset-2 hover:text-ink"
+            >
+              {status.connected || status.verified ? "Manage →" : "Connect →"}
+            </Link>
+          </span>
         </div>
       </section>
     );
@@ -93,14 +101,22 @@ export function FamiliarCard({
 
       <PlatformAvailability />
 
-      <Link
-        href={journal.settings(campaignId)}
-        className="font-body text-[12px] text-ink-soft underline underline-offset-2 hover:text-ink"
-      >
-        {status.connected || status.verified
-          ? "Manage the connection in settings →"
-          : "Get your ingest token in settings →"}
-      </Link>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        <Link
+          href="/getting-started"
+          className="font-body text-[12px] text-ink-soft underline underline-offset-2 hover:text-ink"
+        >
+          Step-by-step setup guide →
+        </Link>
+        <Link
+          href={journal.settings(campaignId)}
+          className="font-body text-[12px] text-ink-soft underline underline-offset-2 hover:text-ink"
+        >
+          {status.connected || status.verified
+            ? "Manage the connection in settings →"
+            : "Get your ingest token in settings →"}
+        </Link>
+      </div>
     </section>
   );
 }

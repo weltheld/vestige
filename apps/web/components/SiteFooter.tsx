@@ -13,6 +13,12 @@ export function SiteFooter() {
       </div>
       <nav className="flex gap-6">
         <Link
+          href="/getting-started"
+          className="font-body text-xs text-ink-soft underline-offset-4 hover:text-wine hover:underline"
+        >
+          Getting started
+        </Link>
+        <Link
           href="/imprint"
           className="font-body text-xs text-ink-soft underline-offset-4 hover:text-wine hover:underline"
         >
