@@ -243,6 +243,15 @@ function ProfileMenu({
               <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
             </div>
           )}
+          {/* Theme — plain buttons (not menu items) so trying themes doesn't
+              close the menu; the selection applies instantly. */}
+          <div className="mt-1 pt-1">
+            <p className="px-2 py-1 font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Theme
+            </p>
+            <ThemePicker />
+          </div>
+          <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
           <DropdownMenu.Item
             // Opens the shared overlay in place (blurred backdrop + close-X),
             // instead of a cross-zone navigation to Calendar's /profile page.
@@ -252,15 +261,6 @@ function ProfileMenu({
             <Pencil size={13} className="text-muted" />
             Edit profile
           </DropdownMenu.Item>
-          {/* Theme — plain buttons (not menu items) so trying themes doesn't
-              close the menu; the selection applies instantly. */}
-          <div className="mt-1 border-t border-hairline pt-1">
-            <p className="px-2 py-1 font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-              Theme
-            </p>
-            <ThemePicker />
-          </div>
-          <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
           <DropdownMenu.Item
             onSelect={onSignOut}
             className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"

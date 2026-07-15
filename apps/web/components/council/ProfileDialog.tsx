@@ -111,13 +111,6 @@ export function ProfileDialog({
                 <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
               </div>
             )}
-            <DropdownMenu.Item
-              onSelect={() => setOpen(true)}
-              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
-            >
-              <Pencil size={13} className="text-ink-soft" />
-              Edit profile
-            </DropdownMenu.Item>
             {onOpenPollSettings && (
               <DropdownMenu.Item
                 onSelect={onOpenPollSettings}
@@ -129,13 +122,20 @@ export function ProfileDialog({
             )}
             {/* Theme — plain buttons (not menu items) so trying themes doesn't
                 close the menu; the selection applies instantly. */}
-            <div className="mt-1 border-t border-hairline pt-1">
+            <div className="mt-1 pt-1">
               <p className="px-2 py-1 font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-soft">
                 Theme
               </p>
               <ThemePicker />
             </div>
             <div className="my-1 h-px bg-hairline" />
+            <DropdownMenu.Item
+              onSelect={() => setOpen(true)}
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+            >
+              <Pencil size={13} className="text-ink-soft" />
+              Edit profile
+            </DropdownMenu.Item>
             <DropdownMenu.Item
               onSelect={() => signOutAction()}
               className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
