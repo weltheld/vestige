@@ -1,20 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, ScrollText, Library } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Home, CalendarDays, ScrollText, Library } from "lucide-react";
 
 export type BottomNavModule = "calendar" | "journal" | "codex";
 
 /**
- * Sticky mobile module navigation (Calendar · Journal · Codex). On < lg it
+ * Sticky mobile navigation: Home · Calendar · Journal · Codex. On < lg it
  * replaces the top-header module tabs entirely, freeing the header for the
  * crest, campaign switcher and profile chip. Hidden on lg+, where the header
  * shows the labelled segmented tabs instead.
  *
  * Fixed to the bottom of the viewport. Pages that render this must add
  * matching bottom padding (`pb-[…]` on the page shell) so the bar never
- * covers content or the footer — see the layouts that use it. Renders
- * nothing when there's no campaign context (no module hrefs).
+ * covers content or the footer — see the layouts that use it. Home always
+ * renders (it needs no campaign context); the module items only appear once
+ * their hrefs are known.
  *
  * Variant B ("indicator bar"): a flat bar; the active item turns wine with a
  * short gold marker above it. Inactive items are muted.
@@ -30,23 +32,24 @@ export function ModuleBottomNav({
   journalHref?: string;
   codexHref?: string;
 }) {
-  const items: Array<{ key: BottomNavModule; label: string; href?: string; icon: React.ReactNode }> = [
-    { key: "calendar", label: "Calendar", href: calendarHref, icon: <CalendarDays size={20} /> },
-    { key: "journal", label: "Journal", href: journalHref, icon: <ScrollText size={20} /> },
-    { key: "codex", label: "Codex", href: codexHref, icon: <Library size={20} /> },
-  ];
+  const pathname = usePathname();
+  const onHome = pathname === "/app";
 
-  // No campaign selected → no module targets → nothing to show.
-  if (!items.some((i) => i.href)) return null;
+  const items: Array<{ key: string; label: string; href?: string; active: boolean; icon: React.ReactNode }> = [
+    { key: "home", label: "Home", href: "/app", active: onHome, icon: <Home size={20} /> },
+    { key: "calendar", label: "Calendar", href: calendarHref, active: active === "calendar", icon: <CalendarDays size={20} /> },
+    { key: "journal", label: "Journal", href: journalHref, active: active === "journal", icon: <ScrollText size={20} /> },
+    { key: "codex", label: "Codex", href: codexHref, active: active === "codex", icon: <Library size={20} /> },
+  ];
 
   return (
     <nav
-      aria-label="Modules"
+      aria-label="Navigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <div className="mx-auto flex max-w-md items-stretch">
         {items.map((item) => {
-          const isActive = active === item.key;
+          const isActive = item.active;
           const inner = (
             <>
               <span
