@@ -87,8 +87,11 @@ export default async function SessionListPage({
 
         {sessionList}
 
+        {/* Mobile/tablet: the compact card (the full promo lives in the
+            desktop sidebar). Keeps the journal feed the focus on small
+            screens. */}
         <div className="lg:hidden">
-          <FamiliarCard campaignId={campaignId} status={familiarStatus} />
+          <FamiliarCard campaignId={campaignId} status={familiarStatus} compact />
         </div>
       </div>
     </main>
