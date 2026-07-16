@@ -160,12 +160,16 @@ export function DayCell({
         isDisabled
           ? "cursor-not-allowed border-transparent opacity-40"
           : day.inCurrentMonth
-            ? "border-hairline/70"
+            ? "border-hairline"
             : "border-transparent opacity-40",
         // Press-down squish (springs back via the button's transition) —
         // instant physical feedback before the tint/ring even land.
-        interactive && "hover:border-ink/40 cursor-pointer active:scale-[0.96]",
-        isBestDay && "border-dm-gold/80 ring-1 ring-dm-gold/40",
+        // color-mix, not /N modifiers — opacity modifiers on our var()
+        // colors compile to no CSS, so hover/best-day fell back to defaults.
+        interactive &&
+          "hover:border-[color-mix(in_srgb,var(--ink)_40%,var(--surface))] cursor-pointer active:scale-[0.96]",
+        isBestDay &&
+          "border-[color-mix(in_srgb,var(--dm-gold)_80%,var(--surface))] ring-1 ring-[color-mix(in_srgb,var(--dm-gold)_40%,var(--surface))]",
         // Today gets a wine frame + the edge tag below — last in the list so
         // tailwind-merge lets it win over the hairline/disabled borders (and
         // over Best day's gold, which keeps its ring).

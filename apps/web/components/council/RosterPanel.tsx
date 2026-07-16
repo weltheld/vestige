@@ -27,7 +27,7 @@ export function RosterPanel({ members, myUserId }: Props) {
         <p className="small-caps">The Party</p>
       </div>
 
-      <ul className="divide-y divide-hairline/50 overflow-hidden rounded-lg border border-hairline/60 bg-surface">
+      <ul className="divide-y divide-hairline overflow-hidden rounded-lg border border-hairline bg-surface">
         {roster.map((m) => {
           const isMe = myUserId === m.userId;
           return (

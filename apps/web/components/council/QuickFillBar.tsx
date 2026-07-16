@@ -141,11 +141,18 @@ export function QuickFillBar({
 
         {/* View filters — what the calendar days display. Same chip
             typography as the fill buttons above. */}
-        <div className="-mx-3 border-t border-hairline/70 px-3 pt-2.5">
+        <div className="-mx-3 border-t border-hairline px-3 pt-2.5">
           <p className="mb-1.5 text-[10px] font-display font-semibold uppercase tracking-[0.1em] text-ink-soft/80">
             Show on calendar
           </p>
-          <div className="grid grid-cols-2 gap-1">
+          {/* Asymmetric split: "Campaign votes" is the longer label, so it
+              gets the wider track. Single chip spans the full row. */}
+          <div
+            className={cn(
+              "grid gap-1",
+              alignAvailable ? "grid-cols-[2fr_3fr]" : "grid-cols-1",
+            )}
+          >
             <FilterChip label="All votes" active={showVotes} onToggle={onToggleVotes} />
             {alignAvailable && (
               <FilterChip label="Campaign votes" active={showAlign} onToggle={onToggleAlign} />
@@ -204,8 +211,9 @@ export function QuickFillBar({
   );
 }
 
-/** A toggleable view-filter chip — FillButton's typography, with a dot that
- *  reads as the on/off state (green when active, hollow when not). */
+/** A toggleable view-filter chip — FillButton's typography; the on/off state
+ *  is carried by color alone (green border/tint when active), no dot, so the
+ *  full chip width belongs to the label. */
 function FilterChip({
   label,
   active,
@@ -221,20 +229,14 @@ function FilterChip({
       onClick={onToggle}
       aria-pressed={active}
       className={cn(
-        // Tighter than the fill buttons on purpose: 10px + minimal tracking
-        // and padding so "Campaign votes" fits the sidebar chip untruncated.
-        "inline-flex h-7 w-full items-center justify-center gap-1 rounded-md border px-0.5 text-[10px] font-display uppercase tracking-[0.02em] transition",
+        "inline-flex h-7 w-full items-center justify-center rounded-md border px-1 text-[11px] font-display uppercase tracking-[0.02em] transition",
+        // color-mix arbitrary values, not border-x/N modifiers — opacity
+        // modifiers on our var() colors silently compile to no CSS at all.
         active
-          ? "border-vote-yes/60 bg-vote-yes/10 text-vote-yes"
+          ? "border-[color-mix(in_srgb,var(--vote-yes)_55%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-yes)_12%,var(--surface))] text-vote-yes"
           : "border-hairline text-ink-soft hover:bg-parchment hover:text-ink",
       )}
     >
-      <span
-        className={cn(
-          "h-1.5 w-1.5 shrink-0 rounded-full",
-          active ? "bg-vote-yes" : "border border-ink-soft/50",
-        )}
-      />
       <span className="whitespace-nowrap">{label}</span>
     </button>
   );
@@ -258,9 +260,13 @@ function FillButton({
       disabled={disabled}
       className={cn(
         "inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md border text-[11px] font-display tracking-wide uppercase transition",
-        color === "vote-yes" && "text-vote-yes border-vote-yes/40 hover:bg-vote-yes/10",
-        color === "vote-maybe" && "text-vote-maybe border-vote-maybe/40 hover:bg-vote-maybe/10",
-        color === "vote-no" && "text-vote-no border-vote-no/40 hover:bg-vote-no/10",
+        // color-mix, not /N modifiers (those no-op on var() colors).
+        color === "vote-yes" &&
+          "text-vote-yes border-[color-mix(in_srgb,var(--vote-yes)_40%,var(--surface))] hover:bg-[color-mix(in_srgb,var(--vote-yes)_10%,var(--surface))]",
+        color === "vote-maybe" &&
+          "text-vote-maybe border-[color-mix(in_srgb,var(--vote-maybe)_40%,var(--surface))] hover:bg-[color-mix(in_srgb,var(--vote-maybe)_10%,var(--surface))]",
+        color === "vote-no" &&
+          "text-vote-no border-[color-mix(in_srgb,var(--vote-no)_40%,var(--surface))] hover:bg-[color-mix(in_srgb,var(--vote-no)_10%,var(--surface))]",
         disabled && "opacity-40 cursor-not-allowed",
       )}
     >

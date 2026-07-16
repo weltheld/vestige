@@ -368,7 +368,7 @@ export function GroupViewClient(props: Props) {
           {/* Left sidebar: banner + party, quick fill, best day (desktop only) —
               moving the banner + avatars in here (instead of a full-width row
               above the grid) gives the calendar column more room. */}
-          <aside className="hidden border-r border-hairline/70 lg:block">
+          <aside className="hidden border-r border-hairline lg:block">
             <div className="flex flex-col gap-4 p-5">
               <div
                 className={cn(
