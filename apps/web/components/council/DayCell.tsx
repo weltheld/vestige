@@ -201,7 +201,10 @@ export function DayCell({
                   <span
                     key={i}
                     className={cn(
-                      "h-1.5 w-1.5 rounded-full ring-1 ring-white/70",
+                      // ring-surface (not white) — the ring's job is only to
+                      // separate adjacent pips from the tile tint, so it must
+                      // match the theme's tile color, not hardcode white.
+                      "h-1.5 w-1.5 rounded-full ring-1 ring-surface",
                       av.value === "yes"
                         ? "bg-vote-yes"
                         : av.value === "maybe"

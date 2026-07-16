@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Settings2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ModuleBottomNav } from "@vestige/ui";
 import { PlatformHeader } from "@/components/council/PlatformHeader";
@@ -431,18 +430,8 @@ export function GroupViewClient(props: Props) {
                 alignAvailable={alignCampaignCount > 0}
               />
 
-              {isCreator && (
-                <button
-                  type="button"
-                  // Poll settings moved into the platform Settings layer
-                  // (Poll tab) — one settings surface for everything.
-                  onClick={() => router.push(`/journal/c/${group.id}/settings`)}
-                  className="flex w-full items-center gap-1.5 rounded-md border border-hairline/60 bg-surface/60 px-3 py-2 text-left text-sm text-ink hover:bg-parchment"
-                >
-                  <Settings2 className="h-3.5 w-3.5 text-ink-soft" />
-                  Settings
-                </button>
-              )}
+              {/* No settings button here — poll settings live in the
+                  platform Settings layer (header menu → Settings → Poll). */}
             </div>
           </aside>
 

@@ -145,8 +145,8 @@ export function QuickFillBar({
           <p className="mb-1.5 text-[10px] font-display font-semibold uppercase tracking-[0.1em] text-ink-soft/80">
             Show on calendar
           </p>
-          <div className="grid grid-cols-2 gap-1.5">
-            <FilterChip label="Party votes" active={showVotes} onToggle={onToggleVotes} />
+          <div className="grid grid-cols-2 gap-1">
+            <FilterChip label="All votes" active={showVotes} onToggle={onToggleVotes} />
             {alignAvailable && (
               <FilterChip label="Campaign votes" active={showAlign} onToggle={onToggleAlign} />
             )}
@@ -221,7 +221,9 @@ function FilterChip({
       onClick={onToggle}
       aria-pressed={active}
       className={cn(
-        "inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md border px-1 text-[11px] font-display tracking-wide uppercase transition",
+        // Tighter than the fill buttons on purpose: 10px + minimal tracking
+        // and padding so "Campaign votes" fits the sidebar chip untruncated.
+        "inline-flex h-7 w-full items-center justify-center gap-1 rounded-md border px-0.5 text-[10px] font-display uppercase tracking-[0.02em] transition",
         active
           ? "border-vote-yes/60 bg-vote-yes/10 text-vote-yes"
           : "border-hairline text-ink-soft hover:bg-parchment hover:text-ink",
@@ -229,11 +231,11 @@ function FilterChip({
     >
       <span
         className={cn(
-          "h-1.5 w-1.5 rounded-full",
+          "h-1.5 w-1.5 shrink-0 rounded-full",
           active ? "bg-vote-yes" : "border border-ink-soft/50",
         )}
       />
-      <span className="truncate">{label}</span>
+      <span className="whitespace-nowrap">{label}</span>
     </button>
   );
 }
