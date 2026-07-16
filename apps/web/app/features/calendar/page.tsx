@@ -119,10 +119,10 @@ function MiniCalendar() {
           className={[
             "aspect-square rounded-[5px] border",
             i === best
-              ? "border-wine bg-wine/15"
+              ? "border-wine bg-[color-mix(in_srgb,var(--wine)_15%,var(--surface))]"
               : yes.has(i)
-                ? "border-transparent bg-vote-yes/20"
-                : "border-hairline/70 bg-surface",
+                ? "border-transparent bg-[color-mix(in_srgb,var(--vote-yes)_20%,var(--surface))]"
+                : "border-[color-mix(in_srgb,var(--hairline)_70%,var(--surface))] bg-surface",
           ].join(" ")}
         />
       ))}

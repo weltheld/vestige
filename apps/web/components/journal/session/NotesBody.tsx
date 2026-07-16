@@ -121,7 +121,7 @@ function PlayerChips({
                 key={n}
                 className="flex items-center gap-2 rounded-full border border-hairline bg-cod-soft py-1 pl-1 pr-3"
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[11px] text-parchment ring-1 ring-gold/60">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[11px] text-parchment ring-1 ring-[color-mix(in_srgb,var(--gold)_60%,var(--surface))]">
                   {p?.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -201,7 +201,7 @@ function renderCodexMentions(text: string, campaignId: string): React.ReactNode 
       <Link
         key={`${m.index}-${m[2]}`}
         href={journal.npc(campaignId, m[2].toLowerCase())}
-        className="text-wine underline decoration-wine/40 underline-offset-2 transition hover:decoration-wine"
+        className="text-wine underline decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] underline-offset-2 transition hover:decoration-wine"
       >
         {m[1]}
       </Link>,

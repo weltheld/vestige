@@ -137,7 +137,7 @@ export function SettingsClient({ settings, manage, magicLink, variant = "page" }
       <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto p-4 sm:p-8">
         <button
           aria-label="Close"
-          className="fixed inset-0 bg-ink/50 backdrop-blur-sm"
+          className="fixed inset-0 bg-[color-mix(in_srgb,var(--ink)_50%,transparent)] backdrop-blur-sm"
           onClick={close}
         />
         {card}
@@ -464,7 +464,7 @@ function PlayersTab({
                         if (!window.confirm(`Remove ${m.name} from this campaign?`)) return;
                         run(() => removeMember(id, m.userId), `${m.name} removed.`);
                       }}
-                      className="rounded p-1 text-muted transition hover:bg-vote-no/10 hover:text-vote-no"
+                      className="rounded p-1 text-muted transition hover:bg-[color-mix(in_srgb,var(--vote-no)_10%,var(--surface))] hover:text-vote-no"
                     >
                       <X size={14} />
                     </button>
@@ -483,7 +483,7 @@ function PlayersTab({
             manage.invitations.map((i) => (
               <li
                 key={i.id}
-                className="flex items-center justify-between rounded-md border border-hairline bg-cod-soft/60 px-3 py-2"
+                className="flex items-center justify-between rounded-md border border-hairline bg-[color-mix(in_srgb,var(--cod-soft)_60%,var(--surface))] px-3 py-2"
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <Avatar url={i.avatarUrl} name={i.name ?? i.email} />
@@ -614,12 +614,12 @@ function PlayersTab({
       )}
 
       {error && (
-        <p className="rounded-md border border-vote-no/40 bg-vote-no/10 px-3 py-2 font-body text-[12px] text-vote-no">
+        <p className="rounded-md border border-[color-mix(in_srgb,var(--vote-no)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-no)_10%,var(--surface))] px-3 py-2 font-body text-[12px] text-vote-no">
           {error}
         </p>
       )}
       {notice && !error && (
-        <p className="rounded-md border border-vote-yes/40 bg-vote-yes/10 px-3 py-2 font-body text-[12px] text-vote-yes">
+        <p className="rounded-md border border-[color-mix(in_srgb,var(--vote-yes)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-yes)_10%,var(--surface))] px-3 py-2 font-body text-[12px] text-vote-yes">
           {notice}
         </p>
       )}

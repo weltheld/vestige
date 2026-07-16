@@ -171,7 +171,7 @@ export function InvitePageClient({
           {joinedParty.map((m) => (
             <li
               key={m.userId}
-              className="flex items-center justify-between rounded-md border border-hairline/60 bg-surface/60 px-3 py-2"
+              className="flex items-center justify-between rounded-md border border-[color-mix(in_srgb,var(--hairline)_60%,var(--surface))] bg-[color-mix(in_srgb,var(--surface)_60%,var(--parchment))] px-3 py-2"
             >
               <div className="flex items-center gap-3">
                 <Avatar src={m.avatarUrl} alt={m.displayName} size={32} />
@@ -193,7 +193,7 @@ export function InvitePageClient({
           {pendingInvites.map((i) => (
             <li
               key={i.id}
-              className="flex items-center justify-between rounded-md border border-hairline/60 bg-surface/40 px-3 py-2"
+              className="flex items-center justify-between rounded-md border border-[color-mix(in_srgb,var(--hairline)_60%,var(--surface))] bg-[color-mix(in_srgb,var(--surface)_40%,var(--parchment))] px-3 py-2"
             >
               <div className="flex items-center gap-3">
                 <Avatar
@@ -236,7 +236,7 @@ export function InvitePageClient({
             </li>
           ))}
           {joinedParty.length === 0 && pendingInvites.length === 0 && (
-            <li className="rounded-md border border-hairline/60 bg-surface/40 px-3 py-3 text-center text-xs text-ink-soft">
+            <li className="rounded-md border border-[color-mix(in_srgb,var(--hairline)_60%,var(--surface))] bg-[color-mix(in_srgb,var(--surface)_40%,var(--parchment))] px-3 py-3 text-center text-xs text-ink-soft">
               Send the first invitation below to grow the company.
             </li>
           )}
@@ -256,7 +256,7 @@ export function InvitePageClient({
             {addableUsers.map((u) => (
               <li
                 key={u.userId}
-                className="flex items-center justify-between gap-3 rounded-md border border-hairline/60 bg-surface/60 px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-md border border-[color-mix(in_srgb,var(--hairline)_60%,var(--surface))] bg-[color-mix(in_srgb,var(--surface)_60%,var(--parchment))] px-3 py-2"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar
@@ -305,12 +305,12 @@ export function InvitePageClient({
       </form>
 
       {error && (
-        <p className="mt-3 rounded-md border border-vote-no/40 bg-vote-no/10 px-3 py-2 text-xs text-vote-no">
+        <p className="mt-3 rounded-md border border-[color-mix(in_srgb,var(--vote-no)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-no)_10%,var(--surface))] px-3 py-2 text-xs text-vote-no">
           {error}
         </p>
       )}
       {notice && !error && (
-        <p className="mt-3 rounded-md border border-vote-yes/40 bg-vote-yes/10 px-3 py-2 text-xs text-vote-yes">
+        <p className="mt-3 rounded-md border border-[color-mix(in_srgb,var(--vote-yes)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-yes)_10%,var(--surface))] px-3 py-2 text-xs text-vote-yes">
           {notice}
         </p>
       )}

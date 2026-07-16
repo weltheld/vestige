@@ -133,7 +133,7 @@ export function ProfileEditDialog({ open, onClose }: { open: boolean; onClose: (
     <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto p-4 sm:p-8">
       <button
         aria-label="Close"
-        className="fixed inset-0 bg-ink/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-[color-mix(in_srgb,var(--ink)_50%,transparent)] backdrop-blur-sm"
         onClick={() => !saving && onClose()}
       />
       <div className="relative w-full max-w-[480px] rounded-xl border border-hairline bg-surface p-8 shadow-[0_8px_32px_-8px_rgba(43,33,24,0.35)] sm:p-10">

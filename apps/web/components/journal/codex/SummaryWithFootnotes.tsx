@@ -70,7 +70,7 @@ function renderMentions(text: string, campaignId?: string): Array<string | React
         <Link
           key={`${m.index}-${id}`}
           href={href}
-          className="text-wine underline decoration-wine/40 underline-offset-2 transition hover:decoration-wine"
+          className="text-wine underline decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] underline-offset-2 transition hover:decoration-wine"
         >
           {label}
         </Link>,

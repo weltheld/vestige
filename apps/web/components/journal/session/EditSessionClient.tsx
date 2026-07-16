@@ -461,7 +461,7 @@ export function EditSessionClient({
                 <button
                   type="button"
                   onClick={() => setDeleteConfirmOpen(true)}
-                  className="flex items-center gap-1.5 font-body text-[11px] text-wine underline decoration-wine/40 underline-offset-2 hover:decoration-wine"
+                  className="flex items-center gap-1.5 font-body text-[11px] text-wine underline decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] underline-offset-2 hover:decoration-wine"
                 >
                   <Trash2 size={12} /> Delete session
                 </button>
@@ -497,7 +497,7 @@ export function EditSessionClient({
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <button
               aria-label="Cancel"
-              className="fixed inset-0 bg-ink/50 backdrop-blur-sm"
+              className="fixed inset-0 bg-[color-mix(in_srgb,var(--ink)_50%,transparent)] backdrop-blur-sm"
               onClick={() => !deleting && setDeleteConfirmOpen(false)}
             />
             <div className="relative w-full max-w-[380px] rounded-xl border border-hairline bg-surface p-6 shadow-parchment">

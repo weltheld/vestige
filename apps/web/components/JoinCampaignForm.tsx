@@ -62,8 +62,8 @@ export function JoinCampaignForm() {
         <p
           className={`absolute right-0 top-full z-10 mt-1 whitespace-nowrap rounded-md border px-2 py-1 font-body text-[11px] shadow-sm ${
             error
-              ? "border-vote-no/40 bg-vote-no/10 text-vote-no"
-              : "border-vote-yes/40 bg-vote-yes/10 text-vote-yes"
+              ? "border-[color-mix(in_srgb,var(--vote-no)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-no)_10%,var(--surface))] text-vote-no"
+              : "border-[color-mix(in_srgb,var(--vote-yes)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-yes)_10%,var(--surface))] text-vote-yes"
           }`}
         >
           {error || notice}

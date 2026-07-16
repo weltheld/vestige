@@ -14,7 +14,7 @@ export function HeroBand({
   children?: ReactNode;
 }) {
   return (
-    <section className="rounded-card border border-hairline bg-parchment/60 px-6 py-8 shadow-parchment">
+    <section className="rounded-card border border-hairline bg-[color-mix(in_srgb,var(--parchment)_60%,var(--surface))] px-6 py-8 shadow-parchment">
       <h2 className="font-display text-3xl tracking-wide text-wine">{title}</h2>
       {subtitle && (
         <p className="mt-2 max-w-2xl font-body text-ink-soft">{subtitle}</p>

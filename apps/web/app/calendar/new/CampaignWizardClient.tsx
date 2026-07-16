@@ -131,7 +131,7 @@ export function CampaignWizardClient({
         </header>
 
         {error && (
-          <p className="rounded-md border border-vote-no/40 bg-vote-no/10 px-4 py-2 text-sm text-vote-no">
+          <p className="rounded-md border border-[color-mix(in_srgb,var(--vote-no)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-no)_10%,var(--surface))] px-4 py-2 text-sm text-vote-no">
             {error}
           </p>
         )}
@@ -162,7 +162,7 @@ export function CampaignWizardClient({
                 required
               />
 
-              <div className="flex items-start gap-2 rounded-md border border-dm-gold/30 bg-dm-gold/10 px-3 py-2.5">
+              <div className="flex items-start gap-2 rounded-md border border-[color-mix(in_srgb,var(--dm-gold)_30%,var(--surface))] bg-[color-mix(in_srgb,var(--dm-gold)_10%,var(--surface))] px-3 py-2.5">
                 <Lock className="mt-0.5 h-4 w-4 flex-none text-dm-gold" />
                 <p className="text-xs text-ink-soft">
                   Only the campaign creator can generate links or add existing
@@ -189,7 +189,7 @@ export function CampaignWizardClient({
                 </WaxButton>
               )}
 
-              <div className="rounded-md border border-hairline/70 bg-parchment/40 px-3 py-2.5">
+              <div className="rounded-md border border-[color-mix(in_srgb,var(--hairline)_70%,var(--surface))] bg-[color-mix(in_srgb,var(--parchment)_40%,var(--surface))] px-3 py-2.5">
                 <p className="small-caps">
                   {isCreated ? "Ready to launch" : "Starting state"}
                 </p>
@@ -226,8 +226,8 @@ export function CampaignWizardClient({
                   className={cn(
                     "flex min-w-0 flex-1 items-center gap-2 rounded-md border px-3 py-2.5 font-mono text-sm",
                     isCreated
-                      ? "border-hairline bg-surface/80 text-wine"
-                      : "border-hairline bg-parchment/40 text-ink-soft/70",
+                      ? "border-hairline bg-[color-mix(in_srgb,var(--surface)_80%,var(--parchment))] text-wine"
+                      : "border-hairline bg-[color-mix(in_srgb,var(--parchment)_40%,var(--surface))] text-[color-mix(in_srgb,var(--ink-soft)_70%,transparent)]",
                   )}
                 >
                   <LinkIcon className="h-4 w-4 flex-none text-dm-gold" />
@@ -245,8 +245,8 @@ export function CampaignWizardClient({
                   className={cn(
                     "inline-flex h-10 flex-none items-center gap-1.5 rounded-md px-4 font-display text-xs tracking-wider uppercase",
                     isCreated
-                      ? "bg-wine text-parchment hover:bg-wine/90"
-                      : "bg-parchment/60 text-ink-soft/60 cursor-not-allowed",
+                      ? "bg-wine text-parchment hover:bg-[color-mix(in_srgb,var(--wine)_90%,var(--parchment))]"
+                      : "bg-[color-mix(in_srgb,var(--parchment)_60%,var(--surface))] text-[color-mix(in_srgb,var(--ink-soft)_60%,transparent)] cursor-not-allowed",
                   )}
                 >
                   {copied ? (
@@ -285,7 +285,7 @@ export function CampaignWizardClient({
                     {emailInvites.map((e) => (
                       <li
                         key={e}
-                        className="rounded-full border border-hairline bg-parchment/50 px-3 py-1 text-xs text-ink-soft"
+                        className="rounded-full border border-hairline bg-[color-mix(in_srgb,var(--parchment)_50%,var(--surface))] px-3 py-1 text-xs text-ink-soft"
                       >
                         {e}
                       </li>
@@ -298,7 +298,7 @@ export function CampaignWizardClient({
             <div className="mt-6 space-y-2">
               <p className="small-caps">Existing platform users</p>
               {!isCreated ? (
-                <div className="rounded-md border border-hairline/70 bg-parchment/40 p-5 text-center">
+                <div className="rounded-md border border-[color-mix(in_srgb,var(--hairline)_70%,var(--surface))] bg-[color-mix(in_srgb,var(--parchment)_40%,var(--surface))] p-5 text-center">
                   <Users className="mx-auto h-6 w-6 text-dm-gold" />
                   <p className="mt-2 font-display text-sm text-ink">
                     No invitees selected yet
@@ -309,7 +309,7 @@ export function CampaignWizardClient({
                   </p>
                 </div>
               ) : otherUsers.length === 0 ? (
-                <div className="rounded-md border border-hairline/70 bg-parchment/40 p-5 text-center text-sm text-ink-soft">
+                <div className="rounded-md border border-[color-mix(in_srgb,var(--hairline)_70%,var(--surface))] bg-[color-mix(in_srgb,var(--parchment)_40%,var(--surface))] p-5 text-center text-sm text-ink-soft">
                   No other registered users yet. Use the email invite above.
                 </div>
               ) : (
@@ -325,8 +325,8 @@ export function CampaignWizardClient({
                           className={cn(
                             "flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition",
                             selected
-                              ? "border-vote-yes/40 bg-vote-yes/10"
-                              : "border-hairline/60 bg-surface/60 hover:bg-parchment/40",
+                              ? "border-[color-mix(in_srgb,var(--vote-yes)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-yes)_10%,var(--surface))]"
+                              : "border-[color-mix(in_srgb,var(--hairline)_60%,var(--surface))] bg-[color-mix(in_srgb,var(--surface)_60%,var(--parchment))] hover:bg-[color-mix(in_srgb,var(--parchment)_40%,var(--surface))]",
                             pending && "opacity-60",
                           )}
                         >
@@ -342,7 +342,7 @@ export function CampaignWizardClient({
                               "inline-flex h-7 w-7 items-center justify-center rounded-full transition",
                               selected
                                 ? "bg-vote-yes text-parchment"
-                                : "border-2 border-dm-gold/40 text-dm-gold",
+                                : "border-2 border-[color-mix(in_srgb,var(--dm-gold)_40%,var(--surface))] text-dm-gold",
                             )}
                           >
                             {selected ? (
@@ -373,7 +373,7 @@ function Pill({
   label: string;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-dm-gold/15 px-3 py-1 text-[11px] font-display tracking-wider uppercase text-dm-gold">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--dm-gold)_15%,var(--surface))] px-3 py-1 text-[11px] font-display tracking-wider uppercase text-dm-gold">
       <Icon className="h-3.5 w-3.5" />
       {label}
     </span>

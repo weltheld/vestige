@@ -9,7 +9,7 @@ export function SidebarCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-card border border-hairline bg-parchment/60 p-5 shadow-parchment">
+    <div className="rounded-card border border-hairline bg-[color-mix(in_srgb,var(--parchment)_60%,var(--surface))] p-5 shadow-parchment">
       {title && (
         <h3 className="mb-3 font-display text-lg text-ink">{title}</h3>
       )}

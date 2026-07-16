@@ -79,7 +79,7 @@ export function SectionEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-[100px] w-full font-body text-[15px] leading-[1.85] text-ink outline-none [&_p.is-editor-empty:first-child::before]:text-muted [&_p.is-editor-empty:first-child::before]:italic [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:h-0 [&_p.is-editor-empty:first-child::before]:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gold [&_blockquote]:pl-3 [&_blockquote]:italic [&_a]:text-wine [&_a]:underline [&_a]:decoration-wine/40 [&_a]:underline-offset-2",
+          "min-h-[100px] w-full font-body text-[15px] leading-[1.85] text-ink outline-none [&_p.is-editor-empty:first-child::before]:text-muted [&_p.is-editor-empty:first-child::before]:italic [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:h-0 [&_p.is-editor-empty:first-child::before]:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gold [&_blockquote]:pl-3 [&_blockquote]:italic [&_a]:text-wine [&_a]:underline [&_a]:decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] [&_a]:underline-offset-2",
       },
     },
   });

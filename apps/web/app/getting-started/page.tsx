@@ -338,7 +338,7 @@ function Phase({
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <li className="flex gap-4 rounded-xl border border-hairline bg-surface p-5">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gold/60 font-display text-[12px] font-bold text-gold">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--gold)_60%,var(--surface))] font-display text-[12px] font-bold text-gold">
         {n}
       </span>
       <div className="flex min-w-0 flex-col gap-2.5 pt-0.5">
@@ -356,7 +356,7 @@ function Callout({ children, tone = "info" }: { children: React.ReactNode; tone?
     <div
       className={`rounded-lg border px-3.5 py-3 font-body text-[13px] leading-[1.6] ${
         tone === "warn"
-          ? "border-vote-no/40 bg-vote-no/10 text-ink-soft"
+          ? "border-[color-mix(in_srgb,var(--vote-no)_40%,var(--surface))] bg-[color-mix(in_srgb,var(--vote-no)_10%,var(--surface))] text-ink-soft"
           : "border-hairline bg-cod-soft text-ink-soft"
       }`}
     >
@@ -396,7 +396,7 @@ function Href({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-wine underline decoration-wine/40 underline-offset-2 hover:decoration-wine"
+        className="text-wine underline decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] underline-offset-2 hover:decoration-wine"
       >
         {children}
       </a>
@@ -405,7 +405,7 @@ function Href({
   return (
     <Link
       href={href}
-      className="text-wine underline decoration-wine/40 underline-offset-2 hover:decoration-wine"
+      className="text-wine underline decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] underline-offset-2 hover:decoration-wine"
     >
       {children}
     </Link>

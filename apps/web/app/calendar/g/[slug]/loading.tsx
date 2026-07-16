@@ -7,7 +7,7 @@ export default function Loading() {
       <HeaderSkeleton />
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col lg:grid lg:grid-cols-[280px_1fr]">
-        <aside className="hidden border-r border-hairline/70 p-5 lg:block">
+        <aside className="hidden border-r border-[color-mix(in_srgb,var(--hairline)_70%,var(--surface))] p-5 lg:block">
           <div className="flex flex-col gap-4">
             <Skeleton className="aspect-[4/3] w-full rounded-xl" />
             <Skeleton className="h-9 w-full rounded-md" />
