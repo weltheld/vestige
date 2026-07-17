@@ -6,13 +6,13 @@ import { getServiceRoleSupabase } from "@vestige/db/server";
 
 type SB = SupabaseClient<Database>;
 
-export type ManageMember = {
+type ManageMember = {
   userId: string;
   isDm: boolean;
   name: string;
   avatarUrl: string | null;
 };
-export type ManageInvitation = {
+type ManageInvitation = {
   id: string;
   name: string | null;
   email: string;
@@ -20,7 +20,7 @@ export type ManageInvitation = {
   status: string;
   emailInvite: boolean;
 };
-export type ManageAddable = {
+type ManageAddable = {
   userId: string;
   name: string;
   email: string;

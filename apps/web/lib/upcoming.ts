@@ -6,7 +6,7 @@ import type { CampaignSummary } from "@vestige/domain";
 
 type SB = SupabaseClient<Database>;
 
-export type UpcomingPlayer = {
+type UpcomingPlayer = {
   userId: string;
   name: string;
   avatarUrl: string | null;

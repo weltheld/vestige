@@ -20,8 +20,6 @@ export type VestigeHeaderUser = {
 /** @deprecated use `currentCampaign` (HeaderCampaign). Kept for compatibility. */
 export type VestigeHeaderCampaign = { name: string };
 
-export type { HeaderCampaign };
-
 type Props = {
   user: VestigeHeaderUser;
   /** Which module tab is active. `null` = neither (e.g. the campaign list). */

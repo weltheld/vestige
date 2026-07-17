@@ -5,7 +5,7 @@ import {
   getServiceRoleSupabase,
 } from "@vestige/db/server";
 
-export type LibImage = { id: string; url: string };
+type LibImage = { id: string; url: string };
 
 export type UploadImageResult =
   | { ok: true; image: LibImage }

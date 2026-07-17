@@ -6,7 +6,7 @@ import { getOrCreateFamiliarConnection, type FamiliarConnection } from "./famili
 
 type SB = SupabaseClient<Database>;
 
-export type SettingsMember = {
+type SettingsMember = {
   userId: string;
   name: string;
   avatarUrl: string | null;

@@ -5,7 +5,7 @@ import type { Database, NpcRow, NpcStatusDb } from "@vestige/db";
 
 type SB = SupabaseClient<Database>;
 
-export type { NpcRow, NpcStatusDb };
+export type { NpcRow };
 
 export type NpcMentionEntry = {
   sessionId: string;

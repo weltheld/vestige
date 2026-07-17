@@ -2,7 +2,7 @@ export type VoteValue = "yes" | "maybe" | "no";
 
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type BackgroundScene = "tavern" | "parchment" | "wine" | "forest";
-export type CampaignPhase = "draft" | "live";
+type CampaignPhase = "draft" | "live";
 
 export type User = {
   id: string;
@@ -39,17 +39,6 @@ export type Member = {
   joinedAt: string;
 };
 
-// Pre-launch invitations live in this list. They can target either an existing
-// platform user (userId) or a fresh email address (email). Once accepted they
-// become a real Member.
-export type Invitation = {
-  groupId: string;
-  userId?: string;
-  email?: string;
-  status: "queued" | "sent" | "joined";
-  invitedAt: string;
-};
-
 export type Vote = {
   groupId: string;
   userId: string;
@@ -57,4 +46,3 @@ export type Vote = {
   value: VoteValue;
 };
 
-export type Session = { userId: string | null };

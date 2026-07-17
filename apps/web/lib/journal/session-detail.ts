@@ -5,7 +5,7 @@ import type { Database, JournalCharacterRoleDb } from "@vestige/db";
 
 type SB = SupabaseClient<Database>;
 
-export type SessionCharacter = {
+type SessionCharacter = {
   id: string;
   name: string;
   role: JournalCharacterRoleDb;
@@ -22,7 +22,7 @@ export type Annotation = {
   createdAt: string;
 };
 
-export type SessionImage = {
+type SessionImage = {
   id: string;
   url: string;
 };
