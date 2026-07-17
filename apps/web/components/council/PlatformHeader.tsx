@@ -65,7 +65,11 @@ export function PlatformHeader({
               Calendar
             </span>
             <Link
-              href="/journal"
+              // Bare "/journal" ignores which campaign you're viewing and
+              // redirects to campaigns[0] (most recently joined) — that's
+              // the "campaign changes on navigation" bug. Route straight to
+              // this campaign's journal instead, matching the Codex link.
+              href={campaign ? `/journal/c/${campaign.id}` : "/journal"}
               className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
             >
               <ScrollText size={14} />
