@@ -35,13 +35,6 @@ export async function setViableWeekdays(campaignId: string, weekdays: number[]) 
   revalidatePath(`/journal/c/${campaignId}/settings`);
 }
 
-export async function setCampaignCover(campaignId: string, url: string) {
-  const supabase = await sb();
-  const { error } = await supabase.from("campaigns").update({ banner_url: url }).eq("id", campaignId);
-  if (error) throw error;
-  revalidatePath(`/journal/c/${campaignId}/settings`);
-}
-
 /** Clear the campaign banner (RLS: only the creator can update campaigns). */
 export async function removeCampaignBanner(campaignId: string) {
   const supabase = await sb();
@@ -58,17 +51,6 @@ export async function setMemberDm(campaignId: string, userId: string, isDm: bool
   const { error } = await supabase
     .from("campaign_members")
     .update({ is_dm: isDm })
-    .eq("campaign_id", campaignId)
-    .eq("user_id", userId);
-  if (error) throw error;
-  revalidatePath(`/journal/c/${campaignId}/settings`);
-}
-
-export async function removeMember(campaignId: string, userId: string) {
-  const supabase = await sb();
-  const { error } = await supabase
-    .from("campaign_members")
-    .delete()
     .eq("campaign_id", campaignId)
     .eq("user_id", userId);
   if (error) throw error;

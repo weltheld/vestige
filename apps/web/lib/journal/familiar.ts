@@ -9,10 +9,7 @@ type SB = SupabaseClient<Database>;
 
 /** Where Familiar POSTs recaps. This app's basePath is "/journal", so the
  *  route (app/api/familiar/ingest) lives under it. */
-export const FAMILIAR_INGEST_URL = `${WEB_URL}/journal/api/familiar/ingest`;
-
-/** The Familiar landing / download page. */
-export const FAMILIAR_DOWNLOAD_URL = "https://dnd-recap-bot.vercel.app";
+const FAMILIAR_INGEST_URL = `${WEB_URL}/journal/api/familiar/ingest`;
 
 function newIngestToken() {
   const rand = () => globalThis.crypto.randomUUID().replace(/-/g, "");

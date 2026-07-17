@@ -140,36 +140,6 @@ export async function removeMember(campaignId: string, userId: string): Promise<
   return { ok: true };
 }
 
-/** A member leaves a campaign they belong to. The creator can't leave (they
- *  own it) — they'd delete it instead. */
-export async function leaveCampaign(campaignId: string): Promise<SimpleResult> {
-  const supabase = await getServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "You must be signed in." };
-
-  const { data: campaign } = await supabase
-    .from("campaigns")
-    .select("id, creator_id")
-    .eq("id", campaignId)
-    .maybeSingle();
-  if (!campaign) return { ok: false, error: "Campaign not found." };
-  if (campaign.creator_id === user.id) {
-    return { ok: false, error: "The campaign owner can't leave — delete the campaign instead." };
-  }
-
-  const admin = getServiceRoleSupabase();
-  const { error } = await admin
-    .from("campaign_members")
-    .delete()
-    .eq("campaign_id", campaignId)
-    .eq("user_id", user.id);
-  if (error) return { ok: false, error: error.message };
-
-  await admin.from("invitations").delete().eq("campaign_id", campaignId).eq("user_id", user.id);
-  return { ok: true };
-}
 
 export async function addExistingMember(campaignId: string, userId: string): Promise<SimpleResult> {
   const guard = await creatorGuard(campaignId);

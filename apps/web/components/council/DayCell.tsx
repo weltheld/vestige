@@ -31,7 +31,7 @@ type Props = {
   showVotes?: boolean;
 };
 
-export function nextVoteValue(current: VoteValue | undefined): VoteValue | null {
+function nextVoteValue(current: VoteValue | undefined): VoteValue | null {
   if (current === "yes") return "maybe";
   if (current === "maybe") return "no";
   if (current === "no") return null;

@@ -20,23 +20,6 @@ export async function uploadJournalImage(campaignId: string, file: File): Promis
   return data.publicUrl;
 }
 
-/** Uploads a campaign cover under {campaignId}/... in the existing `banners`
- *  bucket (creator-only write, per Council of Days' RLS) and returns its URL. */
-export async function uploadCampaignBanner(campaignId: string, file: File): Promise<string> {
-  const supabase = getBrowserSupabase();
-  const ext = file.name.split(".").pop() || "jpg";
-  const path = `${campaignId}/${crypto.randomUUID()}.${ext}`;
-
-  const { error } = await supabase.storage.from("banners").upload(path, file, {
-    cacheControl: "3600",
-    upsert: false,
-  });
-  if (error) throw error;
-
-  const { data } = supabase.storage.from("banners").getPublicUrl(path);
-  return data.publicUrl;
-}
-
 /** Opens a native file picker and resolves with the chosen file, or null. */
 export function pickImageFile(): Promise<File | null> {
   return new Promise((resolve) => {

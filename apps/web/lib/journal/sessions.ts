@@ -16,15 +16,6 @@ export type SessionListItem = {
   updatedAt: string;
 };
 
-export type CampaignHeader = {
-  name: string;
-  coverUrl: string | null;
-  sessionCount: number;
-  startedAt: string | null;
-  /** Party member portrait URLs (for the hero avatar group). */
-  memberAvatars: string[];
-};
-
 function excerptOf(summary: string | null): string {
   if (!summary) return "";
   const text = summary.replace(/\s+/g, " ").trim();
@@ -70,37 +61,4 @@ export async function getSessions(supabase: SB, campaignId: string): Promise<Ses
       authorName: nameById.get(s.created_by) ?? "Unknown",
       updatedAt: s.updated_at,
     }));
-}
-
-/** Hero data for a campaign's Journal home. */
-export async function getCampaignHeader(
-  supabase: SB,
-  campaignId: string,
-  campaign: { name: string; coverUrl: string | null },
-): Promise<CampaignHeader> {
-  const [{ count }, { data: earliest }, { data: members }] = await Promise.all([
-    supabase
-      .from("journal_sessions")
-      .select("id", { count: "exact", head: true })
-      .eq("campaign_id", campaignId),
-    supabase
-      .from("journal_sessions")
-      .select("date")
-      .eq("campaign_id", campaignId)
-      .not("date", "is", null)
-      .order("date", { ascending: true })
-      .limit(1)
-      .maybeSingle(),
-    supabase.from("campaign_members").select("avatar_url").eq("campaign_id", campaignId).limit(6),
-  ]);
-
-  return {
-    name: campaign.name,
-    coverUrl: campaign.coverUrl,
-    sessionCount: count ?? 0,
-    startedAt: earliest?.date ?? null,
-    memberAvatars: (members ?? [])
-      .map((m) => m.avatar_url)
-      .filter((u): u is string => !!u),
-  };
 }

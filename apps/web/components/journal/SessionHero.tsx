@@ -1,5 +1,3 @@
-import { format, parseISO } from "date-fns";
-
 type Props = {
   title: string;
   /** e.g. session number prefix shown before the title in gold-soft. */
@@ -98,10 +96,4 @@ export function SessionHero({
       </div>
     </section>
   );
-}
-
-export function startedSubtitle(sessionCount: number, startedAt: string | null) {
-  const count = `${sessionCount} ${sessionCount === 1 ? "session" : "sessions"}`;
-  if (!startedAt) return count;
-  return `${count} · Started ${format(parseISO(startedAt), "MMMM yyyy")}`;
 }

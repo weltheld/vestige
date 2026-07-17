@@ -58,10 +58,6 @@ export function monthLabel(year: number, monthIndex: number) {
   return format(new Date(year, monthIndex, 1), "LLLL yyyy");
 }
 
-export function shortMonthLabel(year: number, monthIndex: number) {
-  return format(new Date(year, monthIndex, 1), "LLL yyyy");
-}
-
 export function prevMonth(year: number, monthIndex: number) {
   return monthIndex === 0
     ? { year: year - 1, monthIndex: 11 }
@@ -79,12 +75,3 @@ export function defaultMonth() {
   return { year: t.getFullYear(), monthIndex: t.getMonth() };
 }
 
-export function longDateLabel(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return format(new Date(y, m - 1, d), "MMMM d, yyyy");
-}
-
-export function weekdayLabel(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return format(new Date(y, m - 1, d), "EEEE");
-}
