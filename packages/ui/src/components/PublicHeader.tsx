@@ -3,20 +3,31 @@ import { CalendarDays, ScrollText } from "lucide-react";
 import { PlatformCrest } from "./PlatformCrest";
 
 /**
- * The logged-out Vestige header: crest + wordmark + module switcher +
- * SIGN IN link. Mirrors the logged-in VestigeHeader's segmented-control nav
- * design (see SEGMENT_TRACK there) so the look is consistent whether or not
- * you're signed in. The module tabs link to the public per-module
- * description pages; pass `current` to highlight the one you're on.
+ * The logged-out Vestige header. Same chrome as the logged-in VestigeHeader
+ * (height, border, background, crest size, wordmark treatment, the module
+ * switcher's segmented-track design) and the same left-to-right skeleton —
+ * crest+wordmark, module nav, a flex-1 spacer, then the right-side links —
+ * so the header doesn't visibly change when a session starts or ends. The
+ * module tabs link to the public per-module description pages; pass
+ * `current` to highlight the one you're on.
  */
-export function PublicHeader({ current = null }: { current?: "calendar" | "journal" | null }) {
+export function PublicHeader({
+  current = null,
+  /** Carried through to Sign in / Join Vestige when a protected route
+   *  bounced the visitor here, so they land back where they meant to go. */
+  next,
+}: {
+  current?: "calendar" | "journal" | null;
+  next?: string;
+}) {
+  const withNext = (href: string) => (next ? `${href}?next=${encodeURIComponent(next)}` : href);
   return (
-    <header className="flex h-20 w-full items-center justify-between bg-surface px-6 sm:px-12">
-      <div className="flex items-center gap-4">
-        <Link href="/" aria-label="Vestige — home" className="flex items-center gap-2.5">
-          <PlatformCrest size={34} />
-          <span className="font-display text-[17px] font-semibold tracking-[0.1em] text-ink">
-            VESTIGE
+    <header className="border-b border-hairline bg-parchment">
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
+        <Link href="/" aria-label="Vestige — home" className="flex min-w-0 items-center gap-2.5">
+          <PlatformCrest size={38} />
+          <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
+            Vestige
           </span>
         </Link>
 
@@ -37,20 +48,20 @@ export function PublicHeader({ current = null }: { current?: "calendar" | "journ
             />
           </div>
         </nav>
-      </div>
 
-      <div className="flex items-center gap-5 sm:gap-7">
+        <div className="flex-1" />
+
         <Link
           href="/getting-started"
-          className="hidden font-display text-xs font-semibold tracking-[0.08em] text-ink-soft hover:text-wine min-[420px]:block"
+          className="hidden font-body text-xs text-ink-soft transition hover:text-wine min-[420px]:block"
         >
-          GETTING STARTED
+          Getting started
         </Link>
         <Link
-          href="/signin"
-          className="font-display text-xs font-semibold tracking-[0.08em] text-wine hover:opacity-80"
+          href={withNext("/signin")}
+          className="font-display text-xs font-semibold tracking-[0.06em] text-wine transition hover:opacity-80"
         >
-          SIGN IN
+          Sign in
         </Link>
       </div>
     </header>

@@ -45,11 +45,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body className="min-h-screen bg-parchment text-ink antialiased">
-        {/* Apply the user's saved theme before paint to avoid a flash. Shared
-            across all zones via same-origin localStorage. */}
+        {/* Apply the user's saved theme before paint to avoid a flash — or
+            "slate", the platform default, if they've never picked one (this
+            runs identically on the logged-out landing page, so it gets the
+            same default). Shared across all zones via same-origin
+            localStorage; the ThemePicker override always wins once set. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('vestige-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}`,
+            __html: `try{var t=localStorage.getItem('vestige-theme');document.documentElement.setAttribute('data-theme',t||'slate')}catch(e){}`,
           }}
         />
         {children}

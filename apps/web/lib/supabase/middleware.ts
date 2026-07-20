@@ -51,7 +51,11 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && needsAuth) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = pathname.startsWith("/calendar") ? "/calendar/login" : "/signin";
+    // Calendar invite links keep their own login (auto-enrols, no extra
+    // click). Everything else — chiefly a bare /app visit — goes to the
+    // landing page first rather than straight to a bare sign-in form; its
+    // own Sign in / Join Vestige links carry `next` the rest of the way.
+    redirectUrl.pathname = pathname.startsWith("/calendar") ? "/calendar/login" : "/";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }

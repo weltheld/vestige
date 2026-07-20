@@ -16,9 +16,14 @@ export type SessionListItem = {
   updatedAt: string;
 };
 
+// Mentions store as [Label](codex:<uuid>) / [Label](session:<uuid>) — this
+// is a plain-text preview (no links rendered here), so collapse each one
+// down to its label instead of showing the raw markdown + id.
+const MENTION_RE = /\[([^\]]+)\]\((?:codex|session):[0-9a-fA-F-]{36}\)/g;
+
 function excerptOf(summary: string | null): string {
   if (!summary) return "";
-  const text = summary.replace(/\s+/g, " ").trim();
+  const text = summary.replace(MENTION_RE, "$1").replace(/\s+/g, " ").trim();
   return text.length > 200 ? `${text.slice(0, 200)}…` : text;
 }
 

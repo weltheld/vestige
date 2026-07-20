@@ -38,10 +38,13 @@ export function applyTheme(value: string) {
 
 /** A compact swatch list for the profile menu. */
 export function ThemePicker() {
-  const [theme, setTheme] = useState("parchment");
+  // "slate" matches the root layout's no-flash script default — by the time
+  // this mounts, data-theme is always already set, but this fallback keeps
+  // the two in sync for any edge-case hydration timing.
+  const [theme, setTheme] = useState("slate");
 
   useEffect(() => {
-    setTheme(document.documentElement.getAttribute("data-theme") || "parchment");
+    setTheme(document.documentElement.getAttribute("data-theme") || "slate");
   }, []);
 
   return (

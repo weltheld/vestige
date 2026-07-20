@@ -3,11 +3,21 @@ import { Calendar, BookOpen, Users } from "lucide-react";
 import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
-export default function Landing() {
+export default async function Landing({
+  searchParams,
+}: {
+  // Set by middleware when an unauthenticated visitor is bounced here from
+  // a protected route (e.g. /app) — carried through to Sign in / Join
+  // Vestige below so they land back where they meant to go.
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+  const safeNext = next && next.startsWith("/") ? next : undefined;
+
   return (
     <div className="flex min-h-screen flex-col bg-parchment">
-      <PublicHeader />
-      <Hero />
+      <PublicHeader next={safeNext} />
+      <Hero next={safeNext} />
       <Pillars />
       <HowItWorks />
       <SiteFooter />
@@ -17,7 +27,8 @@ export default function Landing() {
 
 /* ---------------------------------------------------------------- Hero */
 
-function Hero() {
+function Hero({ next }: { next?: string }) {
+  const withNext = (href: string) => (next ? `${href}?next=${encodeURIComponent(next)}` : href);
   return (
     <section className="flex flex-col items-center gap-7 bg-parchment px-6 py-24 text-center sm:px-12">
       <p className="font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">
@@ -33,13 +44,13 @@ function Hero() {
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Link
-          href="/signup"
+          href={withNext("/signup")}
           className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
         >
           Join Vestige
         </Link>
         <Link
-          href="/signin"
+          href={withNext("/signin")}
           className="flex h-11 items-center justify-center rounded-lg border border-hairline px-6 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink transition hover:border-gold"
         >
           Sign in
