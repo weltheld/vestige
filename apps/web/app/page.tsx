@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Calendar, BookOpen, Users } from "lucide-react";
+import { Calendar, BookOpen, Library, Sparkles } from "lucide-react";
 import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -68,7 +68,7 @@ function Pillars() {
     {
       Icon: Calendar,
       title: "One shared schedule",
-      body: "The Calendar shows when everyone can play. No more thread-scrolling to find a date.",
+      body: "The Calendar shows when everyone can play. Vote on dates and the best one floats to the top.",
     },
     {
       Icon: BookOpen,
@@ -76,9 +76,14 @@ function Pillars() {
       body: "Every session is recorded the same way: summary, characters, notes. Annotated by anyone in the party.",
     },
     {
-      Icon: Users,
-      title: "One party, one place",
-      body: "Players and characters carry across both modules. Sign in once and find everything.",
+      Icon: Library,
+      title: "One campaign wiki",
+      body: "NPCs, places, and lore build themselves into a searchable Codex as you write your sessions.",
+    },
+    {
+      Icon: Sparkles,
+      title: "An optional scribe",
+      body: "Familiar, our Discord bot, can record and transcribe your session automatically — straight into the Journal.",
     },
   ];
   return (
@@ -86,15 +91,12 @@ function Pillars() {
       <p className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
         What Vestige offers
       </p>
-      <div className="flex flex-col items-stretch gap-8 md:flex-row md:gap-0">
-        {pillars.map(({ Icon, title, body }, i) => (
-          <div key={title} className="flex items-stretch">
-            {i > 0 && <div className="mx-8 hidden w-px bg-hairline md:block" />}
-            <div className="flex max-w-[280px] flex-col gap-4">
-              <Icon size={28} className="text-gold" />
-              <h3 className="font-display text-lg font-semibold text-ink">{title}</h3>
-              <p className="font-body text-sm leading-[1.7] text-ink-soft">{body}</p>
-            </div>
+      <div className="grid w-full max-w-[1000px] grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-hairline">
+        {pillars.map(({ Icon, title, body }) => (
+          <div key={title} className="flex max-w-[280px] flex-col gap-4 lg:px-8 lg:first:pl-0 lg:last:pr-0">
+            <Icon size={28} className="text-gold" />
+            <h3 className="font-display text-lg font-semibold text-ink">{title}</h3>
+            <p className="font-body text-sm leading-[1.7] text-ink-soft">{body}</p>
           </div>
         ))}
       </div>
@@ -109,17 +111,17 @@ function HowItWorks() {
     {
       n: "01",
       title: "Open a campaign",
-      body: "Name it, give it an image, invite your party. The campaign is shared by Calendar and Journal automatically.",
+      body: "Name it, give it an image, and invite your players — one shared space across Calendar, Journal, and Codex.",
     },
     {
       n: "02",
-      title: "Find your next date",
-      body: "The Calendar polls everyone. Best day floats to the top.",
+      title: "Vote on a date",
+      body: "Fill the Calendar with your votes to find your next date — the best day for everyone floats to the top.",
     },
     {
       n: "03",
-      title: "Capture what happened",
-      body: "After the session, drop a recap in the Journal. Anyone in the party can annotate it later.",
+      title: "Capture the session",
+      body: "Record with Familiar, our Discord bot, or write it up yourself — either way it's saved to the Journal. The Codex builds itself into a campaign wiki from what you write.",
     },
   ];
   return (
