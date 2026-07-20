@@ -122,7 +122,7 @@ export function SettingsClient({ settings, manage, magicLink, variant = "page" }
         {tab === "familiar" && isCreator && settings.familiar && (
           <FamiliarSettings campaignId={id} connection={settings.familiar} />
         )}
-        {tab === "codex" && isCreator && (
+        {tab === "codex" && isCreator && settings.ai && (
           <div className="flex flex-col gap-3">
             <SectionLabel>AI summaries</SectionLabel>
             <AiKeySettings campaignId={id} current={settings.ai} />

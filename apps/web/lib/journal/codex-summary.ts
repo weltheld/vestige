@@ -145,15 +145,25 @@ export async function resolveProvider(
 ): Promise<{ provider: AiProviderDb; apiKey: string } | null> {
   const { data } = await supabase
     .from("campaign_ai_settings")
-    .select("provider, anthropic_key, groq_key")
+    .select("provider, anthropic_key_id, groq_key_id")
     .eq("campaign_id", campaignId)
     .maybeSingle();
-  const activeKey = data
+  const activeKeyId = data
     ? data.provider === "anthropic"
-      ? data.anthropic_key
-      : data.groq_key
+      ? data.anthropic_key_id
+      : data.groq_key_id
     : null;
-  if (data && activeKey) return { provider: data.provider, apiKey: activeKey };
+  if (data && activeKeyId) {
+    // Keys now live in the caller's personal library (shared across their
+    // campaigns) rather than on this row directly — RLS on user_ai_keys
+    // (owner-only) covers this fine since only the creator ever gets here.
+    const { data: key } = await supabase
+      .from("user_ai_keys")
+      .select("api_key")
+      .eq("id", activeKeyId)
+      .maybeSingle();
+    if (key?.api_key) return { provider: data.provider, apiKey: key.api_key };
+  }
   if (process.env.ANTHROPIC_API_KEY) {
     return { provider: "anthropic", apiKey: process.env.ANTHROPIC_API_KEY };
   }

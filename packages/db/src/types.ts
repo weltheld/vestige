@@ -184,12 +184,23 @@ export type FamiliarConnectionRow = {
 
 export type AiProviderDb = "anthropic" | "groq";
 
+/** A user's own AI provider key, kept once and linkable from any of their
+ *  campaigns (see CampaignAiSettingsRow) instead of re-pasted per campaign. */
+export type UserAiKeyRow = {
+  id: string;
+  user_id: string;
+  provider: AiProviderDb;
+  api_key: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type CampaignAiSettingsRow = {
   campaign_id: string;
-  /** Which provider is ACTIVE for summaries (both keys can be stored). */
+  /** Which provider is ACTIVE for summaries (both can be linked). */
   provider: AiProviderDb;
-  anthropic_key: string | null;
-  groq_key: string | null;
+  anthropic_key_id: string | null;
+  groq_key_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -558,14 +569,31 @@ export type Database = {
         Insert: {
           campaign_id: string;
           provider: AiProviderDb;
-          anthropic_key?: string | null;
-          groq_key?: string | null;
+          anthropic_key_id?: string | null;
+          groq_key_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<CampaignAiSettingsRow>;
         Relationships: [
           Rel<"campaign_ai_settings_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+          Rel<"campaign_ai_settings_anthropic_key_id_fkey", ["anthropic_key_id"], "user_ai_keys", ["id"], false>,
+          Rel<"campaign_ai_settings_groq_key_id_fkey", ["groq_key_id"], "user_ai_keys", ["id"], false>,
+        ];
+      };
+      user_ai_keys: {
+        Row: UserAiKeyRow;
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: AiProviderDb;
+          api_key: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<UserAiKeyRow>;
+        Relationships: [
+          Rel<"user_ai_keys_user_id_fkey", ["user_id"], "profiles", ["id"], false>,
         ];
       };
       journal_session_revisions: {
