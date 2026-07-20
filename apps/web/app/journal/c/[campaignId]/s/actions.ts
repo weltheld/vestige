@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@vestige/db/server";
-import type { JournalCharacterRoleDb } from "@vestige/db";
+import type { JournalCharacterRoleDb, NpcKindDb } from "@vestige/db";
 import { syncNpcMentions } from "@/lib/journal/npc-sync";
 import { isCampaignOwner } from "@/lib/journal/data";
 import { extractSessionEntities } from "@/lib/journal/codex-extract";
@@ -245,20 +245,27 @@ export async function addAnnotation(
   revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
 }
 
-export type CodexExtractResult =
-  | { ok: true; created: number; linked: number; total: number }
+export type ExtractedEntityPreview = {
+  name: string;
+  kind: NpcKindDb;
+  summary: string;
+  /** Set when an entry with this name already exists in the codex —
+   *  selecting it links this session to it instead of creating a new one. */
+  existingId: string | null;
+};
+
+export type PreviewCodexExtractionResult =
+  | { ok: true; entities: ExtractedEntityPreview[] }
   | { ok: false; error: string };
 
-/** Extract people/places/events from a session's text and add them to the
- *  campaign codex — the on-demand version of Familiar's ingest first pass.
- *  Owner-only: each run spends the campaign's AI key. New entries are
- *  created (existing summaries are never overwritten), the first occurrence
- *  of each name in the session text becomes a [Name](codex:id) link, and
- *  matching mention rows are inserted. */
-export async function extractCodexFromSession(
+/** Run the AI extraction pass over a session and return what it found,
+ *  WITHOUT writing anything — the review step lets the owner pick which
+ *  entities actually get added before anything touches the codex. Owner-
+ *  only: this is the step that spends the campaign's AI key. */
+export async function previewCodexExtraction(
   campaignId: string,
   sessionId: string,
-): Promise<CodexExtractResult> {
+): Promise<PreviewCodexExtractionResult> {
   const { supabase, userId } = await uid();
   if (!(await isCampaignOwner(supabase, userId, campaignId))) {
     return { ok: false, error: "Only the campaign owner can extract codex entries." };
@@ -289,16 +296,62 @@ export async function extractCodexFromSession(
     return { ok: false, error: "Nothing codex-worthy found in this session." };
   }
 
+  const { data: existing } = await supabase
+    .from("npcs")
+    .select("id, name")
+    .eq("campaign_id", campaignId);
+  const existingByName = new Map((existing ?? []).map((n) => [n.name.trim().toLowerCase(), n.id] as const));
+
+  return {
+    ok: true,
+    entities: extracted.entities.map((e) => ({
+      name: e.name,
+      kind: e.kind,
+      summary: e.summary,
+      existingId: existingByName.get(e.name.trim().toLowerCase()) ?? null,
+    })),
+  };
+}
+
+export type ApplyCodexExtractionResult =
+  | { ok: true; created: number; linked: number }
+  | { ok: false; error: string };
+
+/** Add the owner's SELECTED subset of a previewed extraction to the codex —
+ *  the on-demand version of Familiar's ingest first pass. New entries are
+ *  created (existing summaries are never overwritten), the first occurrence
+ *  of each name in the session text becomes a [Name](codex:id) link, and
+ *  matching mention rows are inserted. */
+export async function applyCodexExtraction(
+  campaignId: string,
+  sessionId: string,
+  selected: Array<{ name: string; kind: NpcKindDb; summary: string }>,
+): Promise<ApplyCodexExtractionResult> {
+  const { supabase, userId } = await uid();
+  if (!(await isCampaignOwner(supabase, userId, campaignId))) {
+    return { ok: false, error: "Only the campaign owner can add codex entries." };
+  }
+  if (selected.length === 0) return { ok: false, error: "Nothing selected." };
+
+  const { data: session } = await supabase
+    .from("journal_sessions")
+    .select("id, campaign_id, summary, npcs, notes")
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (!session || session.campaign_id !== campaignId) {
+    return { ok: false, error: "Session not found." };
+  }
+
   // How many are genuinely new (before seeding creates them).
   const { data: existing } = await supabase
     .from("npcs")
     .select("name")
     .eq("campaign_id", campaignId);
   const known = new Set((existing ?? []).map((n) => n.name.trim().toLowerCase()));
-  const created = extracted.entities.filter((e) => !known.has(e.name.toLowerCase())).length;
+  const created = selected.filter((e) => !known.has(e.name.trim().toLowerCase())).length;
 
   // The owner's own client passes the npcs RLS insert policy.
-  const resolved = await seedCodexEntities(supabase, campaignId, userId, extracted.entities);
+  const resolved = await seedCodexEntities(supabase, campaignId, userId, selected);
   if (resolved.length === 0) {
     return { ok: false, error: "Could not create codex entries. Try again." };
   }
@@ -319,11 +372,11 @@ export async function extractCodexFromSession(
   if (updateError) {
     return { ok: false, error: "Codex entries were created, but linking the text failed." };
   }
-  // Record a mention for EVERY entity extracted from this session — that's
-  // its "Appears in" provenance. This is independent of linkifyEntities,
-  // which only produces an in-text hyperlink when it can match the name
-  // verbatim; an entity the AI found but couldn't string-match still belongs
-  // to this session and must show up under "Appears in".
+  // Record a mention for EVERY selected entity — that's its "Appears in"
+  // provenance. This is independent of linkifyEntities, which only
+  // produces an in-text hyperlink when it can match the name verbatim; an
+  // entity that couldn't be string-matched still belongs to this session
+  // and must show up under "Appears in".
   if (resolved.length) {
     await supabase.from("npc_mentions").upsert(
       resolved.map((e) => ({ npc_id: e.id, session_id: sessionId })),
@@ -340,5 +393,5 @@ export async function extractCodexFromSession(
 
   revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
   revalidatePath(`/journal/c/${campaignId}/codex`);
-  return { ok: true, created, linked: resolved.length, total: resolved.length };
+  return { ok: true, created, linked: resolved.length };
 }
