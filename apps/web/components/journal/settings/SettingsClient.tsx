@@ -418,6 +418,11 @@ function PlayersTab({
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
         <SectionLabel>Players ({settings.members.length})</SectionLabel>
+        {settings.membersError && (
+          <p className="rounded-md border border-vote-no/40 bg-vote-no/10 px-3 py-2 font-body text-[12px] text-vote-no">
+            Couldn&apos;t load players: {settings.membersError}
+          </p>
+        )}
         <ul className="flex flex-col gap-2">
           {settings.members.map((m) => (
             <li

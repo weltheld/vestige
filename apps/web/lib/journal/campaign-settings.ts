@@ -51,6 +51,11 @@ export type CampaignSettings = {
   /** Weekdays the calendar offers for voting (0 = Sunday … 6 = Saturday). */
   viableWeekdays: number[];
   members: SettingsMember[];
+  /** Set when the members query itself failed (RLS, bad join, etc.) — as
+   *  opposed to `members: []`, which means the query succeeded and the
+   *  campaign genuinely has no rows. Surfaced in the Players tab instead of
+   *  being silently swallowed into an empty list. */
+  membersError: string | null;
   /** Familiar ingest token + status — creator only (the token is a secret). */
   familiar: FamiliarConnection | null;
   /** AI summarization key (masked) — creator only; null = none saved. */
@@ -84,11 +89,16 @@ export async function getCampaignSettings(
     .maybeSingle();
   if (!c) return null;
 
-  const { data: rows } = await supabase
+  const { data: rows, error: membersQueryError } = await supabase
     .from("campaign_members")
     .select("user_id, is_dm, character_name, avatar_url, profiles(first_name, display_name, avatar_url)")
     .eq("campaign_id", campaignId)
     .order("joined_at", { ascending: true });
+  if (membersQueryError) {
+    // Surface the real cause (RLS, ambiguous embed, etc.) instead of quietly
+    // rendering "Players (0)" as if the campaign genuinely had no members.
+    console.error(`[campaign-settings] members query failed for ${campaignId}:`, membersQueryError);
+  }
 
   const members: SettingsMember[] = ((rows ?? []) as unknown as MemberRow[]).map((m) => ({
     userId: m.user_id,
@@ -168,6 +178,7 @@ export async function getCampaignSettings(
     isCreator,
     viableWeekdays: c.viable_weekdays ?? [],
     members,
+    membersError: membersQueryError?.message ?? null,
     familiar,
     ai,
   };
