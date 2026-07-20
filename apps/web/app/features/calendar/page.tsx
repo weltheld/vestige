@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Calendar, CheckCircle2, Sparkles, Swords } from "lucide-react";
 import { PublicHeader } from "@vestige/ui";
@@ -35,16 +36,17 @@ export default function CalendarFeature() {
           >
             Join Vestige
           </Link>
-          <Link
-            href="/features/journal"
-            className="flex h-11 items-center justify-center rounded-lg border border-hairline px-6 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink transition hover:border-gold"
-          >
-            See the Journal
-          </Link>
         </div>
 
-        <div className="mt-6 w-full max-w-[440px] rounded-2xl border border-hairline bg-cod-soft p-6">
-          <MiniCalendar />
+        <div className="mt-6 w-full max-w-[900px] overflow-hidden rounded-2xl border border-hairline shadow-[0_16px_48px_-16px_rgba(43,33,24,0.28)]">
+          <Image
+            src="/images/calendar-preview.png"
+            alt="The Calendar module, showing a month of availability votes with the best day highlighted"
+            width={2218}
+            height={1510}
+            className="h-auto w-full"
+            priority
+          />
         </div>
       </section>
 
@@ -105,27 +107,5 @@ function ClosingCta() {
         Join Vestige
       </Link>
     </section>
-  );
-}
-
-function MiniCalendar() {
-  const yes = new Set([3, 9, 16, 17, 24]);
-  const best = 17;
-  return (
-    <div className="grid grid-cols-7 gap-1.5">
-      {Array.from({ length: 28 }, (_, i) => (
-        <div
-          key={i}
-          className={[
-            "aspect-square rounded-[5px] border",
-            i === best
-              ? "border-wine bg-[color-mix(in_srgb,var(--wine)_15%,var(--surface))]"
-              : yes.has(i)
-                ? "border-transparent bg-[color-mix(in_srgb,var(--vote-yes)_20%,var(--surface))]"
-                : "border-[color-mix(in_srgb,var(--hairline)_70%,var(--surface))] bg-surface",
-          ].join(" ")}
-        />
-      ))}
-    </div>
   );
 }

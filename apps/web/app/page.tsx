@@ -42,20 +42,14 @@ function Hero({ next }: { next?: string }) {
         place for everything your party shares between sessions.
       </p>
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <Link
-          href={withNext("/signup")}
-          className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-        >
-          Join Vestige
-        </Link>
-        <Link
-          href={withNext("/signin")}
-          className="flex h-11 items-center justify-center rounded-lg border border-hairline px-6 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink transition hover:border-gold"
-        >
-          Sign in
-        </Link>
-      </div>
+      {/* Just Join Vestige here — the header's own Sign in link already
+          covers returning users, so the hero doesn't need to repeat it. */}
+      <Link
+        href={withNext("/signup")}
+        className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+      >
+        Join Vestige
+      </Link>
 
     </section>
   );

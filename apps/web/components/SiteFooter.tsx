@@ -1,16 +1,9 @@
 import Link from "next/link";
-import { PlatformCrest } from "@vestige/ui";
 
 /** The marketing-site footer, shared by the landing and the per-module pages. */
 export function SiteFooter() {
   return (
-    <footer className="mt-auto flex items-center justify-between gap-6 border-t border-hairline bg-surface px-6 py-10 sm:px-12">
-      <div className="flex items-center gap-2.5">
-        <PlatformCrest size={22} />
-        <span className="font-display text-sm font-semibold tracking-[0.1em] text-ink">
-          VESTIGE
-        </span>
-      </div>
+    <footer className="mt-auto flex items-center justify-center gap-6 border-t border-hairline bg-surface px-6 py-10 sm:px-12">
       <nav className="flex gap-6">
         <Link
           href="/getting-started"

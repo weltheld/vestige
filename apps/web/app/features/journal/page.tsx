@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, ScrollText, MessagesSquare, Library } from "lucide-react";
 import { PublicHeader } from "@vestige/ui";
@@ -35,16 +36,17 @@ export default function JournalFeature() {
           >
             Join Vestige
           </Link>
-          <Link
-            href="/features/calendar"
-            className="flex h-11 items-center justify-center rounded-lg border border-hairline px-6 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink transition hover:border-gold"
-          >
-            See the Calendar
-          </Link>
         </div>
 
-        <div className="mt-6 w-full max-w-[440px] rounded-2xl border border-hairline bg-cod-soft p-6 text-left">
-          <MiniJournal />
+        <div className="mt-6 w-full max-w-[900px] overflow-hidden rounded-2xl border border-hairline shadow-[0_16px_48px_-16px_rgba(43,33,24,0.28)]">
+          <Image
+            src="/images/journal-preview.png"
+            alt="The Journal module, showing a recorded session recap and the Familiar connection card"
+            width={2218}
+            height={1508}
+            className="h-auto w-full"
+            priority
+          />
         </div>
       </section>
 
@@ -105,24 +107,5 @@ function ClosingCta() {
         Join Vestige
       </Link>
     </section>
-  );
-}
-
-function MiniJournal() {
-  return (
-    <div className="relative">
-      <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-        Session 07
-      </p>
-      <p className="mt-1 font-display text-base text-wine">The Trial at Silverhold</p>
-      <div className="mt-3 space-y-2">
-        <div className="h-0.5 w-full max-w-[260px] rounded bg-hairline" />
-        <div className="h-0.5 w-[88%] max-w-[230px] rounded bg-hairline" />
-        <div className="h-0.5 w-[76%] max-w-[200px] rounded bg-hairline" />
-      </div>
-      <span className="mt-3 inline-flex items-center rounded-lg bg-surface px-3 py-2 font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-gold">
-        + Annotate
-      </span>
-    </div>
   );
 }
