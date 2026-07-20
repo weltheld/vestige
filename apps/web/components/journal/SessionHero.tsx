@@ -53,16 +53,23 @@ export function SessionHero({
 
   if (variant === "session") {
     return (
-      <section className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl bg-cod-soft px-5 py-4">
+      <section className="flex flex-col gap-3 rounded-xl bg-cod-soft px-4 py-4 sm:flex-row sm:items-center sm:gap-x-5 sm:gap-y-3 sm:px-5">
         <div className="min-w-0 flex-1">
-          <h1 className="truncate font-display text-[22px] font-semibold tracking-[0.04em] text-ink">
+          {/* Smaller on mobile — at the desktop size this was cramped
+              against the avatar group + action button and read as
+              oversized/unreadable in the squeezed space. */}
+          <h1 className="truncate font-display text-[17px] font-semibold tracking-[0.02em] text-ink sm:text-[22px] sm:tracking-[0.04em]">
             {prefix && <span className="text-gold-soft">{prefix}</span>}
             {title}
           </h1>
           <p className="mt-0.5 font-body text-[12px] italic text-ink-soft">{subtitle}</p>
         </div>
-        {avatarGroup && <div className="shrink-0">{avatarGroup}</div>}
-        {action && <div className="shrink-0">{action}</div>}
+        {(avatarGroup || action) && (
+          <div className="flex shrink-0 items-center gap-3">
+            {avatarGroup}
+            {action}
+          </div>
+        )}
       </section>
     );
   }

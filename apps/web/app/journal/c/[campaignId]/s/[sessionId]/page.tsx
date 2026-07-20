@@ -49,7 +49,7 @@ export default async function SessionDetailPage({
     .filter((u): u is string => !!u);
 
   return (
-    <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-16 pt-6">
+    <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-16 pt-6 sm:px-8 lg:px-12">
       <SessionHero
         variant="session"
         title={session.title}
@@ -74,9 +74,16 @@ export default async function SessionDetailPage({
         }
       />
 
-      <div className="flex items-start gap-8">
-        <SessionSidebar session={session} campaignId={campaignId} />
-        <div className="min-w-0 flex-1">
+      {/* Mobile stacks title (above) → recap/changelog → session image →
+          session info; the sidebar (image+info) trails the main content via
+          order, then moves back to its usual left column at lg. */}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+        <SessionSidebar
+          session={session}
+          campaignId={campaignId}
+          className="order-2 lg:order-1"
+        />
+        <div className="order-1 min-w-0 flex-1 lg:order-2">
           <SessionTabs
             revisionCount={revisions.length}
             recap={<NotesBody session={session} campaignId={campaignId} players={players} />}

@@ -45,15 +45,52 @@ function Avatar({ url, name, size, ring }: { url: string | null; name: string; s
 export function SessionSidebar({
   session,
   campaignId,
+  className = "",
 }: {
   session: SessionDetail;
   campaignId: string;
+  className?: string;
 }) {
   const dateLabel = session.date ? format(parseISO(session.date), "MMMM d, yyyy") : "Undated";
   const edited = formatDistanceToNow(parseISO(session.updatedAt), { addSuffix: true });
 
   return (
-    <aside className="flex w-[280px] shrink-0 flex-col gap-4">
+    // Full width on mobile (a hardcoded 280px was crushing the recap column
+    // into a sliver on phones); fixed sidebar width returns at lg alongside
+    // the two-column layout. Image card first, Info card second — on mobile
+    // this whole block trails the recap/changelog (see the page's order
+    // classes), so within it the requested image-then-info order holds.
+    <aside className={`flex w-full flex-col gap-4 lg:w-[280px] lg:shrink-0 ${className}`}>
+      <Card label="Session Image">
+        <div className="mx-auto h-[140px] w-full max-w-[240px] overflow-hidden rounded-lg bg-cod-soft">
+          {session.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={session.imageUrl} alt="" className="h-full w-full object-cover" />
+          )}
+        </div>
+        {session.images.length > 1 && (
+          <div className="flex flex-wrap justify-center gap-1.5 lg:justify-start">
+            {session.images
+              .filter((img) => img.url !== session.imageUrl)
+              .map((img) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={img.id}
+                  src={img.url}
+                  alt=""
+                  className="h-10 w-10 rounded-md object-cover"
+                />
+              ))}
+          </div>
+        )}
+        <Link
+          href={journal.editSession(campaignId, session.id)}
+          className="font-body text-[12px] text-ink-soft underline underline-offset-2"
+        >
+          {session.images.length > 1 ? "Manage images" : "Change image"}
+        </Link>
+      </Card>
+
       <Card label="Session Info">
         <Field label="Date" value={dateLabel} />
         <Field
@@ -76,37 +113,6 @@ export function SessionSidebar({
 
       {/* The former "In This Session" card was redundant with the Player
           Characters section of the recap itself, which now renders avatars. */}
-
-      <Card label="Session Image">
-        <div className="h-[140px] w-[240px] overflow-hidden rounded-lg bg-cod-soft">
-          {session.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={session.imageUrl} alt="" className="h-full w-full object-cover" />
-          )}
-        </div>
-        {session.images.length > 1 && (
-          <div className="flex flex-wrap gap-1.5">
-            {session.images
-              .filter((img) => img.url !== session.imageUrl)
-              .map((img) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={img.id}
-                  src={img.url}
-                  alt=""
-                  className="h-10 w-10 rounded-md object-cover"
-                />
-              ))}
-          </div>
-        )}
-        <Link
-          href={journal.editSession(campaignId, session.id)}
-          className="font-body text-[12px] text-ink-soft underline underline-offset-2"
-        >
-          {session.images.length > 1 ? "Manage images" : "Change image"}
-        </Link>
-      </Card>
-
     </aside>
   );
 }
