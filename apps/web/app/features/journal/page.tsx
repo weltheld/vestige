@@ -42,8 +42,8 @@ export default function JournalFeature() {
           <Image
             src="/images/journal-preview.png"
             alt="The Journal module, showing a recorded session recap and the Familiar connection card"
-            width={2218}
-            height={1508}
+            width={2186}
+            height={1848}
             className="h-auto w-full"
             priority
           />
