@@ -161,6 +161,12 @@ export function EditSessionClient({
   }, [fields, localSessionId, campaignId, router]);
 
   async function handleSave() {
+    // Cancel any pending autosave — otherwise its debounced timer can still
+    // fire after this explicit save starts, racing it. Both paths guard
+    // session creation with the same `creating` ref, so whichever runs
+    // first "wins" and the other becomes a no-op instead of a duplicate.
+    if (timer.current) clearTimeout(timer.current);
+    if (creating.current) return;
     setSaveState("saving");
     if (localSessionId) {
       await saveSession(campaignId, localSessionId, fields, true);
@@ -169,8 +175,10 @@ export function EditSessionClient({
       setSavedAgo("just now");
       router.push(journal.session(campaignId, localSessionId));
     } else {
+      creating.current = true;
       const id = await createSession(campaignId, fields);
       if (fields.image_url) await addSessionImage(campaignId, id, fields.image_url);
+      creating.current = false;
       lastRevisionAt.current = Date.now();
       router.push(journal.session(campaignId, id));
     }
@@ -482,7 +490,8 @@ export function EditSessionClient({
               <button
                 type="button"
                 onClick={handleSave}
-                className="flex items-center gap-1.5 rounded-lg bg-wine px-[22px] py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white"
+                disabled={saveState === "saving"}
+                className="flex items-center gap-1.5 rounded-lg bg-wine px-[22px] py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-60"
               >
                 <Check size={13} /> Save session
               </button>
