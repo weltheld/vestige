@@ -1,9 +1,12 @@
 type Props = {
   title: string;
-  /** e.g. session number prefix shown before the title in gold-soft. */
+  /** e.g. session number, shown as its own label line above the title. */
   prefix?: string;
   coverUrl: string | null;
-  subtitle: string;
+  /** Not shown in the "session" variant (the campaign name was dropped
+   *  from the session-detail hero — redundant with the header's own
+   *  campaign switcher). Still used by the "campaign" variant. */
+  subtitle?: string;
   /** Party / character portrait URLs (PCs get a gold ring). */
   avatars?: string[];
   extraCount?: number;
@@ -55,14 +58,19 @@ export function SessionHero({
     return (
       <section className="flex flex-col gap-3 rounded-xl bg-cod-soft px-4 py-4 sm:flex-row sm:items-center sm:gap-x-5 sm:gap-y-3 sm:px-5">
         <div className="min-w-0 flex-1">
-          {/* Smaller on mobile — at the desktop size this was cramped
-              against the avatar group + action button and read as
-              oversized/unreadable in the squeezed space. */}
-          <h1 className="truncate font-display text-[17px] font-semibold tracking-[0.02em] text-ink sm:text-[22px] sm:tracking-[0.04em]">
-            {prefix && <span className="text-gold-soft">{prefix}</span>}
+          {/* Session number as its own label line, title below it — gives
+              the title a full-width row instead of sharing one line with
+              the prefix, so it no longer has to truncate. */}
+          {prefix && (
+            <p className="font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-gold-soft">
+              {prefix}
+            </p>
+          )}
+          {/* No truncate — smaller on mobile specifically so a full title
+              still fits on one line at that width instead of clipping. */}
+          <h1 className="mt-0.5 font-display text-[16px] font-semibold tracking-[0.02em] text-ink sm:text-[22px] sm:tracking-[0.04em]">
             {title}
           </h1>
-          <p className="mt-0.5 font-body text-[12px] italic text-ink-soft">{subtitle}</p>
         </div>
         {(avatarGroup || action) && (
           <div className="flex shrink-0 items-center gap-3">

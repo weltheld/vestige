@@ -41,8 +41,6 @@ export default async function SessionDetailPage({
   if (!session) notFound();
 
   const num = String(session.number).padStart(2, "0");
-  // Date deliberately omitted — the sidebar's Session Info card shows it.
-  const subtitle = campaign.name;
   const pcAvatars = session.characters
     .filter((c) => c.role === "PC")
     .map((c) => c.portraitUrl)
@@ -53,9 +51,8 @@ export default async function SessionDetailPage({
       <SessionHero
         variant="session"
         title={session.title}
-        prefix={`Session ${num} · `}
+        prefix={`Session ${num}`}
         coverUrl={session.imageUrl ?? campaign.imageUrl}
-        subtitle={subtitle}
         avatars={pcAvatars}
         extraCount={session.characters.length > 5 ? session.characters.length - 5 : 0}
         action={
