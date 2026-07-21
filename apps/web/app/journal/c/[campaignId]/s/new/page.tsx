@@ -35,7 +35,6 @@ export default async function NewSessionPage({
       players={players}
       npcs={npcs.map((n) => ({ id: n.id, name: n.name }))}
       initial={{ title: "", date: null, summary: "", player_characters: "", npcs: "", notes: "" }}
-      characters={[]}
       images={[]}
       chroniclerName={viewer.label}
       modulesCalendar={calendar}

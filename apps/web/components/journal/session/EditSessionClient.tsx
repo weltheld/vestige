@@ -11,8 +11,6 @@ import { journal } from "@/lib/journal/links";
 import {
   createSession,
   saveSession,
-  addCharacter,
-  removeCharacter,
   deleteSession,
   addSessionImage,
   removeSessionImage,
@@ -41,8 +39,6 @@ const SectionEditor = dynamic(
   },
 );
 
-type EditCharacter = { id: string; name: string; role: "PC" | "NPC"; portraitUrl: string | null };
-
 type EditPlayer = { userId: string; characterName: string; avatarUrl: string | null; isDm: boolean };
 
 type EditSessionImage = { id: string; url: string };
@@ -51,7 +47,6 @@ type Props = {
   campaignId: string;
   sessionId: string | null;
   initial: SessionInput;
-  characters: EditCharacter[];
   images: EditSessionImage[];
   chroniclerName: string;
   modulesCalendar: boolean;
@@ -71,7 +66,6 @@ export function EditSessionClient({
   campaignId,
   sessionId,
   initial,
-  characters,
   images,
   chroniclerName,
   modulesCalendar,
@@ -326,48 +320,8 @@ export function EditSessionClient({
             </div>
           </Card>
 
-          <Card label="In This Session">
-            {characters.map((c) => (
-              <div key={c.id} className="group flex items-center gap-2.5 py-1">
-                <span
-                  className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[12px] text-parchment ${c.role === "PC" ? "ring-2 ring-gold" : ""}`}
-                >
-                  {c.portraitUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.portraitUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    c.name.charAt(0)
-                  )}
-                </span>
-                <span className="flex flex-1 flex-col">
-                  <span className="font-display text-[13px] text-ink">{c.name}</span>
-                  <span className="font-body text-[10px] italic text-muted">{c.role}</span>
-                </span>
-                {localSessionId && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await removeCharacter(campaignId, localSessionId, c.id);
-                      router.refresh();
-                    }}
-                    className="text-muted opacity-0 transition group-hover:opacity-100"
-                  >
-                    <X size={12} />
-                  </button>
-                )}
-              </div>
-            ))}
-            <div className="h-px bg-hairline" />
-            <CharacterComposer
-              disabled={!localSessionId}
-              players={players.filter((p) => !characters.some((c) => c.name === p.characterName))}
-              onAdd={async (name, role, avatarUrl) => {
-                if (!localSessionId) return;
-                await addCharacter(campaignId, localSessionId, name, role, avatarUrl ?? null);
-                router.refresh();
-              }}
-            />
-          </Card>
+          {/* The former "In This Session" roster card was redundant with the
+              Player Characters and NPCs sections of the recap body itself. */}
 
           <Card label="Session Images">
             <SessionImageGallery
@@ -617,123 +571,6 @@ function Card({ label, children }: { label: string; children: React.ReactNode })
         {label}
       </span>
       {children}
-    </div>
-  );
-}
-
-const GUEST_SENTINEL = "__guest__";
-
-function CharacterComposer({
-  disabled,
-  players,
-  onAdd,
-}: {
-  disabled: boolean;
-  players: EditPlayer[];
-  onAdd: (name: string, role: "PC" | "NPC", avatarUrl?: string | null) => void;
-}) {
-  const [playerChoice, setPlayerChoice] = useState("");
-  const [npcName, setNpcName] = useState("");
-  const [guestName, setGuestName] = useState("");
-  const [guestMode, setGuestMode] = useState(false);
-  const [role, setRole] = useState<"PC" | "NPC">("PC");
-
-  const submitNpc = () => {
-    if (!npcName.trim()) return;
-    onAdd(npcName.trim(), "NPC");
-    setNpcName("");
-  };
-
-  const submitGuest = () => {
-    if (!guestName.trim()) return;
-    onAdd(guestName.trim(), "PC");
-    setGuestName("");
-  };
-
-  // With no campaign players left to add (all added already, or none joined
-  // yet), fall straight to the guest input — otherwise it'd be stuck behind
-  // a disabled select with no way to reach the guest option.
-  const effectiveGuestMode = guestMode || players.length === 0;
-
-  return (
-    <div className="flex items-center gap-2.5 py-1">
-      <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-dashed border-gold text-gold">+</span>
-      <div className="flex flex-1 flex-col gap-1.5">
-        {role === "PC" ? (
-          effectiveGuestMode ? (
-            <>
-              <input
-                value={guestName}
-                disabled={disabled}
-                onChange={(e) => setGuestName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitGuest()}
-                placeholder={disabled ? "Save the session first" : "Guest character's name…"}
-                className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none placeholder:text-muted disabled:opacity-50"
-              />
-              {players.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setGuestMode(false)}
-                  className="self-start font-body text-[11px] text-ink-soft underline underline-offset-2"
-                >
-                  ← Choose a campaign player instead
-                </button>
-              )}
-            </>
-          ) : (
-            <select
-              value={playerChoice}
-              disabled={disabled || players.length === 0}
-              onChange={(e) => {
-                const value = e.target.value;
-                setPlayerChoice("");
-                if (value === GUEST_SENTINEL) setGuestMode(true);
-                else if (value) {
-                  const player = players.find((p) => p.characterName === value);
-                  onAdd(value, "PC", player?.avatarUrl);
-                }
-              }}
-              className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none disabled:opacity-50"
-            >
-              <option value="" disabled>
-                {disabled
-                  ? "Save the session first"
-                  : players.length === 0
-                    ? "No players left to add"
-                    : "Choose a player…"}
-              </option>
-              {players.map((p) => (
-                <option key={p.userId} value={p.characterName}>
-                  {p.characterName}
-                  {p.isDm ? " (DM)" : ""}
-                </option>
-              ))}
-              {!disabled && <option value={GUEST_SENTINEL}>+ Add a guest character…</option>}
-            </select>
-          )
-        ) : (
-          <input
-            value={npcName}
-            disabled={disabled}
-            onChange={(e) => setNpcName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submitNpc()}
-            placeholder={disabled ? "Save the session first" : "NPC name…"}
-            className="border-b border-hairline bg-transparent py-1 font-body text-[13px] italic text-ink outline-none placeholder:text-muted disabled:opacity-50"
-          />
-        )}
-        <div className="flex gap-1.5">
-          {(["PC", "NPC"] as const).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRole(r)}
-              className={`rounded px-2 py-0.5 font-display text-[10px] font-semibold uppercase ${role === r ? "bg-cod-soft text-wine" : "border border-hairline text-muted"}`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
