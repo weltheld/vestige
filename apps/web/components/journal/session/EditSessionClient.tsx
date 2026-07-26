@@ -430,11 +430,6 @@ export function EditSessionClient({
                   <h2 className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-soft">
                     {label}
                   </h2>
-                  {key !== "player_characters" && (
-                    <button type="button" className="ml-auto font-body text-[11px] italic text-muted underline">
-                      Add image to this section
-                    </button>
-                  )}
                 </div>
                 {key === "player_characters" ? (
                   <PresentPlayersEditor
