@@ -2,7 +2,7 @@ import "server-only";
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, AiProviderDb } from "@vestige/db";
+import type { Database, AiProviderDb, NpcKindDb } from "@vestige/db";
 import { resolveProvider } from "./codex-summary";
 import type { IngestCodexEntity } from "./codex-ingest";
 
@@ -18,6 +18,59 @@ const MAX_ENTITIES = 15;
  * knows about the party too.
  */
 
+const KINDS: readonly NpcKindDb[] = ["person", "place", "event", "item", "creature"];
+
+/** Words models reach for instead of our five kind names. Without this a
+ *  reply that says "npc" or "Location" has every entity silently dropped,
+ *  which surfaces to the user as "nothing codex-worthy found". */
+const KIND_SYNONYMS: Record<string, NpcKindDb> = {
+  npc: "person",
+  character: "person",
+  people: "person",
+  persons: "person",
+  location: "place",
+  places: "place",
+  object: "item",
+  artifact: "item",
+  items: "item",
+  loot: "item",
+  monster: "creature",
+  beast: "creature",
+  creatures: "creature",
+  encounter: "event",
+  events: "event",
+};
+
+function normalizeKind(raw: unknown): NpcKindDb | null {
+  if (typeof raw !== "string") return null;
+  const k = raw.trim().toLowerCase();
+  if ((KINDS as readonly string[]).includes(k)) return k as NpcKindDb;
+  return KIND_SYNONYMS[k] ?? null;
+}
+
+/** Schema for Anthropic structured outputs — makes an unparseable or
+ *  wrong-shaped reply impossible rather than something we detect after. */
+const ENTITIES_SCHEMA = {
+  type: "object",
+  properties: {
+    entities: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          kind: { type: "string", enum: [...KINDS] },
+          summary: { type: "string" },
+        },
+        required: ["name", "kind", "summary"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["entities"],
+  additionalProperties: false,
+} as const;
+
 function buildPrompt(sessionText: string): string {
   return `You maintain the codex of a Dungeons & Dragons campaign — a reference of the campaign's notable people, places, events, items, and creatures.
 
@@ -28,11 +81,13 @@ Read the session write-up below and extract the codex-worthy entities:
 - "item": notable objects — magic items, artifacts, quest items, distinctive loot (not generic gear or coins).
 - "creature": named or notable monsters/beasts encountered (a specific dragon, a boss, a recurring foe — not generic mooks unless they matter).
 
+Use exactly those five words for "kind" — no others.
+
 For each entity write a 1-2 sentence factual summary using ONLY information stated in the write-up — no interpretation, no invented details. Write summaries in the same language as the write-up. Only include entities actually worth remembering; fewer is better than padded. At most ${MAX_ENTITIES}.
 
-Respond with ONLY a JSON array, no prose, no code fences:
-[{"name": "...", "kind": "person|place|event|item|creature", "summary": "..."}]
-If nothing qualifies, respond with [].
+Respond with ONLY this JSON object, no prose and no code fences:
+{"entities": [{"name": "...", "kind": "person|place|event|item|creature", "summary": "..."}]}
+If nothing qualifies, respond with {"entities": []}.
 
 Session write-up:
 ---
@@ -40,61 +95,104 @@ ${sessionText}
 ---`;
 }
 
-/** Lenient parse: find the first [...] block, validate each entry. */
-function parseEntities(text: string): IngestCodexEntity[] {
-  const start = text.indexOf("[");
-  const end = text.lastIndexOf("]");
-  if (start === -1 || end <= start) return [];
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text.slice(start, end + 1));
-  } catch {
-    return [];
-  }
-  if (!Array.isArray(raw)) return [];
+/** What a parse produced, including what it had to throw away — the caller
+ *  needs the difference between "the model found nothing" and "the model
+ *  answered and we rejected all of it". */
+type ParseOutcome = {
+  entities: IngestCodexEntity[];
+  /** Entries present in the reply that failed validation. */
+  rejected: number;
+  /** True when no JSON could be located at all. */
+  unparseable: boolean;
+};
+
+/** Lenient parse: accepts {"entities":[…]} or a bare […]. */
+function parseEntities(text: string): ParseOutcome {
+  const raw = locateArray(text);
+  if (raw === null) return { entities: [], rejected: 0, unparseable: true };
+  if (!Array.isArray(raw)) return { entities: [], rejected: 0, unparseable: true };
+
   const out: IngestCodexEntity[] = [];
   const seen = new Set<string>();
+  let rejected = 0;
   for (const item of raw) {
     if (out.length >= MAX_ENTITIES) break;
-    if (typeof item !== "object" || item === null) continue;
-    const { name, kind, summary } = item as Record<string, unknown>;
-    if (typeof name !== "string" || !name.trim() || name.trim().length > 80) continue;
-    if (
-      kind !== "person" &&
-      kind !== "place" &&
-      kind !== "event" &&
-      kind !== "item" &&
-      kind !== "creature"
-    )
+    if (typeof item !== "object" || item === null) {
+      rejected++;
       continue;
-    const key = name.trim().toLowerCase();
+    }
+    const { name, kind, summary } = item as Record<string, unknown>;
+    if (typeof name !== "string" || !name.trim()) {
+      rejected++;
+      continue;
+    }
+    const normalized = normalizeKind(kind);
+    if (!normalized) {
+      rejected++;
+      continue;
+    }
+    // Over-long names used to be dropped outright; a too-chatty name is a
+    // formatting slip, not a reason to lose the entity.
+    const trimmed = name.trim().slice(0, 80);
+    const key = trimmed.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({
-      name: name.trim(),
-      kind,
+      name: trimmed,
+      kind: normalized,
       summary: typeof summary === "string" ? summary.trim().slice(0, 600) : "",
     });
   }
-  return out;
+  return { entities: out, rejected, unparseable: false };
 }
+
+/** The entity array out of either reply shape, or null if there isn't one. */
+function locateArray(text: string): unknown {
+  const objStart = text.indexOf("{");
+  const objEnd = text.lastIndexOf("}");
+  if (objStart !== -1 && objEnd > objStart) {
+    try {
+      const obj = JSON.parse(text.slice(objStart, objEnd + 1)) as Record<string, unknown>;
+      if (Array.isArray(obj.entities)) return obj.entities;
+    } catch {
+      /* fall through to the bare-array shape */
+    }
+  }
+  const start = text.indexOf("[");
+  const end = text.lastIndexOf("]");
+  if (start === -1 || end <= start) return null;
+  try {
+    return JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+type Completion = { text: string; truncated: boolean };
 
 async function complete(
   config: { provider: AiProviderDb; apiKey: string },
   prompt: string,
-): Promise<string> {
+): Promise<Completion> {
   if (config.provider === "anthropic") {
     const client = new Anthropic({ apiKey: config.apiKey });
     const response = await client.messages.create({
       model: "claude-opus-4-8",
-      max_tokens: 2048,
+      // 2048 left almost no headroom: a content-rich session measured 1498
+      // output tokens, and going over silently truncated the JSON mid-entity,
+      // which parsed to nothing and was reported as "nothing found".
+      max_tokens: 8192,
+      output_config: { format: { type: "json_schema", schema: ENTITIES_SCHEMA } },
       messages: [{ role: "user", content: prompt }],
     });
-    return response.content
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim();
+    return {
+      text: response.content
+        .filter((b) => b.type === "text")
+        .map((b) => b.text)
+        .join("")
+        .trim(),
+      truncated: response.stop_reason === "max_tokens",
+    };
   }
 
   const controller = new AbortController();
@@ -108,16 +206,20 @@ async function complete(
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        max_tokens: 2048,
+        max_tokens: 8192,
+        response_format: { type: "json_object" },
         messages: [{ role: "user", content: prompt }],
       }),
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`Groq ${res.status}`);
     const data = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
+      choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
     };
-    return data.choices?.[0]?.message?.content?.trim() ?? "";
+    return {
+      text: data.choices?.[0]?.message?.content?.trim() ?? "",
+      truncated: data.choices?.[0]?.finish_reason === "length",
+    };
   } finally {
     clearTimeout(timeout);
   }
@@ -139,11 +241,41 @@ export async function extractSessionEntities(
       error: "Extraction isn't configured — add an Anthropic or Groq API key in campaign settings.",
     };
   }
+
+  let completion: Completion;
   try {
     // Bounded like the summarizer, for very long write-ups.
-    const text = await complete(config, buildPrompt(sessionText.slice(0, 60_000)));
-    return { ok: true, entities: parseEntities(text) };
-  } catch {
+    completion = await complete(config, buildPrompt(sessionText.slice(0, 60_000)));
+  } catch (err) {
+    console.error("[codex-extract] provider call failed", err);
     return { ok: false, error: "Extraction failed. Try again." };
   }
+
+  const { entities, rejected, unparseable } = parseEntities(completion.text);
+
+  // An empty result has several very different causes; saying "nothing
+  // codex-worthy found" for all of them sends people looking at their prose
+  // when the actual problem is a cut-off or malformed reply.
+  if (entities.length === 0) {
+    if (completion.truncated) {
+      return {
+        ok: false,
+        error:
+          "The AI's reply was cut off before it could be read. Try again, or split this session into shorter entries.",
+      };
+    }
+    if (unparseable) {
+      console.error(
+        "[codex-extract] unparseable reply",
+        JSON.stringify(completion.text.slice(0, 400)),
+      );
+      return { ok: false, error: "The AI's reply couldn't be read. Try again." };
+    }
+    if (rejected > 0) {
+      console.error(`[codex-extract] all ${rejected} entries rejected by validation`);
+      return { ok: false, error: "The AI returned entries in an unexpected format. Try again." };
+    }
+  }
+
+  return { ok: true, entities };
 }

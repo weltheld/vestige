@@ -290,10 +290,28 @@ export async function previewCodexExtraction(
     .filter(Boolean)
     .join("\n\n");
 
+  // Everything but the title being empty means the write-up isn't saved yet
+  // (or went into a different session) — worth saying plainly, because
+  // spending an AI call to be told "nothing found" sends people looking at
+  // their prose instead of at where it actually went.
+  const bodyLength = [session.summary, session.player_characters, session.npcs, session.notes]
+    .map((f) => f?.trim() ?? "")
+    .join("").length;
+  if (bodyLength < 40) {
+    return {
+      ok: false,
+      error:
+        "This session has no write-up saved yet — add the text and save, then try again.",
+    };
+  }
+
   const extracted = await extractSessionEntities(supabase, campaignId, sessionText);
   if (!extracted.ok) return extracted;
   if (extracted.entities.length === 0) {
-    return { ok: false, error: "Nothing codex-worthy found in this session." };
+    return {
+      ok: false,
+      error: `Nothing codex-worthy found in the ${bodyLength.toLocaleString()} characters of this session.`,
+    };
   }
 
   const { data: existing } = await supabase
