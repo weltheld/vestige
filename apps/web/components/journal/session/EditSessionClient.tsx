@@ -21,6 +21,8 @@ import dynamic from "next/dynamic";
 import { pickImageFile, uploadJournalImage } from "@/lib/journal/upload";
 import { createNpc } from "@/app/journal/c/[campaignId]/codex/actions";
 import type { MentionNpc } from "./MentionSuggestion";
+import type { NpcRow } from "@vestige/db";
+import { CastStrip, npcsToCast } from "./SessionCast";
 // Calendar's pan/zoom cropper — shared since the app merge. The session
 // cover renders in a fixed 4:3 card, so uploads get cropped to match
 // instead of letterboxing.
@@ -56,7 +58,14 @@ type Props = {
   players: EditPlayer[];
   /** Campaign NPCs for the editors' @-mention dropdown. */
   npcs?: MentionNpc[];
+  /** The same NPCs with their portraits, for the cast strip. */
+  allNpcs?: NpcRow[];
 };
+
+/** The markdown the @-mention picker writes: [Name](codex:<uuid>). Duplicated
+ *  from lib/journal/npcs.ts, which is server-only and can't be imported here. */
+const CODEX_LINK_RE =
+  /\[[^\]]*\]\(codex:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/g;
 
 /** "Last saved" wants to answer "is my work safe?" at a glance. Today's saves
  *  show a clock time; anything older carries the date, because "14:32" alone
@@ -87,6 +96,7 @@ export function EditSessionClient({
   modulesCalendar,
   players,
   npcs: initialNpcs = [],
+  allNpcs = [],
 }: Props) {
   const router = useRouter();
   const [fields, setFields] = useState<SessionInput>(initial);
@@ -139,6 +149,18 @@ export function EditSessionClient({
   const lastRevisionAt = useRef(0);
 
   const set = (patch: Partial<SessionInput>) => setFields((f) => ({ ...f, ...patch }));
+
+  // The codex entries the draft currently @-mentions, recomputed as you type
+  // so the cast strip reflects the text in front of you rather than the last
+  // saved state.
+  const mentionedNpcs = (() => {
+    const ids = new Set<string>();
+    for (const t of [fields.summary, fields.player_characters, fields.npcs, fields.notes]) {
+      if (!t) continue;
+      for (const m of t.matchAll(CODEX_LINK_RE)) ids.add(m[1].toLowerCase());
+    }
+    return allNpcs.filter((n) => ids.has(n.id.toLowerCase()));
+  })();
 
   // Autosave: debounced 3s draft persist. For a brand-new session, the first
   // autosave creates it (create-on-first-keystroke); after that it's a plain
@@ -336,6 +358,29 @@ export function EditSessionClient({
                 document.body,
               )}
           </div>
+
+          {/* Fills the dead space beside the cover: who's in this session.
+              The NPC half is derived from the draft text, so it updates as
+              you @-mention people rather than waiting for a save. */}
+          <CastStrip
+            className="mt-4"
+            groups={[
+              {
+                label: "The party",
+                members: players.map((p) => ({
+                  id: p.userId,
+                  name: p.characterName,
+                  imageUrl: p.avatarUrl,
+                  note: p.isDm ? "DM" : null,
+                })),
+              },
+              {
+                label: "Mentioned in this write-up",
+                members: npcsToCast(campaignId, mentionedNpcs),
+                empty: "@-mention someone to add them here.",
+              },
+            ]}
+          />
         </div>
       </section>
 
@@ -356,10 +401,24 @@ export function EditSessionClient({
               <p className="font-body text-[11px] text-muted">Chronicled by</p>
               <p className="font-body text-[14px] text-ink">{chroniclerName}</p>
             </div>
+            {/* This used to read "Draft" for anything that wasn't mid-save —
+                including a session loaded fresh and fully persisted — which
+                implied a draft/publish workflow the app doesn't have. It
+                reports what's actually true of the text on screen. */}
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-gold-soft" />
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  saveState === "pending" ? "bg-muted" : "bg-gold-soft"
+                }`}
+              />
               <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-gold">
-                {saveState === "saved" ? "Saved" : "Draft"}
+                {saveState === "saving"
+                  ? "Saving…"
+                  : saveState === "pending"
+                    ? "Unsaved changes"
+                    : localSessionId
+                      ? "Saved"
+                      : "Not saved yet"}
               </span>
             </div>
             <div>

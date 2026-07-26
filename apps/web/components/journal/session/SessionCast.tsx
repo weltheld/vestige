@@ -20,6 +20,20 @@ export type CastMember = {
   href?: string;
 };
 
+/** Codex rows → cast members. Places, items and events are in the codex too
+ *  but aren't cast: a town beside a person's portrait is a category error. */
+export function npcsToCast(campaignId: string, npcs: NpcRow[]): CastMember[] {
+  return npcs
+    .filter((n) => n.kind === "person" || n.kind === "creature")
+    .map((n) => ({
+      id: n.id,
+      name: n.name,
+      imageUrl: n.image_url,
+      note: n.kind === "creature" ? "Creature" : n.status === "dead" ? "Dead" : null,
+      href: journal.npc(campaignId, n.id),
+    }));
+}
+
 export function SessionCast({
   campaignId,
   party,
@@ -31,41 +45,68 @@ export function SessionCast({
   /** Codex entries this session mentions. */
   npcs: NpcRow[];
 }) {
-  // Places, items and events are in the codex too, but they aren't cast —
-  // showing a town beside a person's portrait reads as a category error.
-  const faces: CastMember[] = npcs
-    .filter((n) => n.kind === "person" || n.kind === "creature")
-    .map((n) => ({
-      id: n.id,
-      name: n.name,
-      imageUrl: n.image_url,
-      note: n.kind === "creature" ? "Creature" : n.status === "dead" ? "Dead" : null,
-      href: journal.npc(campaignId, n.id),
-    }));
+  return (
+    <CastStrip
+      groups={[
+        { label: "The party", members: party },
+        { label: "Met this session", members: npcsToCast(campaignId, npcs) },
+      ]}
+    />
+  );
+}
 
-  if (party.length === 0 && faces.length === 0) return null;
+/**
+ * The presentational strip. Shared by the session page and the editor so the
+ * cast looks the same whether you're reading or writing. Groups with no
+ * members are dropped, and an entirely empty strip renders nothing rather
+ * than an empty labelled box.
+ */
+export function CastStrip({
+  groups,
+  className = "",
+}: {
+  groups: Array<{ label: string; members: CastMember[]; empty?: string }>;
+  className?: string;
+}) {
+  const shown = groups.filter((g) => g.members.length > 0 || g.empty);
+  if (shown.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-hairline bg-surface px-5 py-4 sm:flex-row sm:gap-8">
-      {party.length > 0 && <Group label="The party" members={party} />}
-      {faces.length > 0 && <Group label="Met this session" members={faces} />}
+    <section
+      className={`flex flex-col gap-4 rounded-xl border border-hairline bg-surface px-5 py-4 sm:flex-row sm:gap-8 ${className}`}
+    >
+      {shown.map((g) => (
+        <Group key={g.label} label={g.label} members={g.members} empty={g.empty} />
+      ))}
     </section>
   );
 }
 
-function Group({ label, members }: { label: string; members: CastMember[] }) {
+function Group({
+  label,
+  members,
+  empty,
+}: {
+  label: string;
+  members: CastMember[];
+  empty?: string;
+}) {
   return (
     <div className="min-w-0 flex-1">
       <h2 className="pb-2.5 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
         {label}
       </h2>
-      <ul className="flex flex-wrap gap-x-5 gap-y-3">
-        {members.map((m) => (
-          <li key={m.id} className="min-w-0">
-            <Face member={m} />
-          </li>
-        ))}
-      </ul>
+      {members.length === 0 ? (
+        <p className="font-body text-[12px] italic text-muted">{empty}</p>
+      ) : (
+        <ul className="flex flex-wrap gap-x-5 gap-y-3">
+          {members.map((m) => (
+            <li key={m.id} className="min-w-0">
+              <Face member={m} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
