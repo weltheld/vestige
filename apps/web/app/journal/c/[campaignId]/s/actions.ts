@@ -141,12 +141,29 @@ export async function removeCharacter(
 
 /** Add an image to the session's gallery. The first image ever added also
  *  becomes the session image (the one shown at the hero/highest level). */
-export async function addSessionImage(campaignId: string, sessionId: string, url: string) {
+/**
+ * Attach an image to a session's gallery.
+ *
+ * Returns its failure instead of throwing. A server action that throws
+ * surfaces in production as "an error occurred in the Server Components
+ * render" with the real cause redacted, which tells the user nothing and
+ * tells us nothing either — the Postgres message (a missing table, a failed
+ * RLS check) is what actually identifies the problem, and it describes the
+ * caller's own campaign data, so returning it leaks nothing.
+ */
+export async function addSessionImage(
+  campaignId: string,
+  sessionId: string,
+  url: string,
+): Promise<{ ok: boolean; error?: string }> {
   const { supabase, userId } = await uid();
   const { error } = await supabase
     .from("journal_session_images")
     .insert({ session_id: sessionId, url, created_by: userId });
-  if (error) throw error;
+  if (error) {
+    console.error("[addSessionImage] insert failed", error);
+    return { ok: false, error: `${error.message}${error.hint ? ` (${error.hint})` : ""}` };
+  }
 
   const { data: session } = await supabase
     .from("journal_sessions")
@@ -165,6 +182,7 @@ export async function addSessionImage(campaignId: string, sessionId: string, url
   });
   revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
   revalidatePath(`/journal/c/${campaignId}/s/${sessionId}/edit`);
+  return { ok: true };
 }
 
 /** Remove an image from the gallery. If it was the session image, the next

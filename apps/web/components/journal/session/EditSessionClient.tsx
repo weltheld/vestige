@@ -129,6 +129,7 @@ export function EditSessionClient({
   // after typing did nothing at all.
   const [saveState, setSaveState] = useState<"idle" | "pending" | "saving" | "saved">("idle");
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
   const [coverCropFile, setCoverCropFile] = useState<File | null>(null);
   // When the session was last written, as a real timestamp so the editor can
   // say *when* rather than only "saved". Seeded from the stored row so it's
@@ -244,15 +245,21 @@ export function EditSessionClient({
   async function uploadCroppedCover(blob: Blob) {
     setCoverCropFile(null);
     setUploadingCover(true);
+    setCoverError(null);
     try {
       const file = new File([blob], "session-cover.jpg", { type: "image/jpeg" });
       const url = await uploadJournalImage(campaignId, file);
       set({ image_url: url });
       if (localSessionId) {
-        await addSessionImage(campaignId, localSessionId, url);
+        const res = await addSessionImage(campaignId, localSessionId, url);
+        if (!res.ok) throw new Error(res.error ?? "Couldn't save the image.");
         await setSessionCoverImage(campaignId, localSessionId, url);
         router.refresh();
       }
+    } catch (err) {
+      // This path had no catch either — a cover upload could fail in silence.
+      console.error("[cover upload]", err);
+      setCoverError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploadingCover(false);
     }
@@ -309,6 +316,9 @@ export function EditSessionClient({
         </button>
 
         <div className="flex-1 pt-1">
+          {coverError && (
+            <p className="mb-2 font-body text-[12px] text-vote-no">{coverError}</p>
+          )}
           <div className="flex items-center gap-2">
             <input
               value={fields.title}
@@ -440,7 +450,10 @@ export function EditSessionClient({
               onUpload={async (file) => {
                 if (!localSessionId) throw new Error("Save the session first.");
                 const url = await uploadJournalImage(campaignId, file);
-                await addSessionImage(campaignId, localSessionId, url);
+                const res = await addSessionImage(campaignId, localSessionId, url);
+                // The file reached storage but the row didn't land — say which
+                // half failed, and why, rather than "something went wrong".
+                if (!res.ok) throw new Error(res.error ?? "Couldn't save the image.");
                 set({ image_url: fields.image_url ?? url });
                 // Pull the new row back so the thumbnail replaces the local
                 // preview; without awaiting, the preview is revoked before the
