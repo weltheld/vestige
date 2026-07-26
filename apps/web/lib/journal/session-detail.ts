@@ -17,6 +17,8 @@ export type Annotation = {
   id: string;
   anchor: string;
   body: string;
+  /** True when the viewer wrote it — only then may it be deleted. */
+  mine: boolean;
   authorName: string;
   authorAvatar: string | null;
   createdAt: string;
@@ -63,7 +65,9 @@ export type SessionDetail = {
   modulesEnabled: { calendar: boolean; journal: boolean };
 };
 
-function name(p: { first_name: string | null; display_name: string | null } | undefined) {
+function name(
+  p: { first_name: string | null; display_name: string | null } | undefined,
+) {
   return p?.first_name?.trim() || p?.display_name?.trim() || "Unknown";
 }
 
@@ -83,36 +87,42 @@ export async function getSessionDetail(
     { data: reacts },
     { data: auth },
   ] = await Promise.all([
-      supabase
-        .from("journal_sessions")
-        .select(
-          "id, campaign_id, title, date, summary, player_characters, npcs, notes, image_url, created_by, created_at, updated_at, updated_by",
-        )
-        .eq("id", sessionId)
-        .eq("campaign_id", campaignId)
-        .maybeSingle(),
-      supabase
-        .from("journal_session_characters")
-        .select("character_id, journal_characters(id, name, role, portrait_url, bio)")
-        .eq("session_id", sessionId),
-      supabase
-        .from("journal_annotations")
-        .select("id, anchor, body, author_id, created_at")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: true }),
-      supabase.from("campaigns").select("modules_enabled").eq("id", campaignId).maybeSingle(),
-      supabase
-        .from("journal_session_images")
-        .select("id, url")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("journal_reactions")
-        .select("anchor, emoji, user_id, created_at")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: true }),
-      supabase.auth.getUser(),
-    ]);
+    supabase
+      .from("journal_sessions")
+      .select(
+        "id, campaign_id, title, date, summary, player_characters, npcs, notes, image_url, created_by, created_at, updated_at, updated_by",
+      )
+      .eq("id", sessionId)
+      .eq("campaign_id", campaignId)
+      .maybeSingle(),
+    supabase
+      .from("journal_session_characters")
+      .select(
+        "character_id, journal_characters(id, name, role, portrait_url, bio)",
+      )
+      .eq("session_id", sessionId),
+    supabase
+      .from("journal_annotations")
+      .select("id, anchor, body, author_id, created_at")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("campaigns")
+      .select("modules_enabled")
+      .eq("id", campaignId)
+      .maybeSingle(),
+    supabase
+      .from("journal_session_images")
+      .select("id, url")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("journal_reactions")
+      .select("anchor, emoji, user_id, created_at")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true }),
+    supabase.auth.getUser(),
+  ]);
   if (!s) return null;
 
   type CharRow = {
@@ -123,7 +133,9 @@ export async function getSessionDetail(
     bio: string | null;
   };
   const characters: SessionCharacter[] = (links ?? [])
-    .map((l) => (l as { journal_characters: CharRow | null }).journal_characters)
+    .map(
+      (l) => (l as { journal_characters: CharRow | null }).journal_characters,
+    )
     .filter((c): c is CharRow => !!c)
     .map((c) => ({
       id: c.id,
@@ -156,6 +168,8 @@ export async function getSessionDetail(
   ]);
   const profById = new Map((profiles ?? []).map((p) => [p.id, p]));
 
+  const viewerId = auth?.user?.id ?? null;
+
   const annotationsByAnchor: Record<string, Annotation[]> = {};
   for (const a of anns ?? []) {
     const p = profById.get(a.author_id);
@@ -163,6 +177,7 @@ export async function getSessionDetail(
       id: a.id,
       anchor: a.anchor,
       body: a.body,
+      mine: a.author_id === viewerId,
       authorName: name(p),
       authorAvatar: p?.avatar_url ?? null,
       createdAt: a.created_at,
@@ -171,7 +186,6 @@ export async function getSessionDetail(
 
   // Tally reactions per anchor, preserving first-reacted order so the pills
   // don't reshuffle as counts change.
-  const viewerId = auth?.user?.id ?? null;
   const reactionsByAnchor: Record<string, Reaction[]> = {};
   for (const r of reacts ?? []) {
     const list = (reactionsByAnchor[r.anchor] ??= []);
@@ -185,7 +199,10 @@ export async function getSessionDetail(
     entry.names.push(name(profById.get(r.user_id)));
   }
 
-  const modulesEnabled = (campaign?.modules_enabled as { calendar: boolean; journal: boolean }) ?? {
+  const modulesEnabled = (campaign?.modules_enabled as {
+    calendar: boolean;
+    journal: boolean;
+  }) ?? {
     calendar: true,
     journal: true,
   };

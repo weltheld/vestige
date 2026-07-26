@@ -13,6 +13,7 @@ import {
   type NoteChapter,
 } from "@/lib/journal/notes";
 import { AnnotationThread } from "./AnnotationControls";
+import { CommentMarker } from "./CommentMarker";
 import { renderInline } from "./InlineMarkdown";
 import { ReactionBar } from "./ParagraphReactions";
 
@@ -347,12 +348,26 @@ function Chapter({
           />
         </div>
 
+        {/* The thread lives WITH the marker, in the margin. It used to be a
+            link down to a thread at the foot of the chapter, which threw the
+            viewport past all the prose to reach it. */}
         {has && (
-          <CommentMarker annotations={annotations} anchor={chapter.anchor} />
+          <CommentMarker
+            campaignId={campaignId}
+            sessionId={session.id}
+            anchor={chapter.anchor}
+            excerpt={excerpt(
+              heading?.text || chapter.blocks[0]?.text || "",
+              60,
+            )}
+            annotations={annotations}
+          />
         )}
       </div>
 
-      <div id={threadId(chapter.anchor)} className="scroll-mt-24">
+      {/* With no comments yet there's nothing to mark, so the plain "Comment"
+          affordance stays below the text. */}
+      {!has && (
         <AnnotationThread
           campaignId={campaignId}
           sessionId={session.id}
@@ -360,77 +375,7 @@ function Chapter({
           excerpt={excerpt(heading?.text || chapter.blocks[0]?.text || "", 60)}
           annotations={annotations}
         />
-      </div>
-    </div>
-  );
-}
-
-/** Anchors contain a colon ("summary:0"), which is legal in an id but awkward
- *  in a fragment — swap it so the link is unambiguous. */
-function threadId(anchor: string): string {
-  return `c-${anchor.replace(":", "-")}`;
-}
-
-/**
- * Who commented, in the right margin beside the text they commented on.
- *
- * The marker sits next to the prose rather than colouring it: a tint made a
- * commented passage look emphasised, when all it means is that somebody
- * spoke. Faces answer "who's talking here" at a glance while scanning; the
- * thread itself is already open below, so this only has to point.
- *
- * Below `lg` the margin doesn't exist, so it drops under the text instead of
- * squeezing the measure.
- */
-function CommentMarker({
-  annotations,
-  anchor,
-}: {
-  annotations: Annotation[];
-  anchor: string;
-}) {
-  // One face per person, in the order they first spoke.
-  const people: Annotation[] = [];
-  for (const a of annotations) {
-    if (!people.some((p) => p.authorName === a.authorName)) people.push(a);
-  }
-  const shown = people.slice(0, 3);
-  const extra = people.length - shown.length;
-  const label = `${annotations.length} ${annotations.length === 1 ? "comment" : "comments"} — ${people
-    .map((p) => p.authorName)
-    .join(", ")}`;
-
-  return (
-    <a
-      href={`#${threadId(anchor)}`}
-      title={label}
-      aria-label={label}
-      className="mt-2 flex shrink-0 items-center lg:col-start-2 lg:row-start-1 lg:mt-1"
-    >
-      {shown.map((p, i) => (
-        <span
-          key={p.id}
-          className={`flex h-[26px] w-[26px] items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[11px] text-parchment ring-2 ring-surface ${
-            i > 0 ? "-ml-2.5" : ""
-          }`}
-        >
-          {p.authorAvatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={p.authorAvatar}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            p.authorName.charAt(0).toUpperCase()
-          )}
-        </span>
-      ))}
-      {extra > 0 && (
-        <span className="-ml-2.5 flex h-[26px] items-center justify-center rounded-full bg-cod-soft px-1.5 font-body text-[10px] text-ink-soft ring-2 ring-surface">
-          +{extra}
-        </span>
       )}
-    </a>
+    </div>
   );
 }

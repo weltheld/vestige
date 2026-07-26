@@ -272,6 +272,30 @@ export async function toggleReaction(
   return { ok: true };
 }
 
+/**
+ * Remove one of your own comments. RLS is the real guard — the
+ * journal_annotations delete policy is `author_id = auth.uid()` — so a
+ * request for someone else's comment simply matches no row.
+ */
+export async function deleteAnnotation(
+  campaignId: string,
+  sessionId: string,
+  annotationId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { supabase, userId } = await uid();
+  const { error } = await supabase
+    .from("journal_annotations")
+    .delete()
+    .eq("id", annotationId)
+    .eq("author_id", userId);
+  if (error) {
+    console.error("[deleteAnnotation]", error);
+    return { ok: false, error: "Could not delete that comment." };
+  }
+  revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
+  return { ok: true };
+}
+
 export async function addAnnotation(
   campaignId: string,
   sessionId: string,

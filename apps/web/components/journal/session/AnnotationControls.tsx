@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { Plus, MessageCircle } from "lucide-react";
-import { addAnnotation } from "@/app/journal/c/[campaignId]/s/actions";
+import { Plus, MessageCircle, Trash2 } from "lucide-react";
+import {
+  addAnnotation,
+  deleteAnnotation,
+} from "@/app/journal/c/[campaignId]/s/actions";
 import type { Annotation } from "@/lib/journal/session-detail";
 
 /** The whole commenting surface for a Recap paragraph (there's no separate
@@ -32,7 +35,15 @@ export function AnnotationThread({
   const [expanded, setExpanded] = useState(true);
 
   if (annotations.length === 0) {
-    return <Composer campaignId={campaignId} sessionId={sessionId} anchor={anchor} excerpt={excerpt} alwaysOpen={false} />;
+    return (
+      <Composer
+        campaignId={campaignId}
+        sessionId={sessionId}
+        anchor={anchor}
+        excerpt={excerpt}
+        alwaysOpen={false}
+      />
+    );
   }
 
   return (
@@ -56,27 +67,108 @@ export function AnnotationThread({
               >
                 {a.authorAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={a.authorAvatar} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={a.authorAvatar}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   a.authorName.charAt(0).toUpperCase()
                 )}
               </span>
               <div className="flex flex-1 flex-col gap-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="font-display text-[12px] text-ink">{a.authorName}</span>
+                  <span className="font-display text-[12px] text-ink">
+                    {a.authorName}
+                  </span>
                   <span className="font-body text-[10px] text-muted">
                     {format(parseISO(a.createdAt), "MMM d, h:mmaaa")}
                   </span>
+                  {a.mine && (
+                    <DeleteComment
+                      campaignId={campaignId}
+                      sessionId={sessionId}
+                      annotationId={a.id}
+                    />
+                  )}
                 </div>
-                <p className="font-body text-[13px] leading-[1.55] text-ink">{a.body}</p>
+                <p className="font-body text-[13px] leading-[1.55] text-ink">
+                  {a.body}
+                </p>
               </div>
             </div>
           ))}
           <div className="h-px bg-hairline" />
-          <Composer campaignId={campaignId} sessionId={sessionId} anchor={anchor} excerpt={excerpt} alwaysOpen />
+          <Composer
+            campaignId={campaignId}
+            sessionId={sessionId}
+            anchor={anchor}
+            excerpt={excerpt}
+            alwaysOpen
+          />
         </div>
       )}
     </div>
+  );
+}
+
+/** Delete your own comment. Two-step, because there's no undo and a comment
+ *  is somebody's words — but inline rather than a modal, since the blast
+ *  radius is one short message. */
+function DeleteComment({
+  campaignId,
+  sessionId,
+  annotationId,
+}: {
+  campaignId: string;
+  sessionId: string;
+  annotationId: string;
+}) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  if (confirming) {
+    return (
+      <span className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            const res = await deleteAnnotation(
+              campaignId,
+              sessionId,
+              annotationId,
+            );
+            if (!res.ok) setBusy(false);
+            router.refresh();
+          }}
+          className="font-body text-[10px] text-vote-no underline disabled:opacity-60"
+        >
+          {busy ? "Deleting…" : "Delete"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirming(false)}
+          className="font-body text-[10px] text-muted"
+        >
+          Cancel
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label="Delete comment"
+      title="Delete comment"
+      onClick={() => setConfirming(true)}
+      className="ml-auto text-muted transition hover:text-vote-no"
+    >
+      <Trash2 size={12} />
+    </button>
   );
 }
 
@@ -146,7 +238,11 @@ function Composer({
       />
       <div className="flex items-center justify-between">
         {!alwaysOpen && (
-          <button type="button" onClick={() => setOpen(false)} className="font-body text-[11px] text-ink-soft">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="font-body text-[11px] text-ink-soft"
+          >
             Cancel
           </button>
         )}

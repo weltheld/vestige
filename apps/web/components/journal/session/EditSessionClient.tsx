@@ -237,7 +237,7 @@ export function EditSessionClient({
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-12 pb-24 pt-6">
+    <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-24 pt-6 sm:px-8 lg:px-12">
       {coverCropFile && (
         <ImageCropper
           file={coverCropFile}
@@ -339,9 +339,12 @@ export function EditSessionClient({
         </div>
       </section>
 
-      <div className="flex items-start gap-8">
+      {/* Stacks on phones. As a plain flex row the 280px sidebar never gave
+          way, so the editor column was squeezed to a few characters wide and
+          the page was unusable on a phone. */}
+      <div className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-start lg:gap-8">
         {/* Sidebar */}
-        <aside className="flex w-[280px] shrink-0 flex-col gap-4">
+        <aside className="flex w-full flex-col gap-4 lg:w-[280px] lg:shrink-0">
           <Card label="Session Info">
             <div>
               <p className="font-body text-[11px] text-muted">Date</p>
@@ -454,7 +457,7 @@ export function EditSessionClient({
           </div>
 
           {/* Save bar */}
-          <div className="mt-10 flex max-w-[640px] items-center justify-between border-t border-hairline py-4">
+          <div className="mt-10 flex max-w-[640px] flex-wrap items-center justify-between gap-3 border-t border-hairline py-4">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold-soft" />
