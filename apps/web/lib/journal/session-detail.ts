@@ -22,6 +22,16 @@ export type Annotation = {
   createdAt: string;
 };
 
+/** One emoji's tally on one paragraph. */
+export type Reaction = {
+  emoji: string;
+  count: number;
+  /** Whether the viewer is one of the reactors — drives the toggle state. */
+  mine: boolean;
+  /** Who reacted, for the tooltip. */
+  names: string[];
+};
+
 type SessionImage = {
   id: string;
   url: string;
@@ -48,6 +58,8 @@ export type SessionDetail = {
   /** Annotations grouped by their anchor (a paragraph/block id). */
   annotationsByAnchor: Record<string, Annotation[]>;
   annotationCount: number;
+  /** Reactions grouped by the same anchors, tallied per emoji. */
+  reactionsByAnchor: Record<string, Reaction[]>;
   modulesEnabled: { calendar: boolean; journal: boolean };
 };
 
@@ -62,8 +74,15 @@ export async function getSessionDetail(
   sessionId: string,
 ): Promise<SessionDetail | null> {
   // First wave — everything that only needs the ids we already have.
-  const [{ data: s }, { data: links }, { data: anns }, { data: campaign }, { data: images }] =
-    await Promise.all([
+  const [
+    { data: s },
+    { data: links },
+    { data: anns },
+    { data: campaign },
+    { data: images },
+    { data: reacts },
+    { data: auth },
+  ] = await Promise.all([
       supabase
         .from("journal_sessions")
         .select(
@@ -87,6 +106,12 @@ export async function getSessionDetail(
         .select("id, url")
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true }),
+      supabase
+        .from("journal_reactions")
+        .select("anchor, emoji, user_id, created_at")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true }),
+      supabase.auth.getUser(),
     ]);
   if (!s) return null;
 
@@ -114,6 +139,8 @@ export async function getSessionDetail(
   const authorIds = new Set<string>([s.created_by]);
   if (s.updated_by) authorIds.add(s.updated_by);
   for (const a of anns ?? []) authorIds.add(a.author_id);
+  // Reactors too, so the tally can name who reacted.
+  for (const r of reacts ?? []) authorIds.add(r.user_id);
 
   const [{ count: priorCount }, { data: profiles }] = await Promise.all([
     // Sequence number = sessions in this campaign dated on/before this one.
@@ -142,6 +169,22 @@ export async function getSessionDetail(
     });
   }
 
+  // Tally reactions per anchor, preserving first-reacted order so the pills
+  // don't reshuffle as counts change.
+  const viewerId = auth?.user?.id ?? null;
+  const reactionsByAnchor: Record<string, Reaction[]> = {};
+  for (const r of reacts ?? []) {
+    const list = (reactionsByAnchor[r.anchor] ??= []);
+    let entry = list.find((x) => x.emoji === r.emoji);
+    if (!entry) {
+      entry = { emoji: r.emoji, count: 0, mine: false, names: [] };
+      list.push(entry);
+    }
+    entry.count++;
+    if (r.user_id === viewerId) entry.mine = true;
+    entry.names.push(name(profById.get(r.user_id)));
+  }
+
   const modulesEnabled = (campaign?.modules_enabled as { calendar: boolean; journal: boolean }) ?? {
     calendar: true,
     journal: true,
@@ -165,6 +208,7 @@ export async function getSessionDetail(
     characters,
     annotationsByAnchor,
     annotationCount: (anns ?? []).length,
+    reactionsByAnchor,
     modulesEnabled,
   };
 }

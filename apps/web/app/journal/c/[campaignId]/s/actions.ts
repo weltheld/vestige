@@ -225,6 +225,57 @@ export async function deleteSession(campaignId: string, sessionId: string) {
   revalidatePath(`/journal/c/${campaignId}`);
 }
 
+/** The emoji a paragraph can be reacted with. Fixed set rather than a full
+ *  picker: it keeps the hover bar small and the stored values predictable. */
+export const REACTION_EMOJI = ["👍", "😂", "😮", "❤️", "🔥", "💀", "🎲"] as const;
+export type ReactionEmoji = (typeof REACTION_EMOJI)[number];
+
+/**
+ * Add or remove the viewer's reaction on a paragraph. Idempotent in both
+ * directions: the row's primary key is (session, anchor, user, emoji), so a
+ * double-click can't double-count and removing a reaction that isn't there
+ * is a no-op. RLS additionally pins user_id to the caller.
+ */
+export async function toggleReaction(
+  campaignId: string,
+  sessionId: string,
+  anchor: string,
+  emoji: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!(REACTION_EMOJI as readonly string[]).includes(emoji)) {
+    return { ok: false, error: "Unknown reaction." };
+  }
+  const { supabase, userId } = await uid();
+
+  const { data: existing } = await supabase
+    .from("journal_reactions")
+    .select("emoji")
+    .eq("session_id", sessionId)
+    .eq("anchor", anchor)
+    .eq("user_id", userId)
+    .eq("emoji", emoji)
+    .maybeSingle();
+
+  const { error } = existing
+    ? await supabase
+        .from("journal_reactions")
+        .delete()
+        .eq("session_id", sessionId)
+        .eq("anchor", anchor)
+        .eq("user_id", userId)
+        .eq("emoji", emoji)
+    : await supabase
+        .from("journal_reactions")
+        .insert({ session_id: sessionId, anchor, emoji, user_id: userId });
+
+  if (error) {
+    console.error("[toggleReaction]", error);
+    return { ok: false, error: "Could not save that reaction." };
+  }
+  revalidatePath(`/journal/c/${campaignId}/s/${sessionId}`);
+  return { ok: true };
+}
+
 export async function addAnnotation(
   campaignId: string,
   sessionId: string,

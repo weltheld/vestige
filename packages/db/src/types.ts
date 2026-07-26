@@ -165,6 +165,16 @@ export type JournalAnnotationRow = {
   created_at: string;
 };
 
+/** One person's one emoji on one paragraph. Keyed by
+ *  (session_id, anchor, user_id, emoji) — see the journal_reactions migration. */
+export type JournalReactionRow = {
+  session_id: string;
+  anchor: string;
+  emoji: string;
+  user_id: string;
+  created_at: string;
+};
+
 export type JournalSessionImageRow = {
   id: string;
   session_id: string;
@@ -503,6 +513,20 @@ export type Database = {
         Update: Partial<JournalAnnotationRow>;
         Relationships: [
           Rel<"journal_annotations_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
+        ];
+      };
+      journal_reactions: {
+        Row: JournalReactionRow;
+        Insert: {
+          session_id: string;
+          anchor: string;
+          emoji: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: Partial<JournalReactionRow>;
+        Relationships: [
+          Rel<"journal_reactions_session_id_fkey", ["session_id"], "journal_sessions", ["id"], false>,
         ];
       };
       journal_comments: {

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import type { SessionDetail, Annotation } from "@/lib/journal/session-detail";
+import type { SessionDetail, Annotation, Reaction } from "@/lib/journal/session-detail";
 import { NOTE_SECTIONS, blocksFor, excerpt } from "@/lib/journal/notes";
 import { journal } from "@/lib/journal/links";
 import { AnnotationThread } from "./AnnotationControls";
+import { ReactionBar } from "./ParagraphReactions";
 
 export type NotesPlayer = {
   userId: string;
@@ -74,6 +75,7 @@ export function NotesBody({
                     text={b.text}
                     heading={b.heading}
                     annotations={session.annotationsByAnchor[b.anchor] ?? []}
+                    reactions={session.reactionsByAnchor[b.anchor] ?? []}
                     campaignId={campaignId}
                     sessionId={session.id}
                   />
@@ -156,6 +158,7 @@ function AnnotatedParagraph({
   text,
   heading,
   annotations,
+  reactions,
   campaignId,
   sessionId,
 }: {
@@ -164,6 +167,7 @@ function AnnotatedParagraph({
   /** Renders as a heading instead of body copy — see blocksFor(). */
   heading?: 1 | 2;
   annotations: Annotation[];
+  reactions: Reaction[];
   campaignId: string;
   sessionId: string;
 }) {
@@ -172,7 +176,17 @@ function AnnotatedParagraph({
 
   return (
     <div className="group relative">
-      <div className={has ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3" : ""}>
+      {/* Each paragraph is its own hoverable target: the tint on hover shows
+          where the block begins and ends, which is what makes the comment and
+          reaction controls legible as belonging to *this* paragraph. Blocks
+          that already have comments keep their permanent gold marker. */}
+      <div
+        className={
+          has
+            ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3"
+            : "-mx-3 rounded-[10px] border-l-2 border-transparent px-3 py-1 transition-colors group-hover:border-hairline group-hover:bg-[color-mix(in_srgb,var(--cod-soft)_55%,transparent)]"
+        }
+      >
         {heading === 1 ? (
           // Sits under the section label, so a step down from it: display face,
           // sentence case, with air above it when it follows body copy.
@@ -186,6 +200,13 @@ function AnnotatedParagraph({
         ) : (
           <p className="font-body text-[15px] leading-[1.85] text-ink">{body}</p>
         )}
+
+        <ReactionBar
+          campaignId={campaignId}
+          sessionId={sessionId}
+          anchor={anchor}
+          reactions={reactions}
+        />
       </div>
 
       <AnnotationThread
