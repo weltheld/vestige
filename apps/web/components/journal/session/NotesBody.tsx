@@ -1,8 +1,15 @@
-import Link from "next/link";
+import { Fragment } from "react";
 import type { SessionDetail, Annotation, Reaction } from "@/lib/journal/session-detail";
-import { NOTE_SECTIONS, blocksFor, chaptersFor, excerpt, type NoteChapter } from "@/lib/journal/notes";
-import { journal } from "@/lib/journal/links";
+import {
+  NOTE_SECTIONS,
+  blocksFor,
+  chaptersFor,
+  excerpt,
+  type NoteBlock,
+  type NoteChapter,
+} from "@/lib/journal/notes";
 import { AnnotationThread } from "./AnnotationControls";
+import { renderInline } from "./InlineMarkdown";
 import { ReactionBar } from "./ParagraphReactions";
 
 export type NotesPlayer = {
@@ -68,14 +75,7 @@ export function NotesBody({
                   sessionId={session.id}
                 />
               ) : (
-                chaptersFor(blocks).map((chapter) => (
-                  <Chapter
-                    key={chapter.anchor}
-                    chapter={chapter}
-                    session={session}
-                    campaignId={campaignId}
-                  />
-                ))
+                <ChapterList blocks={blocks} session={session} campaignId={campaignId} />
               )}
             </div>
           </section>
@@ -149,6 +149,67 @@ function PlayerChips({
   );
 }
 
+/**
+ * A section's chapters, on a timeline rail when there's a sequence to show.
+ *
+ * The rail only appears with more than one chapter — i.e. once the writer has
+ * actually used headings. A single dot next to an unbroken run of prose is
+ * decoration, not structure, so sections without headings render plain.
+ */
+function ChapterList({
+  blocks,
+  session,
+  campaignId,
+}: {
+  blocks: NoteBlock[];
+  session: SessionDetail;
+  campaignId: string;
+}) {
+  const chapters = chaptersFor(blocks);
+  const rail = chapters.length > 1;
+
+  if (!rail) {
+    return (
+      <>
+        {chapters.map((c) => (
+          <Chapter key={c.anchor} chapter={c} session={session} campaignId={campaignId} />
+        ))}
+      </>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-5">
+      {chapters.map((c, i) => {
+        const last = i === chapters.length - 1;
+        // Major headings are the beats of the session; minor ones and the
+        // untitled run before the first heading are quieter marks on the
+        // same line, so the rail reads as one sequence rather than a list.
+        const major = c.heading?.heading === 1;
+        return (
+          <Fragment key={c.anchor}>
+            <div className="flex flex-col items-center" aria-hidden="true">
+              <span
+                className={
+                  major
+                    ? "mt-[13px] h-[11px] w-[11px] rounded-full bg-gold"
+                    : "mt-[13px] h-[9px] w-[9px] rounded-full border-2 border-hairline bg-surface"
+                }
+              />
+              {/* The line stops at the last beat — a tail running into
+                  nothing reads as "unfinished" rather than "the end". */}
+              {!last && <span className="w-px flex-1 bg-hairline" />}
+            </div>
+            <div className={last ? "" : "pb-7"}>
+              <Chapter chapter={c} session={session} campaignId={campaignId} onRail />
+            </div>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Merge per-anchor reaction tallies into one list for a whole chapter. */
 function mergeReactions(byAnchor: Record<string, Reaction[]>, anchors: string[]): Reaction[] {
   const out: Reaction[] = [];
@@ -183,10 +244,14 @@ function Chapter({
   chapter,
   session,
   campaignId,
+  onRail = false,
 }: {
   chapter: NoteChapter;
   session: SessionDetail;
   campaignId: string;
+  /** On the rail the gutter already sets the left edge, so the hover
+   *  treatment must not pull the block back out with a negative margin. */
+  onRail?: boolean;
 }) {
   const annotations = chapter.anchors.flatMap((a) => session.annotationsByAnchor[a] ?? []);
   const reactions = mergeReactions(session.reactionsByAnchor, chapter.anchors);
@@ -198,18 +263,20 @@ function Chapter({
       <div
         className={
           has
-            ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3"
-            : "-mx-4 rounded-[10px] border-l-2 border-transparent px-4 py-2 transition-colors group-hover:border-hairline"
+            ? `rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3 ${onRail ? "-ml-4" : ""}`
+            : onRail
+              ? "rounded-[10px] py-2 transition-colors"
+              : "-mx-4 rounded-[10px] border-l-2 border-transparent px-4 py-2 transition-colors group-hover:border-hairline"
         }
       >
         {heading &&
           (heading.heading === 1 ? (
             <h3 className="mb-2 font-display text-[21px] font-semibold leading-snug text-ink">
-              {renderCodexMentions(heading.text, campaignId)}
+              {renderInline(heading.text, campaignId)}
             </h3>
           ) : (
             <h4 className="mb-1.5 font-display text-[13px] font-semibold uppercase tracking-[0.07em] text-ink-soft">
-              {renderCodexMentions(heading.text, campaignId)}
+              {renderInline(heading.text, campaignId)}
             </h4>
           ))}
 
@@ -222,7 +289,7 @@ function Chapter({
               key={b.anchor}
               className="font-body text-[17px] leading-[1.75] text-ink [&+p]:mt-4"
             >
-              {renderCodexMentions(b.text, campaignId)}
+              {renderInline(b.text, campaignId)}
             </p>
           ),
         )}
@@ -244,32 +311,4 @@ function Chapter({
       />
     </div>
   );
-}
-
-// The editor writes NPC mentions as markdown links "[Name](codex:<uuid>)".
-// The read view renders stored text verbatim (no markdown parsing), so this
-// single pattern gets special-cased into a quiet wine link to the codex —
-// everything else stays plain text, as before.
-const CODEX_MENTION_RE =
-  /\[([^\]]+)\]\(codex:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/g;
-
-function renderCodexMentions(text: string, campaignId: string): React.ReactNode {
-  if (!text.includes("](codex:")) return text;
-  const parts: React.ReactNode[] = [];
-  let last = 0;
-  for (const m of text.matchAll(CODEX_MENTION_RE)) {
-    if (m.index! > last) parts.push(text.slice(last, m.index));
-    parts.push(
-      <Link
-        key={`${m.index}-${m[2]}`}
-        href={journal.npc(campaignId, m[2].toLowerCase())}
-        className="text-wine underline decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] underline-offset-2 transition hover:decoration-wine"
-      >
-        {m[1]}
-      </Link>,
-    );
-    last = m.index! + m[0].length;
-  }
-  if (last < text.length) parts.push(text.slice(last));
-  return parts;
 }

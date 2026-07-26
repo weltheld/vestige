@@ -26,7 +26,10 @@ export function AnnotationThread({
   excerpt: string;
   annotations: Annotation[];
 }) {
-  const [expanded, setExpanded] = useState(false);
+  // Open by default when there ARE comments: a collapsed "2 comments" toggle
+  // meant discussion on the page was invisible unless you went looking, and
+  // people couldn't find where comments lived at all. Still collapsible.
+  const [expanded, setExpanded] = useState(true);
 
   if (annotations.length === 0) {
     return <Composer campaignId={campaignId} sessionId={sessionId} anchor={anchor} excerpt={excerpt} alwaysOpen={false} />;
@@ -107,13 +110,16 @@ function Composer({
 
   if (!open) {
     return (
+      // Inline and labelled, not a bare "+" floating in the left margin: that
+      // was invisible until hovered, unlabelled once found, and the timeline
+      // rail now occupies the gutter it used to sit in. Fades in on hover
+      // like the reaction control, but stays reachable by keyboard.
       <button
         type="button"
-        aria-label="Add comment"
         onClick={() => setOpen(true)}
-        className="absolute -left-9 top-1 flex h-6 w-6 items-center justify-center rounded-md border border-hairline bg-surface text-gold opacity-0 transition group-hover:opacity-100"
+        className="mt-1.5 flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-2.5 py-0.5 font-body text-[12px] text-ink-soft opacity-0 transition hover:border-gold hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
       >
-        <Plus size={14} />
+        <Plus size={12} /> Comment
       </button>
     );
   }

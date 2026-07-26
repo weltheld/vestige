@@ -8,7 +8,7 @@
     "start": "next start --port 3001",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node lib/journal/notes.test.mjs"
+    "test": "node lib/journal/notes.test.mjs && node lib/journal/inline-tokens.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",
