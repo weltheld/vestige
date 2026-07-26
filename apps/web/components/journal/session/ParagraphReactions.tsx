@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SmilePlus } from "lucide-react";
-import { REACTION_EMOJI, toggleReaction } from "@/app/journal/c/[campaignId]/s/actions";
+// Only the action comes from the "use server" module — the emoji list lives
+// in a plain module, because a server-actions file may export nothing but
+// async functions and importing a value from one crashes the client.
+import { toggleReaction } from "@/app/journal/c/[campaignId]/s/actions";
+import { REACTION_EMOJI } from "@/lib/journal/reactions";
 import type { Reaction } from "@/lib/journal/session-detail";
 
 /**

@@ -7,6 +7,7 @@ import { syncNpcMentions } from "@/lib/journal/npc-sync";
 import { isCampaignOwner } from "@/lib/journal/data";
 import { extractSessionEntities } from "@/lib/journal/codex-extract";
 import { seedCodexEntities, linkifyEntities } from "@/lib/journal/codex-ingest";
+import { isReactionEmoji } from "@/lib/journal/reactions";
 
 export type SessionInput = {
   title: string;
@@ -225,11 +226,6 @@ export async function deleteSession(campaignId: string, sessionId: string) {
   revalidatePath(`/journal/c/${campaignId}`);
 }
 
-/** The emoji a paragraph can be reacted with. Fixed set rather than a full
- *  picker: it keeps the hover bar small and the stored values predictable. */
-export const REACTION_EMOJI = ["👍", "😂", "😮", "❤️", "🔥", "💀", "🎲"] as const;
-export type ReactionEmoji = (typeof REACTION_EMOJI)[number];
-
 /**
  * Add or remove the viewer's reaction on a paragraph. Idempotent in both
  * directions: the row's primary key is (session, anchor, user, emoji), so a
@@ -242,7 +238,7 @@ export async function toggleReaction(
   anchor: string,
   emoji: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!(REACTION_EMOJI as readonly string[]).includes(emoji)) {
+  if (!isReactionEmoji(emoji)) {
     return { ok: false, error: "Unknown reaction." };
   }
   const { supabase, userId } = await uid();
