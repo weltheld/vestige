@@ -72,6 +72,7 @@ export function NotesBody({
                     key={b.anchor}
                     anchor={b.anchor}
                     text={b.text}
+                    heading={b.heading}
                     annotations={session.annotationsByAnchor[b.anchor] ?? []}
                     campaignId={campaignId}
                     sessionId={session.id}
@@ -153,24 +154,38 @@ function PlayerChips({
 function AnnotatedParagraph({
   anchor,
   text,
+  heading,
   annotations,
   campaignId,
   sessionId,
 }: {
   anchor: string;
   text: string;
+  /** Renders as a heading instead of body copy — see blocksFor(). */
+  heading?: 1 | 2;
   annotations: Annotation[];
   campaignId: string;
   sessionId: string;
 }) {
   const has = annotations.length > 0;
+  const body = renderCodexMentions(text, campaignId);
 
   return (
     <div className="group relative">
       <div className={has ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3" : ""}>
-        <p className="font-body text-[15px] leading-[1.85] text-ink">
-          {renderCodexMentions(text, campaignId)}
-        </p>
+        {heading === 1 ? (
+          // Sits under the section label, so a step down from it: display face,
+          // sentence case, with air above it when it follows body copy.
+          <h3 className="mt-3 font-display text-[19px] font-semibold leading-snug text-ink first:mt-0">
+            {body}
+          </h3>
+        ) : heading === 2 ? (
+          <h4 className="mt-2 font-display text-[13px] font-semibold uppercase tracking-[0.07em] text-ink-soft first:mt-0">
+            {body}
+          </h4>
+        ) : (
+          <p className="font-body text-[15px] leading-[1.85] text-ink">{body}</p>
+        )}
       </div>
 
       <AnnotationThread
