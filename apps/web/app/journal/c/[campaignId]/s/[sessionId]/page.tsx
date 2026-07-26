@@ -12,6 +12,8 @@ import { SessionTabs } from "@/components/journal/session/SessionTabs";
 import { NotesBody } from "@/components/journal/session/NotesBody";
 import { ChangeLog } from "@/components/journal/session/ChangeLog";
 import { ExtractCodexButton } from "@/components/journal/session/ExtractCodexButton";
+import { SessionCast } from "@/components/journal/session/SessionCast";
+import { getSessionNpcs } from "@/lib/journal/npcs";
 
 // "Add to Codex" runs an AI extraction via a server action invoked on this
 // page — give it more headroom than the default function timeout.
@@ -32,11 +34,12 @@ export default async function SessionDetailPage({
 
   // Independent reads (revisions only needs the sessionId param) — fetched
   // together instead of as a waterfall.
-  const [session, revisions, players, isOwner] = await Promise.all([
+  const [session, revisions, players, isOwner, sessionNpcs] = await Promise.all([
     getSessionDetail(supabase, campaignId, sessionId),
     getRevisions(supabase, sessionId),
     getCampaignPlayers(supabase, campaignId),
     isCampaignOwner(supabase, viewer.id, campaignId),
+    getSessionNpcs(supabase, sessionId),
   ]);
   if (!session) notFound();
 
@@ -69,6 +72,14 @@ export default async function SessionDetailPage({
             </Link>
           </span>
         }
+      />
+
+      <SessionCast
+        campaignId={campaignId}
+        party={session.characters
+          .filter((c) => c.role === "PC")
+          .map((c) => ({ id: c.id, name: c.name, imageUrl: c.portraitUrl }))}
+        npcs={sessionNpcs}
       />
 
       {/* Mobile stacks title (above) → recap/changelog → session image →

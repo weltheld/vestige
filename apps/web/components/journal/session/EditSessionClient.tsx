@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { DayPicker } from "react-day-picker";
 import { format, parseISO } from "date-fns";
-import { Pencil, ChevronDown, ImagePlus, Info, X, Check, CalendarDays, Trash2 } from "lucide-react";
+import { Pencil, ChevronDown, ImagePlus, Info, X, Check, CalendarDays, Trash2, Loader2 } from "lucide-react";
 import { NOTE_SECTIONS } from "@/lib/journal/notes";
 import { journal } from "@/lib/journal/links";
 import {
@@ -379,10 +379,13 @@ export function EditSessionClient({
               coverUrl={fields.image_url ?? null}
               disabled={!localSessionId}
               onUpload={async (file) => {
-                if (!localSessionId) return;
+                if (!localSessionId) throw new Error("Save the session first.");
                 const url = await uploadJournalImage(campaignId, file);
                 await addSessionImage(campaignId, localSessionId, url);
                 set({ image_url: fields.image_url ?? url });
+                // Pull the new row back so the thumbnail replaces the local
+                // preview; without awaiting, the preview is revoked before the
+                // server list arrives and the tile blinks out.
                 router.refresh();
               }}
               onSetCover={async (url) => {
@@ -647,6 +650,62 @@ function SessionImageGallery({
   onRemove: (image: EditSessionImage) => void | Promise<void>;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // A local preview of the file being uploaded, shown as a tile straight away.
+  // Without it the grid stays empty through upload + insert + refresh, which
+  // reads as "nothing happened".
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // 10 MB: large enough for a phone photo, small enough that a mistaken video
+  // fails here with a clear reason instead of stalling on the network.
+  const MAX_BYTES = 10 * 1024 * 1024;
+
+  async function pickAndUpload() {
+    setError(null);
+    const file = await pickImageFile();
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("That file isn't an image.");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      setError(`That image is ${(file.size / 1024 / 1024).toFixed(1)} MB — the limit is 10 MB.`);
+      return;
+    }
+
+    const localUrl = URL.createObjectURL(file);
+    setPreview(localUrl);
+    setUploading(true);
+    try {
+      await onUpload(file);
+    } catch (err) {
+      // Both the storage upload and the row insert throw, and the old handler
+      // had a finally but no catch — so a failure showed nothing at all.
+      console.error("[session image upload]", err);
+      setError(
+        err instanceof Error && err.message
+          ? `Upload failed: ${err.message}`
+          : "Upload failed. Try again.",
+      );
+      // Success: keep the preview up until the refreshed list actually
+      // contains the new row (see the effect below). router.refresh() isn't
+      // awaitable, so clearing here would blink the tile out and back in.
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  // Drop the local preview once the server list has grown to include it.
+  const count = images.length;
+  const lastCount = useRef(count);
+  if (lastCount.current !== count) {
+    lastCount.current = count;
+    if (preview) {
+      URL.revokeObjectURL(preview);
+      setPreview(null);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -689,28 +748,40 @@ function SessionImageGallery({
           );
         })}
 
+        {/* The image being uploaded, shown immediately from the local file so
+            the grid responds to the click rather than staying empty until the
+            round trip finishes. */}
+        {preview && (
+          <div className="relative aspect-square overflow-hidden rounded-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={preview} alt="" className="h-full w-full object-cover opacity-60" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/40">
+              <Loader2 size={14} className="animate-spin text-parchment" />
+              <span className="font-body text-[9px] italic text-parchment">Uploading…</span>
+            </div>
+          </div>
+        )}
+
         <button
           type="button"
           disabled={disabled || uploading}
-          onClick={async () => {
-            const file = await pickImageFile();
-            if (!file) return;
-            setUploading(true);
-            try {
-              await onUpload(file);
-            } finally {
-              setUploading(false);
-            }
-          }}
-          className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg text-muted disabled:opacity-50"
+          onClick={pickAndUpload}
+          className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg text-muted transition hover:text-ink disabled:opacity-50"
           style={{ border: "1.5px dashed var(--hairline)" }}
         >
           <ImagePlus size={16} />
           <span className="font-body text-[10px] italic">{uploading ? "Uploading…" : "Add"}</span>
         </button>
       </div>
+
+      {error && <p className="font-body text-[11px] text-vote-no">{error}</p>}
       {disabled && (
         <p className="font-body text-[11px] italic text-muted">Save the session first.</p>
+      )}
+      {!disabled && !error && images.length === 0 && !preview && (
+        <p className="font-body text-[11px] italic text-muted">
+          No images yet — the first one becomes the session image.
+        </p>
       )}
     </div>
   );

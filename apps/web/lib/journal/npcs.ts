@@ -75,6 +75,34 @@ export async function getNpcMentions(
     .sort((a, b) => (a.date ?? "9999").localeCompare(b.date ?? "9999"));
 }
 
+/**
+ * The codex entries this session mentions — the reverse of getNpcMentions.
+ *
+ * Drives the cast strip under the session title, ordered the way a reader
+ * meets them: people first, then creatures, then everything else,
+ * alphabetically within each group.
+ */
+export async function getSessionNpcs(supabase: SB, sessionId: string): Promise<NpcRow[]> {
+  const { data: mentions } = await supabase
+    .from("npc_mentions")
+    .select("npc_id")
+    .eq("session_id", sessionId);
+  if (!mentions?.length) return [];
+
+  const { data: npcs } = await supabase
+    .from("npcs")
+    .select("*")
+    .in(
+      "id",
+      mentions.map((m) => m.npc_id),
+    );
+
+  const rank: Record<string, number> = { person: 0, creature: 1, place: 2, item: 3, event: 4 };
+  return (npcs ?? []).sort(
+    (a, b) => (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9) || a.name.localeCompare(b.name),
+  );
+}
+
 /** How many sessions mention each NPC — for the codex overview cards. */
 export async function getMentionCounts(
   supabase: SB,
