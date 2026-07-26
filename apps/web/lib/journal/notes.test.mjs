@@ -38,7 +38,19 @@ assert.equal(blocksFor("notes", "#3 on the list was the culprit").at(0).heading,
 // 5. Deep levels clamp to the minor heading rather than vanishing.
 assert.equal(blocksFor("notes", "###### Tiny").at(0).heading, 2);
 
-// 6. Empty / null sections still yield nothing.
+// 6. Dividers, in all three markdown spellings, carry no text.
+for (const rule of ["---", "***", "___", "- - -".replace(/ /g, "")]) {
+  const d = blocksFor("notes", `Before.\n\n${rule}\n\nAfter.`);
+  assert.equal(d[1].divider, true, `"${rule}" should be a divider`);
+  assert.equal(d[1].text, "");
+  assert.equal(d[0].divider, undefined);
+  assert.equal(d[2].text, "After.");
+}
+
+// 7. A line of dashes is a divider, but a sentence with dashes is not.
+assert.equal(blocksFor("notes", "He paused — then ran.").at(0).divider, undefined);
+
+// 8. Empty / null sections still yield nothing.
 assert.deepEqual(blocksFor("notes", null), []);
 assert.deepEqual(blocksFor("notes", "   "), []);
 

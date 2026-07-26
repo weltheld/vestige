@@ -68,7 +68,15 @@ export function NotesBody({
                   sessionId={session.id}
                 />
               ) : (
-                blocks.map((b) => (
+                blocks.map((b) =>
+                  b.divider ? (
+                    // A divider is scenery, not content: no comment or
+                    // reaction affordance, nothing to say about a line.
+                    <hr
+                      key={b.anchor}
+                      className="mx-auto my-2 w-24 border-0 border-t border-hairline"
+                    />
+                  ) : (
                   <AnnotatedParagraph
                     key={b.anchor}
                     anchor={b.anchor}
@@ -79,7 +87,8 @@ export function NotesBody({
                     campaignId={campaignId}
                     sessionId={session.id}
                   />
-                ))
+                  ),
+                )
               )}
             </div>
           </section>

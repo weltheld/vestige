@@ -15,6 +15,7 @@ import {
   ImagePlus,
   Link as LinkIcon,
   ChevronDown,
+  Minus as DividerIcon,
 } from "lucide-react";
 import { pickImageFile, uploadJournalImage } from "@/lib/journal/upload";
 import {
@@ -86,7 +87,7 @@ export function SectionEditor({
         // the saved page will look like — without them Tailwind's preflight
         // renders headings at body size and the block types are invisible.
         class:
-          "min-h-[100px] w-full font-body text-[15px] leading-[1.85] text-ink outline-none [&_h2]:font-display [&_h2]:text-[19px] [&_h2]:font-semibold [&_h2]:leading-snug [&_h2]:text-ink [&_h3]:font-display [&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-[0.07em] [&_h3]:text-ink-soft [&_p.is-editor-empty:first-child::before]:text-muted [&_p.is-editor-empty:first-child::before]:italic [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:h-0 [&_p.is-editor-empty:first-child::before]:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gold [&_blockquote]:pl-3 [&_blockquote]:italic [&_a]:text-wine [&_a]:underline [&_a]:decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] [&_a]:underline-offset-2",
+          "min-h-[100px] w-full font-body text-[15px] leading-[1.85] text-ink outline-none [&_h2]:font-display [&_h2]:text-[19px] [&_h2]:font-semibold [&_h2]:leading-snug [&_h2]:text-ink [&_h3]:font-display [&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-[0.07em] [&_h3]:text-ink-soft [&_hr]:mx-auto [&_hr]:my-3 [&_hr]:w-24 [&_hr]:border-t [&_hr]:border-hairline [&_p.is-editor-empty:first-child::before]:text-muted [&_p.is-editor-empty:first-child::before]:italic [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:h-0 [&_p.is-editor-empty:first-child::before]:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-gold [&_blockquote]:pl-3 [&_blockquote]:italic [&_a]:text-wine [&_a]:underline [&_a]:decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] [&_a]:underline-offset-2",
       },
     },
   });
@@ -269,6 +270,14 @@ function Toolbar({ editor, campaignId }: { editor: Editor; campaignId: string })
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       >
         <QuoteIcon size={14} />
+      </button>
+      <button
+        type="button"
+        title="Divider"
+        className={`${btn} text-ink-soft`}
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+      >
+        <DividerIcon size={14} />
       </button>
       <span className="mx-0.5 h-4 w-px bg-hairline" />
       <button type="button" className={btn} disabled={uploading} onClick={insertImage}>

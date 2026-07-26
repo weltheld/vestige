@@ -41,6 +41,7 @@ export default async function EditSessionPage({
         image_url: s.imageUrl,
       }}
       images={s.images}
+      lastSavedAt={s.updatedAt}
       chroniclerName={s.authorName}
       modulesCalendar={s.modulesEnabled.calendar}
     />

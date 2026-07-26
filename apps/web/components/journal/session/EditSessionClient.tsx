@@ -48,12 +48,27 @@ type Props = {
   sessionId: string | null;
   initial: SessionInput;
   images: EditSessionImage[];
+  /** When this session was last written (ISO). Null for a session that
+   *  doesn't exist yet — there's nothing saved to report. */
+  lastSavedAt?: string | null;
   chroniclerName: string;
   modulesCalendar: boolean;
   players: EditPlayer[];
   /** Campaign NPCs for the editors' @-mention dropdown. */
   npcs?: MentionNpc[];
 };
+
+/** "Last saved" wants to answer "is my work safe?" at a glance. Today's saves
+ *  show a clock time; anything older carries the date, because "14:32" alone
+ *  is misleading once a day has passed. */
+function formatSavedAt(d: Date): string {
+  const today = new Date();
+  const sameDay =
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate();
+  return sameDay ? format(d, "HH:mm") : format(d, "d MMM, HH:mm");
+}
 
 const PLACEHOLDERS: Record<string, string> = {
   summary: "Begin with what happened. A few sentences are enough.",
@@ -67,6 +82,7 @@ export function EditSessionClient({
   sessionId,
   initial,
   images,
+  lastSavedAt = null,
   chroniclerName,
   modulesCalendar,
   players,
@@ -96,10 +112,21 @@ export function EditSessionClient({
     }
   };
   const [localSessionId, setLocalSessionId] = useState(sessionId);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  // "pending" = edited, autosave debounce running; "saving" = a write is
+  // actually in flight. Keeping these apart matters: the old code set
+  // "saving" on every keystroke, three seconds before anything was written,
+  // and the Save button is disabled while saving — so clicking Save right
+  // after typing did nothing at all.
+  const [saveState, setSaveState] = useState<"idle" | "pending" | "saving" | "saved">("idle");
   const [uploadingCover, setUploadingCover] = useState(false);
   const [coverCropFile, setCoverCropFile] = useState<File | null>(null);
-  const [savedAgo, setSavedAgo] = useState<string | null>(null);
+  // When the session was last written, as a real timestamp so the editor can
+  // say *when* rather than only "saved". Seeded from the stored row so it's
+  // already meaningful the moment the page opens.
+  const [savedAt, setSavedAt] = useState<Date | null>(
+    lastSavedAt ? new Date(lastSavedAt) : null,
+  );
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -123,7 +150,7 @@ export function EditSessionClient({
       return;
     }
     if (timer.current) clearTimeout(timer.current);
-    setSaveState("saving");
+    setSaveState("pending");
     timer.current = setTimeout(async () => {
       if (!localSessionId) {
         if (creating.current || !fields.title.trim()) {
@@ -131,6 +158,7 @@ export function EditSessionClient({
           return;
         }
         creating.current = true;
+        setSaveState("saving");
         const id = await createSession(campaignId, fields);
         // A cover chosen before the session existed isn't in the gallery
         // yet (that table needs a real session id) — backfill it now.
@@ -139,15 +167,16 @@ export function EditSessionClient({
         lastRevisionAt.current = Date.now();
         setLocalSessionId(id);
         setSaveState("saved");
-        setSavedAgo("just now");
+        setSavedAt(new Date());
         router.replace(journal.editSession(campaignId, id));
         return;
       }
       const recordRevision = Date.now() - lastRevisionAt.current > 60_000;
+      setSaveState("saving");
       await saveSession(campaignId, localSessionId, fields, recordRevision);
       if (recordRevision) lastRevisionAt.current = Date.now();
       setSaveState("saved");
-      setSavedAgo("just now");
+      setSavedAt(new Date());
     }, 3000);
     return () => {
       if (timer.current) clearTimeout(timer.current);
@@ -162,19 +191,31 @@ export function EditSessionClient({
     if (timer.current) clearTimeout(timer.current);
     if (creating.current) return;
     setSaveState("saving");
-    if (localSessionId) {
-      await saveSession(campaignId, localSessionId, fields, true);
-      lastRevisionAt.current = Date.now();
-      setSaveState("saved");
-      setSavedAgo("just now");
-      router.push(journal.session(campaignId, localSessionId));
-    } else {
-      creating.current = true;
-      const id = await createSession(campaignId, fields);
-      if (fields.image_url) await addSessionImage(campaignId, id, fields.image_url);
+    try {
+      if (localSessionId) {
+        await saveSession(campaignId, localSessionId, fields, true);
+        lastRevisionAt.current = Date.now();
+        setSaveState("saved");
+        setSavedAt(new Date());
+        // Leave edit mode: an explicit "Save session" means "I'm done here".
+        router.push(journal.session(campaignId, localSessionId));
+      } else {
+        creating.current = true;
+        const id = await createSession(campaignId, fields);
+        if (fields.image_url) await addSessionImage(campaignId, id, fields.image_url);
+        creating.current = false;
+        lastRevisionAt.current = Date.now();
+        setSaveState("saved");
+        setSavedAt(new Date());
+        router.push(journal.session(campaignId, id));
+      }
+    } catch (err) {
+      // Previously an error here left the button stuck disabled on "saving"
+      // with nothing said, and the work looked lost. Hand the editor back.
+      console.error("[save session]", err);
       creating.current = false;
-      lastRevisionAt.current = Date.now();
-      router.push(journal.session(campaignId, id));
+      setSaveState("pending");
+      setSaveError("Couldn't save. Your text is still here — try again.");
     }
   }
 
@@ -318,6 +359,12 @@ export function EditSessionClient({
                 {saveState === "saved" ? "Saved" : "Draft"}
               </span>
             </div>
+            <div>
+              <p className="font-body text-[11px] text-muted">Last saved</p>
+              <p className="font-body text-[14px] text-ink">
+                {savedAt ? formatSavedAt(savedAt) : "Never"}
+              </p>
+            </div>
           </Card>
 
           {/* The former "In This Session" roster card was redundant with the
@@ -414,11 +461,16 @@ export function EditSessionClient({
                 <span className="font-body text-[12px] italic text-muted">
                   {saveState === "saving"
                     ? "Saving…"
-                    : localSessionId
-                      ? `Autosaved as draft${savedAgo ? ` · ${savedAgo}` : ""}`
-                      : "Not saved yet"}
+                    : saveState === "pending"
+                      ? "Unsaved changes…"
+                      : savedAt
+                        ? `Last saved ${formatSavedAt(savedAt)}`
+                        : "Not saved yet"}
                 </span>
               </div>
+              {saveError && (
+                <span className="font-body text-[12px] text-vote-no">{saveError}</span>
+              )}
               {localSessionId && (
                 <button
                   type="button"
@@ -444,7 +496,11 @@ export function EditSessionClient({
               <button
                 type="button"
                 onClick={handleSave}
+                // Only while a write is actually in flight. Disabling on
+                // "pending" is what made the button dead for three seconds
+                // after every keystroke.
                 disabled={saveState === "saving"}
+                title="Save and return to the session"
                 className="flex items-center gap-1.5 rounded-lg bg-wine px-[22px] py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-60"
               >
                 <Check size={13} /> Save session

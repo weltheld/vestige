@@ -13,10 +13,15 @@ export type NoteBlock = {
   /** Set when the block is a markdown heading: 1 = major, 2 = minor.
    *  `text` is then the heading text with the leading #s removed. */
   heading?: 1 | 2;
+  /** A horizontal rule ("---"). `text` is empty; render an ornament. */
+  divider?: true;
 };
 
 /** A leading "# ".."###### " marks the block as a heading. */
 const HEADING_RE = /^(#{1,6})\s+(.*)$/s;
+
+/** A thematic break, in any of markdown's three spellings. */
+const DIVIDER_RE = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/;
 
 /** Split a section's stored text into blocks with stable anchors.
  *  Anchor = `${sectionKey}:${index}` — what annotations reference, so the
@@ -31,6 +36,7 @@ export function blocksFor(section: NoteSectionKey, text: string | null): NoteBlo
     .filter(Boolean)
     .map((t, i) => {
       const anchor = `${section}:${i}`;
+      if (DIVIDER_RE.test(t)) return { anchor, text: "", divider: true };
       const m = HEADING_RE.exec(t);
       if (!m) return { anchor, text: t };
       // Sections already render their own label as the page-level heading, so
