@@ -50,6 +50,46 @@ export function blocksFor(section: NoteSectionKey, text: string | null): NoteBlo
     });
 }
 
+/** A heading and everything under it, up to the next heading. */
+export type NoteChapter = {
+  /** Anchor new comments/reactions land on — the heading's, else the first block's. */
+  anchor: string;
+  /** The heading block, when the chapter opens with one. */
+  heading: NoteBlock | null;
+  /** Body blocks (paragraphs, dividers) beneath it. */
+  blocks: NoteBlock[];
+  /** Every anchor in the chapter, for rolling up existing comments/reactions. */
+  anchors: string[];
+};
+
+/**
+ * Group a section's blocks into heading-delimited chapters.
+ *
+ * The commenting unit is the chapter, not the paragraph: a paragraph is too
+ * fine a target to hang controls off without chopping the prose into visible
+ * boxes. Leading blocks that appear before any heading form one untitled
+ * chapter, so a section with no headings behaves as a single unit.
+ */
+export function chaptersFor(blocks: NoteBlock[]): NoteChapter[] {
+  const chapters: NoteChapter[] = [];
+  for (const b of blocks) {
+    const isHeading = b.heading !== undefined;
+    if (isHeading || chapters.length === 0) {
+      chapters.push({
+        anchor: b.anchor,
+        heading: isHeading ? b : null,
+        blocks: isHeading ? [] : [b],
+        anchors: [b.anchor],
+      });
+      continue;
+    }
+    const current = chapters[chapters.length - 1]!;
+    current.blocks.push(b);
+    current.anchors.push(b.anchor);
+  }
+  return chapters;
+}
+
 export function excerpt(text: string, max = 120): string {
   const t = text.replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max)}…` : t;

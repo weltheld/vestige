@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { SessionDetail, Annotation, Reaction } from "@/lib/journal/session-detail";
-import { NOTE_SECTIONS, blocksFor, excerpt } from "@/lib/journal/notes";
+import { NOTE_SECTIONS, blocksFor, chaptersFor, excerpt, type NoteChapter } from "@/lib/journal/notes";
 import { journal } from "@/lib/journal/links";
 import { AnnotationThread } from "./AnnotationControls";
 import { ReactionBar } from "./ParagraphReactions";
@@ -51,9 +51,9 @@ export function NotesBody({
                 </span>
               )}
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-7">
               {blocks.length === 0 ? (
-                <p className="font-body text-[15px] italic leading-[1.85] text-muted">
+                <p className="font-body text-[17px] italic leading-[1.75] text-muted">
                   Nothing recorded here yet.
                 </p>
               ) : key === "player_characters" ? (
@@ -68,27 +68,14 @@ export function NotesBody({
                   sessionId={session.id}
                 />
               ) : (
-                blocks.map((b) =>
-                  b.divider ? (
-                    // A divider is scenery, not content: no comment or
-                    // reaction affordance, nothing to say about a line.
-                    <hr
-                      key={b.anchor}
-                      className="mx-auto my-2 w-24 border-0 border-t border-hairline"
-                    />
-                  ) : (
-                  <AnnotatedParagraph
-                    key={b.anchor}
-                    anchor={b.anchor}
-                    text={b.text}
-                    heading={b.heading}
-                    annotations={session.annotationsByAnchor[b.anchor] ?? []}
-                    reactions={session.reactionsByAnchor[b.anchor] ?? []}
+                chaptersFor(blocks).map((chapter) => (
+                  <Chapter
+                    key={chapter.anchor}
+                    chapter={chapter}
+                    session={session}
                     campaignId={campaignId}
-                    sessionId={session.id}
                   />
-                  ),
-                )
+                ))
               )}
             </div>
           </section>
@@ -162,67 +149,97 @@ function PlayerChips({
   );
 }
 
-function AnnotatedParagraph({
-  anchor,
-  text,
-  heading,
-  annotations,
-  reactions,
+/** Merge per-anchor reaction tallies into one list for a whole chapter. */
+function mergeReactions(byAnchor: Record<string, Reaction[]>, anchors: string[]): Reaction[] {
+  const out: Reaction[] = [];
+  for (const a of anchors) {
+    for (const r of byAnchor[a] ?? []) {
+      const found = out.find((x) => x.emoji === r.emoji);
+      if (found) {
+        found.count += r.count;
+        found.mine ||= r.mine;
+        found.names.push(...r.names);
+      } else {
+        out.push({ ...r, names: [...r.names] });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * A heading and its body, as one readable run of prose.
+ *
+ * Paragraphs inside are deliberately NOT boxed or tinted: separating every
+ * one made the page read as a stack of cards rather than a chronicle. The
+ * chapter is the hover target instead, so the controls have somewhere to
+ * live without cutting the text apart.
+ *
+ * Comments and reactions written before this grouping existed are anchored
+ * to individual paragraphs, so both are rolled up from every anchor in the
+ * chapter; new ones land on the chapter's own anchor.
+ */
+function Chapter({
+  chapter,
+  session,
   campaignId,
-  sessionId,
 }: {
-  anchor: string;
-  text: string;
-  /** Renders as a heading instead of body copy — see blocksFor(). */
-  heading?: 1 | 2;
-  annotations: Annotation[];
-  reactions: Reaction[];
+  chapter: NoteChapter;
+  session: SessionDetail;
   campaignId: string;
-  sessionId: string;
 }) {
+  const annotations = chapter.anchors.flatMap((a) => session.annotationsByAnchor[a] ?? []);
+  const reactions = mergeReactions(session.reactionsByAnchor, chapter.anchors);
   const has = annotations.length > 0;
-  const body = renderCodexMentions(text, campaignId);
+  const heading = chapter.heading;
 
   return (
     <div className="group relative">
-      {/* Each paragraph is its own hoverable target: the tint on hover shows
-          where the block begins and ends, which is what makes the comment and
-          reaction controls legible as belonging to *this* paragraph. Blocks
-          that already have comments keep their permanent gold marker. */}
       <div
         className={
           has
             ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3"
-            : "-mx-3 rounded-[10px] border-l-2 border-transparent px-3 py-1 transition-colors group-hover:border-hairline group-hover:bg-[color-mix(in_srgb,var(--cod-soft)_55%,transparent)]"
+            : "-mx-4 rounded-[10px] border-l-2 border-transparent px-4 py-2 transition-colors group-hover:border-hairline"
         }
       >
-        {heading === 1 ? (
-          // Sits under the section label, so a step down from it: display face,
-          // sentence case, with air above it when it follows body copy.
-          <h3 className="mt-3 font-display text-[19px] font-semibold leading-snug text-ink first:mt-0">
-            {body}
-          </h3>
-        ) : heading === 2 ? (
-          <h4 className="mt-2 font-display text-[13px] font-semibold uppercase tracking-[0.07em] text-ink-soft first:mt-0">
-            {body}
-          </h4>
-        ) : (
-          <p className="font-body text-[15px] leading-[1.85] text-ink">{body}</p>
+        {heading &&
+          (heading.heading === 1 ? (
+            <h3 className="mb-2 font-display text-[21px] font-semibold leading-snug text-ink">
+              {renderCodexMentions(heading.text, campaignId)}
+            </h3>
+          ) : (
+            <h4 className="mb-1.5 font-display text-[13px] font-semibold uppercase tracking-[0.07em] text-ink-soft">
+              {renderCodexMentions(heading.text, campaignId)}
+            </h4>
+          ))}
+
+        {/* Paragraphs flow: spacing separates them, nothing else. */}
+        {chapter.blocks.map((b) =>
+          b.divider ? (
+            <hr key={b.anchor} className="mx-auto my-4 w-24 border-0 border-t border-hairline" />
+          ) : (
+            <p
+              key={b.anchor}
+              className="font-body text-[17px] leading-[1.75] text-ink [&+p]:mt-4"
+            >
+              {renderCodexMentions(b.text, campaignId)}
+            </p>
+          ),
         )}
 
         <ReactionBar
           campaignId={campaignId}
-          sessionId={sessionId}
-          anchor={anchor}
+          sessionId={session.id}
+          anchor={chapter.anchor}
           reactions={reactions}
         />
       </div>
 
       <AnnotationThread
         campaignId={campaignId}
-        sessionId={sessionId}
-        anchor={anchor}
-        excerpt={excerpt(text, 60)}
+        sessionId={session.id}
+        anchor={chapter.anchor}
+        excerpt={excerpt(heading?.text || chapter.blocks[0]?.text || "", 60)}
         annotations={annotations}
       />
     </div>
