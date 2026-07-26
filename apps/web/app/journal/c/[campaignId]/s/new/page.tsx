@@ -34,7 +34,6 @@ export default async function NewSessionPage({
       sessionId={null}
       players={players}
       npcs={npcs.map((n) => ({ id: n.id, name: n.name }))}
-      allNpcs={npcs}
       initial={{ title: "", date: null, summary: "", player_characters: "", npcs: "", notes: "" }}
       images={[]}
       chroniclerName={viewer.label}

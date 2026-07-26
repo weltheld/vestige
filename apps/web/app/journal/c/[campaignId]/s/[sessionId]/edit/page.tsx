@@ -31,7 +31,6 @@ export default async function EditSessionPage({
       sessionId={sessionId}
       players={players}
       npcs={npcs.map((n) => ({ id: n.id, name: n.name }))}
-      allNpcs={npcs}
       initial={{
         title: s.title,
         date: s.date,

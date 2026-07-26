@@ -21,8 +21,7 @@ import dynamic from "next/dynamic";
 import { pickImageFile, uploadJournalImage } from "@/lib/journal/upload";
 import { createNpc } from "@/app/journal/c/[campaignId]/codex/actions";
 import type { MentionNpc } from "./MentionSuggestion";
-import type { NpcRow } from "@vestige/db";
-import { CastStrip, npcsToCast } from "./SessionCast";
+import { CastStrip } from "./SessionCast";
 // Calendar's pan/zoom cropper — shared since the app merge. The session
 // cover renders in a fixed 4:3 card, so uploads get cropped to match
 // instead of letterboxing.
@@ -58,14 +57,7 @@ type Props = {
   players: EditPlayer[];
   /** Campaign NPCs for the editors' @-mention dropdown. */
   npcs?: MentionNpc[];
-  /** The same NPCs with their portraits, for the cast strip. */
-  allNpcs?: NpcRow[];
 };
-
-/** The markdown the @-mention picker writes: [Name](codex:<uuid>). Duplicated
- *  from lib/journal/npcs.ts, which is server-only and can't be imported here. */
-const CODEX_LINK_RE =
-  /\[[^\]]*\]\(codex:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/g;
 
 /** "Last saved" wants to answer "is my work safe?" at a glance. Today's saves
  *  show a clock time; anything older carries the date, because "14:32" alone
@@ -96,7 +88,6 @@ export function EditSessionClient({
   modulesCalendar,
   players,
   npcs: initialNpcs = [],
-  allNpcs = [],
 }: Props) {
   const router = useRouter();
   const [fields, setFields] = useState<SessionInput>(initial);
@@ -150,18 +141,6 @@ export function EditSessionClient({
   const lastRevisionAt = useRef(0);
 
   const set = (patch: Partial<SessionInput>) => setFields((f) => ({ ...f, ...patch }));
-
-  // The codex entries the draft currently @-mentions, recomputed as you type
-  // so the cast strip reflects the text in front of you rather than the last
-  // saved state.
-  const mentionedNpcs = (() => {
-    const ids = new Set<string>();
-    for (const t of [fields.summary, fields.player_characters, fields.npcs, fields.notes]) {
-      if (!t) continue;
-      for (const m of t.matchAll(CODEX_LINK_RE)) ids.add(m[1].toLowerCase());
-    }
-    return allNpcs.filter((n) => ids.has(n.id.toLowerCase()));
-  })();
 
   // Autosave: debounced 3s draft persist. For a brand-new session, the first
   // autosave creates it (create-on-first-keystroke); after that it's a plain
@@ -369,9 +348,9 @@ export function EditSessionClient({
               )}
           </div>
 
-          {/* Fills the dead space beside the cover: who's in this session.
-              The NPC half is derived from the draft text, so it updates as
-              you @-mention people rather than waiting for a save. */}
+          {/* Fills the dead space beside the cover. The party only — the
+              mentioned-NPC list belongs on the session page, where it's
+              something to read, not a running commentary while writing. */}
           <CastStrip
             className="mt-4"
             groups={[
@@ -383,11 +362,6 @@ export function EditSessionClient({
                   imageUrl: p.avatarUrl,
                   note: p.isDm ? "DM" : null,
                 })),
-              },
-              {
-                label: "Mentioned in this write-up",
-                members: npcsToCast(campaignId, mentionedNpcs),
-                empty: "@-mention someone to add them here.",
               },
             ]}
           />
