@@ -1,5 +1,9 @@
 import { Fragment } from "react";
-import type { SessionDetail, Annotation, Reaction } from "@/lib/journal/session-detail";
+import type {
+  SessionDetail,
+  Annotation,
+  Reaction,
+} from "@/lib/journal/session-detail";
 import {
   NOTE_SECTIONS,
   blocksFor,
@@ -54,7 +58,8 @@ export function NotesBody({
               </h2>
               {sectionCommentCount > 0 && (
                 <span className="ml-auto font-body text-[10px] text-muted">
-                  {sectionCommentCount} {sectionCommentCount === 1 ? "comment" : "comments"}
+                  {sectionCommentCount}{" "}
+                  {sectionCommentCount === 1 ? "comment" : "comments"}
                 </span>
               )}
             </div>
@@ -70,12 +75,18 @@ export function NotesBody({
                   text={text[key] ?? ""}
                   players={players}
                   anchor={blocks[0]!.anchor}
-                  annotations={session.annotationsByAnchor[blocks[0]!.anchor] ?? []}
+                  annotations={
+                    session.annotationsByAnchor[blocks[0]!.anchor] ?? []
+                  }
                   campaignId={campaignId}
                   sessionId={session.id}
                 />
               ) : (
-                <ChapterList blocks={blocks} session={session} campaignId={campaignId} />
+                <ChapterList
+                  blocks={blocks}
+                  session={session}
+                  campaignId={campaignId}
+                />
               )}
             </div>
           </section>
@@ -106,12 +117,20 @@ function PlayerChips({
     .split(/\r?\n/)
     .map((l) => l.replace(/^-\s*/, "").trim())
     .filter(Boolean);
-  const byName = new Map(players.map((p) => [p.characterName.toLowerCase(), p] as const));
+  const byName = new Map(
+    players.map((p) => [p.characterName.toLowerCase(), p] as const),
+  );
   const has = annotations.length > 0;
 
   return (
     <div className="group relative">
-      <div className={has ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3" : ""}>
+      <div
+        className={
+          has
+            ? "rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3"
+            : ""
+        }
+      >
         <div className="flex flex-wrap gap-2">
           {names.map((n) => {
             const p = byName.get(n.toLowerCase());
@@ -123,7 +142,11 @@ function PlayerChips({
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[11px] text-parchment ring-1 ring-[color-mix(in_srgb,var(--gold)_60%,var(--surface))]">
                   {p?.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    <img
+                      src={p.avatarUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     n.charAt(0).toUpperCase()
                   )}
@@ -172,7 +195,12 @@ function ChapterList({
     return (
       <>
         {chapters.map((c) => (
-          <Chapter key={c.anchor} chapter={c} session={session} campaignId={campaignId} />
+          <Chapter
+            key={c.anchor}
+            chapter={c}
+            session={session}
+            campaignId={campaignId}
+          />
         ))}
       </>
     );
@@ -201,7 +229,12 @@ function ChapterList({
               {!last && <span className="w-px flex-1 bg-hairline" />}
             </div>
             <div className={last ? "" : "pb-7"}>
-              <Chapter chapter={c} session={session} campaignId={campaignId} onRail />
+              <Chapter
+                chapter={c}
+                session={session}
+                campaignId={campaignId}
+                onRail
+              />
             </div>
           </Fragment>
         );
@@ -211,7 +244,10 @@ function ChapterList({
 }
 
 /** Merge per-anchor reaction tallies into one list for a whole chapter. */
-function mergeReactions(byAnchor: Record<string, Reaction[]>, anchors: string[]): Reaction[] {
+function mergeReactions(
+  byAnchor: Record<string, Reaction[]>,
+  anchors: string[],
+): Reaction[] {
   const out: Reaction[] = [];
   for (const a of anchors) {
     for (const r of byAnchor[a] ?? []) {
@@ -253,62 +289,148 @@ function Chapter({
    *  treatment must not pull the block back out with a negative margin. */
   onRail?: boolean;
 }) {
-  const annotations = chapter.anchors.flatMap((a) => session.annotationsByAnchor[a] ?? []);
+  const annotations = chapter.anchors.flatMap(
+    (a) => session.annotationsByAnchor[a] ?? [],
+  );
   const reactions = mergeReactions(session.reactionsByAnchor, chapter.anchors);
+  // Drives the margin marker (CommentMarker), not a background fill.
   const has = annotations.length > 0;
   const heading = chapter.heading;
 
   return (
     <div className="group relative">
       <div
-        className={
-          has
-            ? `rounded-[10px] border-l-2 border-gold bg-cod-soft px-4 py-3 ${onRail ? "-ml-4" : ""}`
-            : onRail
-              ? "rounded-[10px] py-2 transition-colors"
-              : "-mx-4 rounded-[10px] border-l-2 border-transparent px-4 py-2 transition-colors group-hover:border-hairline"
-        }
+        // A commented chapter is deliberately NOT tinted. Filling the block
+        // made the prose read as a highlighted callout, when all it means is
+        // that somebody said something about it — the marker belongs beside
+        // the text, not painted across it.
+        className={`grid grid-cols-[minmax(0,1fr)] gap-x-4 lg:grid-cols-[minmax(0,1fr)_auto] ${
+          onRail
+            ? "rounded-[10px] py-2 transition-colors"
+            : "-mx-4 rounded-[10px] border-l-2 border-transparent px-4 py-2 transition-colors group-hover:border-hairline"
+        }`}
       >
-        {heading &&
-          (heading.heading === 1 ? (
-            <h3 className="mb-2 font-display text-[21px] font-semibold leading-snug text-ink">
-              {renderInline(heading.text, campaignId)}
-            </h3>
-          ) : (
-            <h4 className="mb-1.5 font-display text-[13px] font-semibold uppercase tracking-[0.07em] text-ink-soft">
-              {renderInline(heading.text, campaignId)}
-            </h4>
-          ))}
+        <div className="lg:col-start-1">
+          {heading &&
+            (heading.heading === 1 ? (
+              <h3 className="mb-2 font-display text-[21px] font-semibold leading-snug text-ink">
+                {renderInline(heading.text, campaignId)}
+              </h3>
+            ) : (
+              <h4 className="mb-1.5 font-display text-[13px] font-semibold uppercase tracking-[0.07em] text-ink-soft">
+                {renderInline(heading.text, campaignId)}
+              </h4>
+            ))}
 
-        {/* Paragraphs flow: spacing separates them, nothing else. */}
-        {chapter.blocks.map((b) =>
-          b.divider ? (
-            <hr key={b.anchor} className="mx-auto my-4 w-24 border-0 border-t border-hairline" />
-          ) : (
-            <p
-              key={b.anchor}
-              className="font-body text-[17px] leading-[1.75] text-ink [&+p]:mt-4"
-            >
-              {renderInline(b.text, campaignId)}
-            </p>
-          ),
+          {/* Paragraphs flow: spacing separates them, nothing else. */}
+          {chapter.blocks.map((b) =>
+            b.divider ? (
+              <hr
+                key={b.anchor}
+                className="mx-auto my-4 w-24 border-0 border-t border-hairline"
+              />
+            ) : (
+              <p
+                key={b.anchor}
+                className="font-body text-[17px] leading-[1.75] text-ink [&+p]:mt-4"
+              >
+                {renderInline(b.text, campaignId)}
+              </p>
+            ),
+          )}
+
+          <ReactionBar
+            campaignId={campaignId}
+            sessionId={session.id}
+            anchor={chapter.anchor}
+            reactions={reactions}
+          />
+        </div>
+
+        {has && (
+          <CommentMarker annotations={annotations} anchor={chapter.anchor} />
         )}
+      </div>
 
-        <ReactionBar
+      <div id={threadId(chapter.anchor)} className="scroll-mt-24">
+        <AnnotationThread
           campaignId={campaignId}
           sessionId={session.id}
           anchor={chapter.anchor}
-          reactions={reactions}
+          excerpt={excerpt(heading?.text || chapter.blocks[0]?.text || "", 60)}
+          annotations={annotations}
         />
       </div>
-
-      <AnnotationThread
-        campaignId={campaignId}
-        sessionId={session.id}
-        anchor={chapter.anchor}
-        excerpt={excerpt(heading?.text || chapter.blocks[0]?.text || "", 60)}
-        annotations={annotations}
-      />
     </div>
+  );
+}
+
+/** Anchors contain a colon ("summary:0"), which is legal in an id but awkward
+ *  in a fragment — swap it so the link is unambiguous. */
+function threadId(anchor: string): string {
+  return `c-${anchor.replace(":", "-")}`;
+}
+
+/**
+ * Who commented, in the right margin beside the text they commented on.
+ *
+ * The marker sits next to the prose rather than colouring it: a tint made a
+ * commented passage look emphasised, when all it means is that somebody
+ * spoke. Faces answer "who's talking here" at a glance while scanning; the
+ * thread itself is already open below, so this only has to point.
+ *
+ * Below `lg` the margin doesn't exist, so it drops under the text instead of
+ * squeezing the measure.
+ */
+function CommentMarker({
+  annotations,
+  anchor,
+}: {
+  annotations: Annotation[];
+  anchor: string;
+}) {
+  // One face per person, in the order they first spoke.
+  const people: Annotation[] = [];
+  for (const a of annotations) {
+    if (!people.some((p) => p.authorName === a.authorName)) people.push(a);
+  }
+  const shown = people.slice(0, 3);
+  const extra = people.length - shown.length;
+  const label = `${annotations.length} ${annotations.length === 1 ? "comment" : "comments"} — ${people
+    .map((p) => p.authorName)
+    .join(", ")}`;
+
+  return (
+    <a
+      href={`#${threadId(anchor)}`}
+      title={label}
+      aria-label={label}
+      className="mt-2 flex shrink-0 items-center lg:col-start-2 lg:row-start-1 lg:mt-1"
+    >
+      {shown.map((p, i) => (
+        <span
+          key={p.id}
+          className={`flex h-[26px] w-[26px] items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[11px] text-parchment ring-2 ring-surface ${
+            i > 0 ? "-ml-2.5" : ""
+          }`}
+        >
+          {p.authorAvatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={p.authorAvatar}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            p.authorName.charAt(0).toUpperCase()
+          )}
+        </span>
+      ))}
+      {extra > 0 && (
+        <span className="-ml-2.5 flex h-[26px] items-center justify-center rounded-full bg-cod-soft px-1.5 font-body text-[10px] text-ink-soft ring-2 ring-surface">
+          +{extra}
+        </span>
+      )}
+    </a>
   );
 }
