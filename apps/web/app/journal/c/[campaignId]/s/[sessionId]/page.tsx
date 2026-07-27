@@ -13,7 +13,7 @@ import { NotesBody } from "@/components/journal/session/NotesBody";
 import { ChangeLog } from "@/components/journal/session/ChangeLog";
 import { ExtractCodexButton } from "@/components/journal/session/ExtractCodexButton";
 import { SessionCast } from "@/components/journal/session/SessionCast";
-import { getSessionNpcs } from "@/lib/journal/npcs";
+import { getNpcs, getSessionNpcs } from "@/lib/journal/npcs";
 
 // "Add to Codex" runs an AI extraction via a server action invoked on this
 // page — give it more headroom than the default function timeout.
@@ -34,12 +34,15 @@ export default async function SessionDetailPage({
 
   // Independent reads (revisions only needs the sessionId param) — fetched
   // together instead of as a waterfall.
-  const [session, revisions, players, isOwner, sessionNpcs] = await Promise.all([
+  const [session, revisions, players, isOwner, sessionNpcs, codex] = await Promise.all([
     getSessionDetail(supabase, campaignId, sessionId),
     getRevisions(supabase, sessionId),
     getCampaignPlayers(supabase, campaignId),
     isCampaignOwner(supabase, viewer.id, campaignId),
     getSessionNpcs(supabase, sessionId),
+    // Every codex entry in the campaign, so their names link wherever the
+    // prose mentions them — not only where the @-menu was used.
+    getNpcs(supabase, campaignId),
   ]);
   if (!session) notFound();
 
@@ -102,7 +105,14 @@ export default async function SessionDetailPage({
         <div className="order-1 min-w-0 flex-1 lg:order-2">
           <SessionTabs
             revisionCount={revisions.length}
-            recap={<NotesBody session={session} campaignId={campaignId} players={players} />}
+            recap={
+              <NotesBody
+                session={session}
+                campaignId={campaignId}
+                players={players}
+                codex={codex}
+              />
+            }
             changelog={<ChangeLog revisions={revisions} />}
           />
         </div>

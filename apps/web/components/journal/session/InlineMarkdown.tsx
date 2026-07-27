@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { journal } from "@/lib/journal/links";
-import { tokenizeInline, type InlineToken } from "@/lib/journal/inline-tokens";
+import {
+  autoLinkTokens,
+  tokenizeInline,
+  type InlineToken,
+} from "@/lib/journal/inline-tokens";
+import type { AutoLinker } from "@/lib/journal/auto-link";
 
 /** Renders the tokens from tokenizeInline(). Parsing lives in that module so
  *  it can be tested without a JSX runtime; this file is only presentation. */
@@ -13,8 +18,22 @@ const LINK_CLASS =
  * links; omit it on surfaces already wrapped in a link, where mentions
  * render as plain labels instead.
  */
-export function renderInline(text: string, campaignId?: string): React.ReactNode {
-  return toNodes(tokenizeInline(text), campaignId);
+export type AutoLink = {
+  linker: AutoLinker;
+  /** Shared across one chapter so a name links on first mention only. */
+  seen: Set<string>;
+};
+
+export function renderInline(
+  text: string,
+  campaignId?: string,
+  auto?: AutoLink,
+): React.ReactNode {
+  let tokens = tokenizeInline(text);
+  // Without a campaignId there's nowhere for a codex link to point, so
+  // auto-linking is skipped rather than rendered as a bare label.
+  if (auto && campaignId) tokens = autoLinkTokens(tokens, auto.linker, auto.seen);
+  return toNodes(tokens, campaignId);
 }
 
 function toNodes(tokens: InlineToken[], campaignId?: string): React.ReactNode {

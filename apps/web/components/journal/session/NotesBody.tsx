@@ -16,6 +16,11 @@ import { AnnotationThread } from "./AnnotationControls";
 import { CommentMarker } from "./CommentMarker";
 import { renderInline } from "./InlineMarkdown";
 import { ReactionBar } from "./ParagraphReactions";
+import {
+  buildAutoLinker,
+  type AutoLinkEntry,
+  type AutoLinker,
+} from "@/lib/journal/auto-link";
 
 export type NotesPlayer = {
   userId: string;
@@ -28,13 +33,21 @@ export function NotesBody({
   session,
   campaignId,
   players = [],
+  codex = [],
 }: {
   session: SessionDetail;
   campaignId: string;
   /** Campaign players — lets the Player Characters section render avatar
    *  chips instead of the raw markdown bullet list. */
   players?: NotesPlayer[];
+  /** Every codex entry in the campaign. Their names are linked wherever they
+   *  appear in the prose, so a mention doesn't have to have been picked with
+   *  the @-menu to become a link. */
+  codex?: AutoLinkEntry[];
 }) {
+  // Built once for the whole page and shared by every chapter.
+  const linker = buildAutoLinker(codex);
+
   const text: Record<string, string | null> = {
     summary: session.summary,
     player_characters: session.playerCharacters,
@@ -87,6 +100,7 @@ export function NotesBody({
                   blocks={blocks}
                   session={session}
                   campaignId={campaignId}
+                  linker={linker}
                 />
               )}
             </div>
@@ -184,10 +198,12 @@ function ChapterList({
   blocks,
   session,
   campaignId,
+  linker,
 }: {
   blocks: NoteBlock[];
   session: SessionDetail;
   campaignId: string;
+  linker: AutoLinker | null;
 }) {
   const chapters = chaptersFor(blocks);
   const rail = chapters.length > 1;
@@ -201,6 +217,7 @@ function ChapterList({
             chapter={c}
             session={session}
             campaignId={campaignId}
+            linker={linker}
           />
         ))}
       </>
@@ -234,6 +251,7 @@ function ChapterList({
                 chapter={c}
                 session={session}
                 campaignId={campaignId}
+                linker={linker}
                 onRail
               />
             </div>
@@ -281,11 +299,13 @@ function Chapter({
   chapter,
   session,
   campaignId,
+  linker,
   onRail = false,
 }: {
   chapter: NoteChapter;
   session: SessionDetail;
   campaignId: string;
+  linker: AutoLinker | null;
   /** On the rail the gutter already sets the left edge, so the hover
    *  treatment must not pull the block back out with a negative margin. */
   onRail?: boolean;
@@ -297,6 +317,9 @@ function Chapter({
   // Drives the margin marker (CommentMarker), not a background fill.
   const has = annotations.length > 0;
   const heading = chapter.heading;
+  // One `seen` set per chapter: a name links the first time this beat of the
+  // session mentions it, then reads as prose until the next chapter.
+  const auto = linker ? { linker, seen: new Set<string>() } : undefined;
 
   return (
     <div className="group relative">
@@ -315,11 +338,11 @@ function Chapter({
           {heading &&
             (heading.heading === 1 ? (
               <h3 className="mb-2 font-display text-[21px] font-semibold leading-snug text-ink">
-                {renderInline(heading.text, campaignId)}
+                {renderInline(heading.text, campaignId, auto)}
               </h3>
             ) : (
               <h4 className="mb-1.5 font-display text-[13px] font-semibold uppercase tracking-[0.07em] text-ink-soft">
-                {renderInline(heading.text, campaignId)}
+                {renderInline(heading.text, campaignId, auto)}
               </h4>
             ))}
 
@@ -335,7 +358,7 @@ function Chapter({
                 key={b.anchor}
                 className="font-body text-[17px] leading-[1.75] text-ink [&+p]:mt-4"
               >
-                {renderInline(b.text, campaignId)}
+                {renderInline(b.text, campaignId, auto)}
               </p>
             ),
           )}
