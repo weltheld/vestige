@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
-import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
+import type { NpcKindDb, NpcRoleDb } from "@vestige/db";
 import { journal } from "@/lib/journal/links";
 import { draftEntitySummary } from "@/lib/journal/codex-summary";
 import { lookupSrd, type SrdMatch } from "@/lib/journal/open5e";
@@ -13,7 +13,7 @@ import { isCampaignOwner } from "@/lib/journal/data";
 export type NpcInput = {
   name: string;
   summary: string | null;
-  status: NpcStatusDb;
+  role: NpcRoleDb;
   kind: NpcKindDb;
   imageUrl: string | null;
 };
@@ -63,7 +63,7 @@ export async function createNpc(
       campaign_id: campaignId,
       name,
       summary: input.summary?.trim() || null,
-      status: input.status,
+      role: input.role,
       kind: input.kind,
       image_url: input.imageUrl?.trim() || null,
       created_by: userId,
@@ -85,7 +85,7 @@ export async function updateNpc(campaignId: string, npcId: string, input: NpcInp
     .update({
       name,
       summary: input.summary?.trim() || null,
-      status: input.status,
+      role: input.role,
       kind: input.kind,
       image_url: input.imageUrl?.trim() || null,
       updated_at: new Date().toISOString(),

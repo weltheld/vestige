@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Pencil } from "lucide-react";
-import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
+import type { NpcKindDb, NpcRoleDb } from "@vestige/db";
+import { ROLE_KINDS, ROLE_LABEL } from "./NpcRoleLabel";
 import { NpcForm } from "./NpcForm";
 import { DeleteNpcButton } from "./DeleteNpcButton";
 import { SummaryWithFootnotes } from "./SummaryWithFootnotes";
@@ -15,12 +16,7 @@ const KIND_LABEL: Record<NpcKindDb, string> = {
   item: "Item",
   creature: "Creature",
 };
-const STATUS_KINDS = new Set<NpcKindDb>(["person", "creature"]);
-const STATUS_LABEL: Record<NpcStatusDb, string> = {
-  alive: "Alive",
-  dead: "Dead",
-  unknown: "Unknown",
-};
+
 
 /**
  * A codex entry's detail body with a read-first design: view mode renders
@@ -39,7 +35,7 @@ export function NpcEntry({
     id: string;
     name: string;
     summary: string | null;
-    status: NpcStatusDb;
+    role: NpcRoleDb;
     kind: NpcKindDb;
     image_url: string | null;
   };
@@ -58,7 +54,7 @@ export function NpcEntry({
           initial={{
             name: npc.name,
             summary: npc.summary,
-            status: npc.status,
+            role: npc.role,
             kind: npc.kind,
             imageUrl: npc.image_url,
           }}
@@ -74,7 +70,8 @@ export function NpcEntry({
     );
   }
 
-  const meta = [KIND_LABEL[npc.kind], STATUS_KINDS.has(npc.kind) ? STATUS_LABEL[npc.status] : null]
+  // Characters read as their role ("NPC"); everything else as its kind.
+  const meta = [KIND_LABEL[npc.kind], ROLE_KINDS.has(npc.kind) ? ROLE_LABEL[npc.role] : null]
     .filter(Boolean)
     .join(" · ");
 

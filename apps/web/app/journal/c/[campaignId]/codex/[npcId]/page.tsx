@@ -55,7 +55,7 @@ export default async function NpcDetailPage({
               id: npc.id,
               name: npc.name,
               summary: npc.summary,
-              status: npc.status,
+              role: npc.role,
               kind: npc.kind,
               image_url: npc.image_url,
             }}

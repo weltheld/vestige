@@ -5,7 +5,7 @@ import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
 import { getNpcs, getMentionCounts } from "@/lib/journal/npcs";
 import { appHref, journal } from "@/lib/journal/links";
-import { NpcStatusLabel } from "@/components/journal/codex/NpcStatusLabel";
+import { NpcRoleLabel } from "@/components/journal/codex/NpcRoleLabel";
 import { SummaryWithFootnotes } from "@/components/journal/codex/SummaryWithFootnotes";
 import type { NpcKindDb } from "@vestige/db";
 
@@ -95,7 +95,7 @@ export default async function CodexPage({
                           )}
                           <span className="truncate font-display text-lg text-ink">{npc.name}</span>
                         </span>
-                        <NpcStatusLabel status={npc.status} kind={npc.kind} />
+                        <NpcRoleLabel role={npc.role} kind={npc.kind} />
                       </div>
                       {npc.summary ? (
                         <SummaryWithFootnotes

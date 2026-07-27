@@ -101,7 +101,7 @@ export function EditSessionClient({
       const { id } = await createNpc(campaignId, {
         name,
         summary: null,
-        status: "unknown",
+        role: "npc",
         imageUrl: null,
         kind: "person",
       });

@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Loader2, ImagePlus, BookOpen, ScrollText, X } from "lucide-react";
-import type { NpcKindDb, NpcStatusDb } from "@vestige/db";
+import type { NpcKindDb, NpcRoleDb } from "@vestige/db";
+import { ROLE_KINDS, ROLE_LABEL } from "./NpcRoleLabel";
 import {
   createNpc,
   updateNpc,
@@ -36,12 +37,10 @@ const KIND_OPTIONS: Array<{ value: NpcKindDb; label: string }> = [
 /** Kinds that exist in the 5e SRD, so an "Look up in SRD" enrichment button
  *  is worth offering. */
 const SRD_KINDS = new Set<NpcKindDb>(["item", "creature"]);
-const STATUS_KINDS = new Set<NpcKindDb>(["person", "creature"]);
-
-const STATUS_OPTIONS: Array<{ value: NpcStatusDb; label: string }> = [
-  { value: "alive", label: "Alive" },
-  { value: "dead", label: "Dead" },
-  { value: "unknown", label: "Unknown" },
+const ROLE_OPTIONS: Array<{ value: NpcRoleDb; label: string }> = [
+  { value: "npc", label: ROLE_LABEL.npc },
+  { value: "pc", label: ROLE_LABEL.pc },
+  { value: "companion", label: ROLE_LABEL.companion },
 ];
 
 /** Create/edit form for a codex entry. With `npcId` it edits in place;
@@ -62,7 +61,7 @@ export function NpcForm({
   initial?: {
     name: string;
     summary: string | null;
-    status: NpcStatusDb;
+    role: NpcRoleDb;
     kind: NpcKindDb;
     imageUrl: string | null;
   };
@@ -88,7 +87,7 @@ export function NpcForm({
     setSummary(text);
     setEditorKey((k) => k + 1);
   };
-  const [status, setStatus] = useState<NpcStatusDb>(initial?.status ?? "unknown");
+  const [role, setRole] = useState<NpcRoleDb>(initial?.role ?? "npc");
   const [kind, setKind] = useState<NpcKindDb>(initial?.kind ?? "person");
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +110,7 @@ export function NpcForm({
         const input = {
           name,
           summary: joinFootnotes(summary, footnotes) || null,
-          status,
+          role,
           kind,
           imageUrl,
         };
@@ -243,17 +242,17 @@ export function NpcForm({
           </select>
         </label>
 
-        {STATUS_KINDS.has(kind) && (
-          <label className="flex w-40 flex-col gap-1.5">
+        {ROLE_KINDS.has(kind) && (
+          <label className="flex w-44 flex-col gap-1.5">
             <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-              Status
+              Role
             </span>
             <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as NpcStatusDb)}
+              value={role}
+              onChange={(e) => setRole(e.target.value as NpcRoleDb)}
               className="rounded-md border border-hairline bg-transparent px-2 py-2 font-body text-[14px] text-ink outline-none transition focus:border-gold"
             >
-              {STATUS_OPTIONS.map((o) => (
+              {ROLE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>

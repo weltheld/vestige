@@ -79,7 +79,7 @@ export async function seedCodexEntities(
           campaign_id: campaignId,
           name: e.name,
           summary: e.summary || null,
-          status: "unknown",
+          role: "npc",
           kind: e.kind,
           created_by: creatorId,
         })

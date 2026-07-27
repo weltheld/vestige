@@ -129,8 +129,14 @@ export type JournalCharacterRow = {
   created_at: string;
 };
 
+/** Legacy. The codex no longer surfaces a life status — see NpcRoleDb. The
+ *  column still exists (with its default) so existing rows and inserts are
+ *  unaffected; nothing reads it. */
 export type NpcStatusDb = "alive" | "dead" | "unknown";
 export type NpcKindDb = "person" | "place" | "event" | "item" | "creature";
+/** What kind of character an entry is. Orthogonal to `kind`: a person may be
+ *  a PC or an NPC, a creature may be a familiar or a monster. */
+export type NpcRoleDb = "pc" | "npc" | "companion";
 
 export type NpcRow = {
   id: string;
@@ -138,6 +144,7 @@ export type NpcRow = {
   name: string;
   summary: string | null;
   status: NpcStatusDb;
+  role: NpcRoleDb;
   kind: NpcKindDb;
   image_url: string | null;
   created_by: string | null;
@@ -480,6 +487,7 @@ export type Database = {
           name: string;
           summary?: string | null;
           status?: NpcStatusDb;
+          role?: NpcRoleDb;
           kind?: NpcKindDb;
           image_url?: string | null;
           created_by?: string | null;
