@@ -62,13 +62,15 @@ export function SessionHero({
               the title a full-width row instead of sharing one line with
               the prefix, so it no longer has to truncate. */}
           {prefix && (
-            <p className="font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-gold-soft">
+            <p className="font-display text-[9px] font-semibold uppercase tracking-[0.12em] text-gold-soft sm:text-[10px]">
               {prefix}
             </p>
           )}
-          {/* No truncate — smaller on mobile specifically so a full title
-              still fits on one line at that width instead of clipping. */}
-          <h1 className="mt-0.5 font-display text-[16px] font-semibold tracking-[0.02em] text-ink sm:text-[22px] sm:tracking-[0.04em]">
+          {/* The title used to shrink on mobile so it would fit one line,
+              which made the least important thing on the card — the session
+              number — the most legible. It's full size at every width now and
+              wraps if it must; nothing here needs to be one line. */}
+          <h1 className="mt-0.5 font-display text-[20px] font-semibold leading-tight tracking-[0.02em] text-ink sm:text-[22px] sm:tracking-[0.04em]">
             {title}
           </h1>
         </div>

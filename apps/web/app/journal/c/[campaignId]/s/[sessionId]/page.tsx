@@ -74,11 +74,19 @@ export default async function SessionDetailPage({
         }
       />
 
+      {/* The party is the campaign roster, not journal_characters: that table
+          only holds characters someone explicitly linked to this session,
+          which in practice is almost none of them — so the strip showed a
+          single person. The roster is who actually plays, carries avatars,
+          and matches what the editor shows. */}
       <SessionCast
         campaignId={campaignId}
-        party={session.characters
-          .filter((c) => c.role === "PC")
-          .map((c) => ({ id: c.id, name: c.name, imageUrl: c.portraitUrl }))}
+        party={players.map((p) => ({
+          id: p.userId,
+          name: p.characterName,
+          imageUrl: p.avatarUrl,
+          note: p.isDm ? "DM" : null,
+        }))}
         npcs={sessionNpcs}
       />
 

@@ -30,11 +30,20 @@ export function SessionCard({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="h-4 w-0.5 shrink-0 bg-gold" />
-          <h3 className="truncate font-display text-lg text-ink">
-            Session {String(session.number).padStart(2, "0")} · {session.title}
-          </h3>
+        {/* The number and the title used to share one truncated line, so on a
+            narrow screen the number survived and the title was cut — exactly
+            backwards. The number is a quiet label above it now; the title
+            takes the full width and wraps instead of truncating. */}
+        <div className="flex gap-2">
+          <span className="mt-1 h-4 w-0.5 shrink-0 bg-gold" />
+          <div className="min-w-0">
+            <p className="font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-gold-soft">
+              Session {String(session.number).padStart(2, "0")}
+            </p>
+            <h3 className="font-display text-[17px] leading-snug text-ink sm:text-lg">
+              {session.title}
+            </h3>
+          </div>
         </div>
         <p className="font-body text-xs text-muted">
           {dateLabel} · Chronicled by {session.authorName} · Last edited {edited}
