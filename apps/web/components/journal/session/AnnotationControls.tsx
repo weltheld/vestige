@@ -12,22 +12,31 @@ import type { Annotation } from "@/lib/journal/session-detail";
 
 /** The whole commenting surface for a Recap paragraph (there's no separate
  *  Comments section — this is where users comment directly on the summary,
- *  or any other section, right where it appears). Zero comments renders a
- *  bare hover "+"; one or more renders a "N comments" toggle that expands
- *  the full thread (every comment, not just the first) plus a composer that
- *  stays open so more can be added. */
+ *  or any other section, right where it appears). One or more comments renders
+ *  a "N comments" toggle that expands the full thread (every comment, not just
+ *  the first) plus a composer that stays open so more can be added.
+ *
+ *  With no comments yet it's just a composer — closed behind a hover "+"
+ *  where nothing else offers the action, or already open when `startOpen`
+ *  says the margin control has just asked for it. */
 export function AnnotationThread({
   campaignId,
   sessionId,
   anchor,
   excerpt,
   annotations,
+  startOpen = false,
+  onClose,
 }: {
   campaignId: string;
   sessionId: string;
   anchor: string;
   excerpt: string;
   annotations: Annotation[];
+  /** Open the composer immediately — used when the margin control asked
+   *  for it, so the click that opened it doesn't need a second click. */
+  startOpen?: boolean;
+  onClose?: () => void;
 }) {
   // Open by default when there ARE comments: a collapsed "2 comments" toggle
   // meant discussion on the page was invisible unless you went looking, and
@@ -42,6 +51,8 @@ export function AnnotationThread({
         anchor={anchor}
         excerpt={excerpt}
         alwaysOpen={false}
+        startOpen={startOpen}
+        onClose={onClose}
       />
     );
   }
@@ -178,15 +189,19 @@ function Composer({
   anchor,
   excerpt,
   alwaysOpen,
+  startOpen = false,
+  onClose,
 }: {
   campaignId: string;
   sessionId: string;
   anchor: string;
   excerpt: string;
   alwaysOpen: boolean;
+  startOpen?: boolean;
+  onClose?: () => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(alwaysOpen);
+  const [open, setOpen] = useState(alwaysOpen || startOpen);
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -195,7 +210,11 @@ function Composer({
     setSaving(true);
     await addAnnotation(campaignId, sessionId, anchor, body.trim());
     setBody("");
-    if (!alwaysOpen) setOpen(false);
+    if (!alwaysOpen) {
+      setOpen(false);
+      // The comment now exists, so the thread takes over from this composer.
+      onClose?.();
+    }
     setSaving(false);
     router.refresh();
   }
@@ -240,7 +259,10 @@ function Composer({
         {!alwaysOpen && (
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              onClose?.();
+            }}
             className="font-body text-[11px] text-ink-soft"
           >
             Cancel

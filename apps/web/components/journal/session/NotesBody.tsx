@@ -13,9 +13,8 @@ import {
   type NoteChapter,
 } from "@/lib/journal/notes";
 import { AnnotationThread } from "./AnnotationControls";
-import { CommentMarker } from "./CommentMarker";
+import { ChapterAnnotations } from "./ChapterAnnotations";
 import { renderInline } from "./InlineMarkdown";
-import { ReactionBar } from "./ParagraphReactions";
 import {
   buildAutoLinker,
   type AutoLinkEntry,
@@ -288,8 +287,8 @@ function mergeReactions(
  *
  * Paragraphs inside are deliberately NOT boxed or tinted: separating every
  * one made the page read as a stack of cards rather than a chronicle. The
- * chapter is the hover target instead, so the controls have somewhere to
- * live without cutting the text apart.
+ * chapter is the annotation target instead, so the controls have somewhere to
+ * live without cutting the text apart (see ChapterAnnotations).
  *
  * Comments and reactions written before this grouping existed are anchored
  * to individual paragraphs, so both are rolled up from every anchor in the
@@ -314,27 +313,26 @@ function Chapter({
     (a) => session.annotationsByAnchor[a] ?? [],
   );
   const reactions = mergeReactions(session.reactionsByAnchor, chapter.anchors);
-  // Drives the margin marker (CommentMarker), not a background fill.
-  const has = annotations.length > 0;
   const heading = chapter.heading;
   // One `seen` set per chapter: a name links the first time this beat of the
   // session mentions it, then reads as prose until the next chapter.
   const auto = linker ? { linker, seen: new Set<string>() } : undefined;
 
+  // A commented chapter is deliberately NOT tinted. Filling the block made the
+  // prose read as a highlighted callout, when all it means is that somebody
+  // said something about it — the marks belong beside the text, not painted
+  // across it.
   return (
-    <div className="group relative">
-      <div
-        // A commented chapter is deliberately NOT tinted. Filling the block
-        // made the prose read as a highlighted callout, when all it means is
-        // that somebody said something about it — the marker belongs beside
-        // the text, not painted across it.
-        className={`grid grid-cols-[minmax(0,1fr)] gap-x-4 lg:grid-cols-[minmax(0,1fr)_auto] ${
-          onRail
-            ? "rounded-[10px] py-2 transition-colors"
-            : "-mx-4 rounded-[10px] border-l-2 border-transparent px-4 py-2 transition-colors group-hover:border-hairline"
-        }`}
-      >
-        <div className="lg:col-start-1">
+    <ChapterAnnotations
+      campaignId={campaignId}
+      sessionId={session.id}
+      anchor={chapter.anchor}
+      excerpt={excerpt(heading?.text || chapter.blocks[0]?.text || "", 60)}
+      annotations={annotations}
+      reactions={reactions}
+      onRail={onRail}
+    >
+      <>
           {heading &&
             (heading.heading === 1 ? (
               <h3 className="mb-2 font-display text-[21px] font-semibold leading-snug text-ink">
@@ -362,43 +360,7 @@ function Chapter({
               </p>
             ),
           )}
-
-          <ReactionBar
-            campaignId={campaignId}
-            sessionId={session.id}
-            anchor={chapter.anchor}
-            reactions={reactions}
-          />
-        </div>
-
-        {/* The thread lives WITH the marker, in the margin. It used to be a
-            link down to a thread at the foot of the chapter, which threw the
-            viewport past all the prose to reach it. */}
-        {has && (
-          <CommentMarker
-            campaignId={campaignId}
-            sessionId={session.id}
-            anchor={chapter.anchor}
-            excerpt={excerpt(
-              heading?.text || chapter.blocks[0]?.text || "",
-              60,
-            )}
-            annotations={annotations}
-          />
-        )}
-      </div>
-
-      {/* With no comments yet there's nothing to mark, so the plain "Comment"
-          affordance stays below the text. */}
-      {!has && (
-        <AnnotationThread
-          campaignId={campaignId}
-          sessionId={session.id}
-          anchor={chapter.anchor}
-          excerpt={excerpt(heading?.text || chapter.blocks[0]?.text || "", 60)}
-          annotations={annotations}
-        />
-      )}
-    </div>
+      </>
+    </ChapterAnnotations>
   );
 }
