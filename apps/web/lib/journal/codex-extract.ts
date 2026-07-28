@@ -8,7 +8,10 @@ import type { IngestCodexEntity } from "./codex-ingest";
 
 type SB = SupabaseClient<Database>;
 
-const MAX_ENTITIES = 15;
+/** A session's worth of codex-worthy things. 15 was too tight: a six-person
+ *  party plus the NPCs they met filled the budget with people before the
+ *  places, items and events were ever reached. */
+const MAX_ENTITIES = 30;
 
 /**
  * On-demand codex extraction for an existing journal session — the same
@@ -83,6 +86,12 @@ Read the session write-up below and extract the codex-worthy entities:
 
 Use exactly those five words for "kind" — no others.
 
+Cover ALL FIVE kinds. Work through them one at a time and ask what the write-up
+names for each: the party are not the only people, and a session almost always
+happens somewhere, involves something, and turns on some event. Do not spend the
+whole list on characters — an extraction that returns only people has missed the
+places they went and the things they found.
+
 For each entity write a 1-2 sentence factual summary using ONLY information stated in the write-up — no interpretation, no invented details. Only include entities actually worth remembering; fewer is better than padded. At most ${MAX_ENTITIES}.
 
 Write every summary in English, even when the write-up is in another language. Keep proper names exactly as the write-up spells them — a character, place or item name is not translated.
@@ -118,7 +127,6 @@ function parseEntities(text: string): ParseOutcome {
   const seen = new Set<string>();
   let rejected = 0;
   for (const item of raw) {
-    if (out.length >= MAX_ENTITIES) break;
     if (typeof item !== "object" || item === null) {
       rejected++;
       continue;
@@ -145,7 +153,42 @@ function parseEntities(text: string): ParseOutcome {
       summary: typeof summary === "string" ? summary.trim().slice(0, 600) : "",
     });
   }
-  return { entities: out, rejected, unparseable: false };
+  return { entities: capByKind(out), rejected, unparseable: false };
+}
+
+/**
+ * Trim to MAX_ENTITIES without letting one kind starve the others.
+ *
+ * The cap used to cut the model's reply in the order it arrived. Models emit
+ * in prompt order and "person" is listed first, so a big party plus the NPCs
+ * they met could fill the whole budget before the first place — and the user
+ * saw an extraction that found nothing but characters. Taking one of each kind
+ * per round means every kind present in the reply survives, and the cap only
+ * ever trims the tail of the longest lists.
+ */
+function capByKind(entities: IngestCodexEntity[]): IngestCodexEntity[] {
+  if (entities.length <= MAX_ENTITIES) return entities;
+
+  // Per kind, in the model's own order — it puts the most significant first.
+  const queues = new Map<NpcKindDb, IngestCodexEntity[]>();
+  for (const e of entities) {
+    const q = queues.get(e.kind);
+    if (q) q.push(e);
+    else queues.set(e.kind, [e]);
+  }
+
+  const out: IngestCodexEntity[] = [];
+  while (out.length < MAX_ENTITIES) {
+    let took = false;
+    for (const q of queues.values()) {
+      if (q.length === 0) continue;
+      out.push(q.shift()!);
+      took = true;
+      if (out.length >= MAX_ENTITIES) break;
+    }
+    if (!took) break; // every queue drained
+  }
+  return out;
 }
 
 /** The entity array out of either reply shape, or null if there isn't one. */

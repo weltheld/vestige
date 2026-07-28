@@ -1,6 +1,8 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import type { NpcRow } from "@vestige/db";
 import { journal } from "@/lib/journal/links";
+import { ROLE_LABEL } from "@/components/journal/codex/NpcRoleLabel";
 
 /**
  * Who was in this session, under the title: the party first, then the codex
@@ -28,8 +30,11 @@ export function npcsToCast(campaignId: string, npcs: NpcRow[]): CastMember[] {
     .map((n) => ({
       id: n.id,
       name: n.name,
+      // What kind of character they are, which is what the role column
+      // replaced alive/dead with. The old note read "Dead" off `status`, a
+      // column nothing has set since.
+      note: n.kind === "creature" ? "Creature" : ROLE_LABEL[n.role],
       imageUrl: n.image_url,
-      note: n.kind === "creature" ? "Creature" : n.status === "dead" ? "Dead" : null,
       href: journal.npc(campaignId, n.id),
     }));
 }
@@ -47,6 +52,10 @@ export function SessionCast({
 }) {
   return (
     <CastStrip
+      // Stacked, not side by side: the NPCs are their own section under the
+      // party rather than a second column competing with it, and a long
+      // party no longer squeezes them into a narrow half.
+      stack
       groups={[
         { label: "The party", members: party },
         { label: "Met this session", members: npcsToCast(campaignId, npcs) },
@@ -63,9 +72,13 @@ export function SessionCast({
  */
 export function CastStrip({
   groups,
+  stack = false,
   className = "",
 }: {
   groups: Array<{ label: string; members: CastMember[]; empty?: string }>;
+  /** Stack the groups vertically as separate sections instead of laying them
+   *  out as columns side by side. */
+  stack?: boolean;
   className?: string;
 }) {
   const shown = groups.filter((g) => g.members.length > 0 || g.empty);
@@ -73,10 +86,17 @@ export function CastStrip({
 
   return (
     <section
-      className={`flex flex-col gap-4 rounded-xl border border-hairline bg-surface px-5 py-4 sm:flex-row sm:gap-8 ${className}`}
+      className={`flex flex-col rounded-xl border border-hairline bg-surface px-5 py-4 ${
+        stack ? "gap-3.5" : "gap-4 sm:flex-row sm:gap-8"
+      } ${className}`}
     >
-      {shown.map((g) => (
-        <Group key={g.label} label={g.label} members={g.members} empty={g.empty} />
+      {shown.map((g, i) => (
+        <Fragment key={g.label}>
+          {/* A rule between stacked sections, so the second group reads as its
+              own thing rather than a continuation of the first's faces. */}
+          {stack && i > 0 && <span className="h-px bg-hairline" />}
+          <Group label={g.label} members={g.members} empty={g.empty} />
+        </Fragment>
       ))}
     </section>
   );
