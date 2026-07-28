@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { format, parseISO } from "date-fns";
 import { Pencil } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember, getCampaignPlayers, isCampaignOwner } from "@/lib/journal/data";
@@ -46,7 +47,12 @@ export default async function SessionDetailPage({
   ]);
   if (!session) notFound();
 
-  const num = String(session.number).padStart(2, "0");
+  // The date, not "Session 02", in the label above the title: it's what
+  // identifies a session to the people who were there. The number is still on
+  // the changelog and in the URL for anyone who wants the sequence.
+  const dateLabel = session.date
+    ? format(parseISO(session.date), "MMMM d, yyyy")
+    : "Undated";
   const pcAvatars = session.characters
     .filter((c) => c.role === "PC")
     .map((c) => c.portraitUrl)
@@ -57,7 +63,7 @@ export default async function SessionDetailPage({
       <SessionHero
         variant="session"
         title={session.title}
-        prefix={`Session ${num}`}
+        prefix={dateLabel}
         coverUrl={session.imageUrl ?? campaign.imageUrl}
         avatars={pcAvatars}
         extraCount={session.characters.length > 5 ? session.characters.length - 5 : 0}
