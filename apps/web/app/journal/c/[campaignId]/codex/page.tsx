@@ -2,11 +2,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Library } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
-import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
+import { getViewer, getCampaignIfMember, isCampaignOwner } from "@/lib/journal/data";
 import { getNpcs, getMentionCounts } from "@/lib/journal/npcs";
 import { appHref, journal } from "@/lib/journal/links";
 import { NpcRoleLabel } from "@/components/journal/codex/NpcRoleLabel";
 import { SummaryWithFootnotes } from "@/components/journal/codex/SummaryWithFootnotes";
+import { TranslateCodexButton } from "@/components/journal/codex/TranslateCodexButton";
+import { looksEnglish } from "@/lib/journal/codex-translate";
 import type { NpcKindDb } from "@vestige/db";
 
 const SECTIONS: Array<{ kind: NpcKindDb; heading: string }> = [
@@ -30,10 +32,17 @@ export default async function CodexPage({
   const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!campaign) redirect(appHref());
 
-  const [npcs, mentionCounts] = await Promise.all([
+  const [npcs, mentionCounts, isOwner] = await Promise.all([
     getNpcs(supabase, campaignId),
     getMentionCounts(supabase, campaignId),
+    isCampaignOwner(supabase, viewer.id, campaignId),
   ]);
+  // The translate pass spends the campaign's API key, so it's offered only to
+  // the owner — and only while something still reads as non-English, so the
+  // button disappears once the codex is done rather than sitting there forever.
+  const hasNonEnglish = npcs.some(
+    (n) => n.summary?.trim() && !looksEnglish(n.summary),
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
@@ -44,12 +53,17 @@ export default async function CodexPage({
             The people, places, events, creatures, and items of your campaign.
           </p>
         </div>
-        <Link
-          href={journal.newNpc(campaignId)}
-          className="rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-        >
-          + New entry
-        </Link>
+        <div className="flex flex-wrap items-start gap-3">
+          {isOwner && hasNonEnglish && (
+            <TranslateCodexButton campaignId={campaignId} />
+          )}
+          <Link
+            href={journal.newNpc(campaignId)}
+            className="rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+          >
+            + New entry
+          </Link>
+        </div>
       </div>
 
       {npcs.length === 0 ? (

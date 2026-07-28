@@ -28,7 +28,7 @@ const SYSTEM_PROMPT =
   "Style rules:\n" +
   "- Voice: high-fantasy chronicle — the measured, evocative telling of a loremaster recording a story, not a database entry. Let the drama live in word choice and rhythm, never in added content.\n" +
   "- No headings, no lists, no markdown. Refer to the entity by name.\n" +
-  "- Write in the same language the excerpts are written in.\n" +
+  "- Write in English, even when the excerpts are in another language. Keep proper names exactly as the excerpts spell them — a character, place or item name is never translated.\n" +
   "- Do NOT write the footnote legend yourself — only the inline [n] markers; the legend is appended for you.";
 
 /** Drop a previously appended footnote legend (everything from the "—"

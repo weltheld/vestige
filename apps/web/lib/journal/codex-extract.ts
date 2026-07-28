@@ -83,7 +83,9 @@ Read the session write-up below and extract the codex-worthy entities:
 
 Use exactly those five words for "kind" — no others.
 
-For each entity write a 1-2 sentence factual summary using ONLY information stated in the write-up — no interpretation, no invented details. Write summaries in the same language as the write-up. Only include entities actually worth remembering; fewer is better than padded. At most ${MAX_ENTITIES}.
+For each entity write a 1-2 sentence factual summary using ONLY information stated in the write-up — no interpretation, no invented details. Only include entities actually worth remembering; fewer is better than padded. At most ${MAX_ENTITIES}.
+
+Write every summary in English, even when the write-up is in another language. Keep proper names exactly as the write-up spells them — a character, place or item name is not translated.
 
 Respond with ONLY this JSON object, no prose and no code fences:
 {"entities": [{"name": "...", "kind": "person|place|event|item|creature", "summary": "..."}]}
