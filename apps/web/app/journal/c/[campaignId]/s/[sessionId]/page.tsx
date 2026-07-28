@@ -14,7 +14,7 @@ import { NotesBody } from "@/components/journal/session/NotesBody";
 import { ChangeLog } from "@/components/journal/session/ChangeLog";
 import { ExtractCodexButton } from "@/components/journal/session/ExtractCodexButton";
 import { SessionCast } from "@/components/journal/session/SessionCast";
-import { getNpcs, getSessionNpcs } from "@/lib/journal/npcs";
+import { getNpcs } from "@/lib/journal/npcs";
 
 // "Add to Codex" runs an AI extraction via a server action invoked on this
 // page — give it more headroom than the default function timeout.
@@ -35,12 +35,11 @@ export default async function SessionDetailPage({
 
   // Independent reads (revisions only needs the sessionId param) — fetched
   // together instead of as a waterfall.
-  const [session, revisions, players, isOwner, sessionNpcs, codex] = await Promise.all([
+  const [session, revisions, players, isOwner, codex] = await Promise.all([
     getSessionDetail(supabase, campaignId, sessionId),
     getRevisions(supabase, sessionId),
     getCampaignPlayers(supabase, campaignId),
     isCampaignOwner(supabase, viewer.id, campaignId),
-    getSessionNpcs(supabase, sessionId),
     // Every codex entry in the campaign, so their names link wherever the
     // prose mentions them — not only where the @-menu was used.
     getNpcs(supabase, campaignId),
@@ -91,14 +90,12 @@ export default async function SessionDetailPage({
           single person. The roster is who actually plays, carries avatars,
           and matches what the editor shows. */}
       <SessionCast
-        campaignId={campaignId}
         party={players.map((p) => ({
           id: p.userId,
           name: p.characterName,
           imageUrl: p.avatarUrl,
           note: p.isDm ? "DM" : null,
         }))}
-        npcs={sessionNpcs}
       />
 
       {/* Mobile stacks title (above) → recap/changelog → session image →

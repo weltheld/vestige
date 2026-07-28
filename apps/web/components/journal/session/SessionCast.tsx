@@ -1,16 +1,17 @@
-import { Fragment } from "react";
 import Link from "next/link";
-import type { NpcRow } from "@vestige/db";
-import { journal } from "@/lib/journal/links";
-import { ROLE_LABEL } from "@/components/journal/codex/NpcRoleLabel";
 
 /**
- * Who was in this session, under the title: the party first, then the codex
- * entries the write-up mentions.
+ * Who was at the table, under the session title.
  *
- * The space under the session name was empty, and this is the thing a reader
- * most wants there — the cast answers "whose story is this" before the prose
- * has to. NPC faces link into the codex, so the strip doubles as the way in.
+ * The space under the session name was empty, and the party is the thing a
+ * reader most wants there — it answers "whose story is this" before the prose
+ * has to.
+ *
+ * The mentioned NPCs deliberately do NOT appear here. Codex mentions include
+ * everyone the write-up merely names in passing, so on a talkative session the
+ * strip filled with faces that were never really present — which made the
+ * party itself harder to read, not easier. They're reachable where they belong:
+ * as links in the prose, and in the codex.
  */
 
 export type CastMember = {
@@ -22,46 +23,8 @@ export type CastMember = {
   href?: string;
 };
 
-/** Codex rows → cast members. Places, items and events are in the codex too
- *  but aren't cast: a town beside a person's portrait is a category error. */
-export function npcsToCast(campaignId: string, npcs: NpcRow[]): CastMember[] {
-  return npcs
-    .filter((n) => n.kind === "person" || n.kind === "creature")
-    .map((n) => ({
-      id: n.id,
-      name: n.name,
-      // What kind of character they are, which is what the role column
-      // replaced alive/dead with. The old note read "Dead" off `status`, a
-      // column nothing has set since.
-      note: n.kind === "creature" ? "Creature" : ROLE_LABEL[n.role],
-      imageUrl: n.image_url,
-      href: journal.npc(campaignId, n.id),
-    }));
-}
-
-export function SessionCast({
-  campaignId,
-  party,
-  npcs,
-}: {
-  campaignId: string;
-  /** The player characters at the table. */
-  party: CastMember[];
-  /** Codex entries this session mentions. */
-  npcs: NpcRow[];
-}) {
-  return (
-    <CastStrip
-      // Stacked, not side by side: the NPCs are their own section under the
-      // party rather than a second column competing with it, and a long
-      // party no longer squeezes them into a narrow half.
-      stack
-      groups={[
-        { label: "The party", members: party },
-        { label: "Met this session", members: npcsToCast(campaignId, npcs) },
-      ]}
-    />
-  );
+export function SessionCast({ party }: { party: CastMember[] }) {
+  return <CastStrip groups={[{ label: "The party", members: party }]} />;
 }
 
 /**
@@ -72,13 +35,9 @@ export function SessionCast({
  */
 export function CastStrip({
   groups,
-  stack = false,
   className = "",
 }: {
   groups: Array<{ label: string; members: CastMember[]; empty?: string }>;
-  /** Stack the groups vertically as separate sections instead of laying them
-   *  out as columns side by side. */
-  stack?: boolean;
   className?: string;
 }) {
   const shown = groups.filter((g) => g.members.length > 0 || g.empty);
@@ -86,17 +45,10 @@ export function CastStrip({
 
   return (
     <section
-      className={`flex flex-col rounded-xl border border-hairline bg-surface px-5 py-4 ${
-        stack ? "gap-3.5" : "gap-4 sm:flex-row sm:gap-8"
-      } ${className}`}
+      className={`flex flex-col gap-4 rounded-xl border border-hairline bg-surface px-5 py-4 sm:flex-row sm:gap-8 ${className}`}
     >
-      {shown.map((g, i) => (
-        <Fragment key={g.label}>
-          {/* A rule between stacked sections, so the second group reads as its
-              own thing rather than a continuation of the first's faces. */}
-          {stack && i > 0 && <span className="h-px bg-hairline" />}
-          <Group label={g.label} members={g.members} empty={g.empty} />
-        </Fragment>
+      {shown.map((g) => (
+        <Group key={g.label} label={g.label} members={g.members} empty={g.empty} />
       ))}
     </section>
   );
