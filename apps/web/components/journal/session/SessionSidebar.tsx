@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format, parseISO, formatDistanceToNow } from "date-fns";
+import { format, parseISO } from "date-fns";
 import type { SessionDetail } from "@/lib/journal/session-detail";
 import { journal } from "@/lib/journal/links";
 import { DeleteSessionButton } from "./DeleteSessionButton";
@@ -26,22 +26,6 @@ function Card({
   );
 }
 
-function Avatar({ url, name, size, ring }: { url: string | null; name: string; size: number; ring?: boolean }) {
-  return (
-    <span
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-parchment ${ring ? "ring-2 ring-gold" : ""}`}
-      style={{ width: size, height: size, fontSize: size * 0.4 }}
-    >
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="h-full w-full object-cover" />
-      ) : (
-        name.charAt(0).toUpperCase()
-      )}
-    </span>
-  );
-}
-
 export function SessionSidebar({
   session,
   campaignId,
@@ -52,7 +36,6 @@ export function SessionSidebar({
   className?: string;
 }) {
   const dateLabel = session.date ? format(parseISO(session.date), "MMMM d, yyyy") : "Undated";
-  const edited = formatDistanceToNow(parseISO(session.updatedAt), { addSuffix: true });
 
   return (
     // Full width on mobile (a hardcoded 280px was crushing the recap column
@@ -92,19 +75,10 @@ export function SessionSidebar({
       </Card>
 
       <Card label="Session Info">
+        {/* Just the date. Who wrote it and when it was last touched is
+            bookkeeping about the page rather than about the session — and the
+            changelog tab already records both, in order. */}
         <Field label="Date" value={dateLabel} />
-        <Field
-          label="Last edited"
-          value={edited}
-          sub={session.editorName ? `by ${session.editorName}` : undefined}
-        />
-        <div>
-          <p className="font-body text-[11px] text-muted">Chronicled by</p>
-          <div className="mt-1 flex items-center gap-2">
-            <Avatar url={session.authorAvatar} name={session.authorName} size={20} />
-            <span className="font-body text-[14px] text-ink">{session.authorName}</span>
-          </div>
-        </div>
         <div className="h-px bg-hairline" />
         {/* Editing moved to the prominent button in the hero; only the
             destructive action stays tucked away here. */}
@@ -117,12 +91,11 @@ export function SessionSidebar({
   );
 }
 
-function Field({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="font-body text-[11px] text-muted">{label}</p>
       <p className="font-body text-[14px] text-ink">{value}</p>
-      {sub && <p className="font-body text-[11px] italic text-muted">{sub}</p>}
     </div>
   );
 }
