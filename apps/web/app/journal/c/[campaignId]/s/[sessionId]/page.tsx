@@ -74,7 +74,9 @@ export default async function SessionDetailPage({
             )}
             <Link
               href={journal.editSession(campaignId, session.id)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-wine px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+              // Secondary, not a wine-filled primary: on a page whose job is
+              // reading, the strongest thing in the band should be the title.
+              className="inline-flex items-center gap-1.5 rounded-lg border border-hairline bg-surface px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft transition hover:border-gold hover:text-ink"
             >
               <Pencil size={12} />
               Edit session

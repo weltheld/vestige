@@ -87,7 +87,11 @@ export function ExtractCodexButton({
         disabled={busy}
         onClick={startPreview}
         title="Find people, places, and events in this session and review them for the codex"
-        className="inline-flex items-center gap-1.5 rounded-lg border border-white/40 bg-black/30 px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm transition hover:bg-black/45 disabled:opacity-60"
+        // White-on-translucent-black was styled for the hero's cover image,
+        // which this variant of the hero doesn't have — on the plain band it
+        // read as a heavy primary action. Same quiet outline as the codex
+        // page's own secondary buttons.
+        className="inline-flex items-center gap-1.5 rounded-lg border border-hairline bg-surface px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft transition hover:border-gold hover:text-ink disabled:opacity-60"
       >
         {phase.step === "previewing" ? (
           <Loader2 size={12} className="animate-spin" />
