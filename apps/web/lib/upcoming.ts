@@ -72,13 +72,6 @@ export async function getUpcomingSlots(
     if (!setDateByCampaign.has(s.campaign_id)) setDateByCampaign.set(s.campaign_id, s.date);
   }
 
-  const votesByCampaign = new Map<string, { user_id: string; date: string; value: string }[]>();
-  for (const v of votes ?? []) {
-    const list = votesByCampaign.get(v.campaign_id) ?? [];
-    list.push(v);
-    votesByCampaign.set(v.campaign_id, list);
-  }
-
   const membersByCampaign = new Map<
     string,
     { user_id: string; character_name: string | null; avatar_url: string | null }[]
@@ -87,6 +80,20 @@ export async function getUpcomingSlots(
     const list = membersByCampaign.get(m.campaign_id) ?? [];
     list.push(m);
     membersByCampaign.set(m.campaign_id, list);
+  }
+
+  // Vote rows outlive membership — they cascade from the campaign and the auth
+  // user, not from campaign_members — so an ex-player's old votes would keep
+  // voting for a date long after they left. Only current members count.
+  const memberOf = new Set(
+    (members ?? []).map((m) => `${m.campaign_id}:${m.user_id}`),
+  );
+  const votesByCampaign = new Map<string, { user_id: string; date: string; value: string }[]>();
+  for (const v of votes ?? []) {
+    if (!memberOf.has(`${v.campaign_id}:${v.user_id}`)) continue;
+    const list = votesByCampaign.get(v.campaign_id) ?? [];
+    list.push(v);
+    votesByCampaign.set(v.campaign_id, list);
   }
 
   const userIds = [...new Set((members ?? []).map((m) => m.user_id))];

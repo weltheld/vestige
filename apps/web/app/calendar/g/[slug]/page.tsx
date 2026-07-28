@@ -90,14 +90,16 @@ export default async function GroupPage({
   const members: Member[] = [];
   for (const row of membersRows ?? []) {
     const p = profileById.get(row.user_id);
-    if (!p) continue;
-    // Per-campaign character identity, falling back to the global profile.
+    // A member whose profile row is missing used to be dropped from the
+    // roster entirely — but their votes still loaded, so the day tallies
+    // counted a vote with no name to attribute it to. They're kept, with
+    // whatever identity we do have.
     users.push({
-      id: p.id,
-      email: p.email,
-      displayName: p.display_name,
-      characterName: row.character_name ?? p.character_name,
-      avatarUrl: row.avatar_url ?? p.avatar_url ?? undefined,
+      id: row.user_id,
+      email: p?.email ?? "",
+      displayName: p?.display_name ?? "",
+      characterName: row.character_name ?? p?.character_name ?? "Unknown member",
+      avatarUrl: row.avatar_url ?? p?.avatar_url ?? undefined,
     });
     members.push({
       groupId: row.campaign_id,
@@ -133,12 +135,20 @@ export default async function GroupPage({
     createdAt: campaign.created_at,
   };
 
-  const votes: Vote[] = (votesRows ?? []).map((v) => ({
-    groupId: v.campaign_id,
-    userId: v.user_id,
-    date: v.date,
-    value: v.value,
-  }));
+  // Only current members' votes count. Removing someone from a campaign
+  // leaves their vote rows behind (they cascade from the campaign and the
+  // auth user, not from membership), and those orphans were still being
+  // tallied — a day showed one more "yes" than it had names to show for it,
+  // which read as a player who never voted being counted as available.
+  const memberIdSet = new Set(members.map((m) => m.userId));
+  const votes: Vote[] = (votesRows ?? [])
+    .filter((v) => memberIdSet.has(v.user_id))
+    .map((v) => ({
+      groupId: v.campaign_id,
+      userId: v.user_id,
+      date: v.date,
+      value: v.value,
+    }));
 
   // ---- Cross-campaign awareness (for THIS user only) -------------------
   // The user's OTHER campaigns let us surface, on this calendar, the days

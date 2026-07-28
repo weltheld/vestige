@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, BookOpen } from "lucide-react";
-import { format, parseISO, formatDistanceToNow } from "date-fns";
+import { format, parseISO } from "date-fns";
 import type { SessionListItem } from "@/lib/journal/sessions";
 
 export function SessionCard({
@@ -10,15 +10,19 @@ export function SessionCard({
   session: SessionListItem;
   href: string;
 }) {
-  const dateLabel = session.date ? format(parseISO(session.date), "MMM d, yyyy") : "Undated";
-  const edited = formatDistanceToNow(parseISO(session.updatedAt), { addSuffix: true });
+  const dateLabel = session.date
+    ? format(parseISO(session.date), "MMM d, yyyy")
+    : "Undated";
 
   return (
     <Link
       href={href}
-      className="flex items-center gap-5 rounded-xl bg-cod-soft px-5 py-4 transition hover:brightness-[0.99]"
+      // items-stretch + overflow-hidden so the image can reach the card's own
+      // edges: it used to be a small fixed-height thumbnail floating in the
+      // middle of the row with padding all around it.
+      className="flex min-h-[112px] items-stretch overflow-hidden rounded-xl bg-cod-soft transition hover:brightness-[0.99]"
     >
-      <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-cod-soft">
+      <div className="w-28 shrink-0 self-stretch overflow-hidden bg-cod-soft sm:w-40">
         {session.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={session.imageUrl} alt="" className="h-full w-full object-cover" />
@@ -29,25 +33,16 @@ export function SessionCard({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        {/* The number and the title used to share one truncated line, so on a
-            narrow screen the number survived and the title was cut — exactly
-            backwards. The number is a quiet label above it now; the title
-            takes the full width and wraps instead of truncating. */}
-        <div className="flex gap-2">
-          <span className="mt-1 h-4 w-0.5 shrink-0 bg-gold" />
-          <div className="min-w-0">
-            <p className="font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-gold-soft">
-              Session {String(session.number).padStart(2, "0")}
-            </p>
-            <h3 className="font-display text-[17px] leading-snug text-ink sm:text-lg">
-              {session.title}
-            </h3>
-          </div>
-        </div>
-        <p className="font-body text-xs text-muted">
-          {dateLabel} · Chronicled by {session.authorName} · Last edited {edited}
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-5 py-4">
+        {/* The date is what you actually look for in a list of sessions — the
+            sequence number was taking the prominent slot and the date was
+            buried in a run of metadata below the title. */}
+        <p className="font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-gold-soft">
+          {dateLabel}
         </p>
+        <h3 className="font-display text-[17px] leading-snug text-ink sm:text-lg">
+          {session.title}
+        </h3>
         {session.excerpt && (
           <p className="line-clamp-2 font-body text-[13px] leading-[1.6] text-ink-soft">
             {session.excerpt}
@@ -55,7 +50,7 @@ export function SessionCard({
         )}
       </div>
 
-      <ChevronRight size={16} className="shrink-0 text-muted" />
+      <ChevronRight size={16} className="mr-4 shrink-0 self-center text-muted" />
     </Link>
   );
 }
