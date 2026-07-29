@@ -333,14 +333,21 @@ function Chapter({
       onRail={onRail}
     >
       <>
+          {/* Headings are NOT auto-linked. A chapter title is a label for what
+              follows, and turning part of it into a link made it read as
+              navigation rather than as a heading — "A Gift from Heliana" is the
+              name of a scene, not a pointer to Heliana. A mention written into
+              a heading by hand still links; only the automatic pass skips them.
+              This also leaves the name unspent, so the prose below gets the
+              link where it's actually useful. */}
           {heading &&
             (heading.heading === 1 ? (
               <h3 className="mb-2 font-display text-[21px] font-semibold leading-snug text-ink">
-                {renderInline(heading.text, campaignId, auto)}
+                {renderInline(heading.text, campaignId)}
               </h3>
             ) : (
               <h4 className="mb-1.5 font-display text-[13px] font-semibold uppercase tracking-[0.07em] text-ink-soft">
-                {renderInline(heading.text, campaignId, auto)}
+                {renderInline(heading.text, campaignId)}
               </h4>
             ))}
 
