@@ -12,8 +12,10 @@ function s(tokens) {
       : t.type === "bold" ? `<b>${s(t.children)}</b>`
       : t.type === "italic" ? `<i>${s(t.children)}</i>`
       : t.type === "code" ? `<c>${t.value}</c>`
-      : t.type === "ref" ? `<${t.kind}:${t.id}>${t.label}</>`
-      : `<a ${t.href}>${t.label}</a>`,
+      // Render children when present, so emphasis inside a link label shows
+      // up in the serialisation instead of being hidden behind t.label.
+      : t.type === "ref" ? `<${t.kind}:${t.id}>${t.children ? s(t.children) : t.label}</>`
+      : `<a ${t.href}>${t.children ? s(t.children) : t.label}</a>`,
     )
     .join("");
 }
@@ -35,6 +37,22 @@ assert.equal(r("**bold** and *it*"), "<b>bold</b> and <i>it</i>");
 assert.equal(r(`[Larry](codex:${UUID})`), `<codex:${UUID}>Larry</>`);
 assert.equal(r(`**[Larry](codex:${UUID})**`), `<b><codex:${UUID}>Larry</></b>`);
 assert.equal(r(`[Session 4](session:${UUID})`), `<session:${UUID}>Session 4</>`);
+
+// Emphasis INSIDE a link label — what the editor writes when you bold a
+// mention. This used to render the asterisks verbatim inside the link.
+assert.equal(r(`[**Larry**](codex:${UUID})`), `<codex:${UUID}><b>Larry</b></>`);
+assert.equal(r(`[*Larry*](codex:${UUID})`), `<codex:${UUID}><i>Larry</i></>`);
+assert.equal(
+  r(`[**the map**](https://example.com/m)`),
+  "<a https://example.com/m><b>the map</b></a>",
+);
+// A bolded mention alongside other bold text in the same paragraph.
+assert.equal(
+  r(`[**Larry**](codex:${UUID}) drew his **blade**`),
+  `<codex:${UUID}><b>Larry</b></> drew his <b>blade</b>`,
+);
+// A label with no markup still round-trips to plain text.
+assert.equal(r(`[Larry the Bold](codex:${UUID})`), `<codex:${UUID}>Larry the Bold</>`);
 
 // External links and code.
 assert.equal(r("see [the map](https://example.com/m)"), "see <a https://example.com/m>the map</a>");

@@ -58,8 +58,11 @@ function toNodes(tokens: InlineToken[], campaignId?: string): React.ReactNode {
             {t.value}
           </code>
         );
-      case "ref":
-        if (!campaignId) return t.label;
+      case "ref": {
+        // Emphasis inside the label renders as emphasis — including when
+        // there's no campaignId and the mention degrades to a plain label.
+        const inner = t.children ? toNodes(t.children, campaignId) : t.label;
+        if (!campaignId) return <span key={i}>{inner}</span>;
         return (
           <Link
             key={i}
@@ -70,14 +73,15 @@ function toNodes(tokens: InlineToken[], campaignId?: string): React.ReactNode {
             }
             className={LINK_CLASS}
           >
-            {t.label}
+            {inner}
           </Link>
         );
+      }
       case "link":
         return (
           // External destination — opens away, with the usual noopener guard.
           <a key={i} href={t.href} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
-            {t.label}
+            {t.children ? toNodes(t.children, campaignId) : t.label}
           </a>
         );
     }

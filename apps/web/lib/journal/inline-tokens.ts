@@ -20,8 +20,18 @@ export type InlineToken =
   | { type: "bold"; children: InlineToken[] }
   | { type: "italic"; children: InlineToken[] }
   | { type: "code"; value: string }
-  | { type: "ref"; kind: "codex" | "session"; id: string; label: string }
-  | { type: "link"; href: string; label: string };
+  // `label` is the raw link text; `children` is that text tokenized, so
+  // emphasis inside a label ("[**Larry**](codex:…)" — what the editor writes
+  // when you bold a mention) renders as bold rather than as asterisks.
+  // Optional: auto-linked refs are built from plain text and need neither.
+  | {
+      type: "ref";
+      kind: "codex" | "session";
+      id: string;
+      label: string;
+      children?: InlineToken[];
+    }
+  | { type: "link"; href: string; label: string; children?: InlineToken[] };
 
 /** Ordered alternation — bold is tried before italic, so "**x**" can't be
  *  read as an italic run that happens to start with "*". */
@@ -55,9 +65,15 @@ export function tokenizeInline(text: string, depth = 0): InlineToken[] {
         kind: refKind === "session" ? "session" : "codex",
         id: refId.toLowerCase(),
         label: refLabel,
+        children: tokenizeInline(refLabel, depth + 1),
       });
     } else if (href && linkLabel) {
-      out.push({ type: "link", href, label: linkLabel });
+      out.push({
+        type: "link",
+        href,
+        label: linkLabel,
+        children: tokenizeInline(linkLabel, depth + 1),
+      });
     } else if (bold !== undefined) {
       out.push({ type: "bold", children: tokenizeInline(bold, depth + 1) });
     } else if (italic !== undefined) {
