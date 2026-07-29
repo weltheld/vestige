@@ -1,17 +1,17 @@
 import Link from "next/link";
 
 /**
- * Who was at the table, under the session title.
+ * A cast list — who's involved, with faces.
  *
- * The space under the session name was empty, and the party is the thing a
- * reader most wants there — it answers "whose story is this" before the prose
- * has to.
+ * Used as a horizontal strip in the session editor, and as the shape the
+ * session sidebar's party column is built from. On the session detail page the
+ * strip under the title is gone: the party reads better as a column beside the
+ * prose than as a wide row competing with the session name.
  *
- * The mentioned NPCs deliberately do NOT appear here. Codex mentions include
- * everyone the write-up merely names in passing, so on a talkative session the
- * strip filled with faces that were never really present — which made the
- * party itself harder to read, not easier. They're reachable where they belong:
- * as links in the prose, and in the codex.
+ * Mentioned NPCs are deliberately not cast anywhere. Codex mentions include
+ * everyone a write-up merely names in passing, so on a talkative session the
+ * list filled with people who were never really present. They're reachable
+ * where they belong: as links in the prose, and in the codex.
  */
 
 export type CastMember = {
@@ -22,10 +22,6 @@ export type CastMember = {
   note?: string | null;
   href?: string;
 };
-
-export function SessionCast({ party }: { party: CastMember[] }) {
-  return <CastStrip groups={[{ label: "The party", members: party }]} />;
-}
 
 /**
  * The presentational strip. Shared by the session page and the editor so the

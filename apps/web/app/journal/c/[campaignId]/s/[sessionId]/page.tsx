@@ -13,7 +13,6 @@ import { SessionTabs } from "@/components/journal/session/SessionTabs";
 import { NotesBody } from "@/components/journal/session/NotesBody";
 import { ChangeLog } from "@/components/journal/session/ChangeLog";
 import { ExtractCodexButton } from "@/components/journal/session/ExtractCodexButton";
-import { SessionCast } from "@/components/journal/session/SessionCast";
 import { getNpcs } from "@/lib/journal/npcs";
 
 // "Add to Codex" runs an AI extraction via a server action invoked on this
@@ -52,11 +51,6 @@ export default async function SessionDetailPage({
   const dateLabel = session.date
     ? format(parseISO(session.date), "MMMM d, yyyy")
     : "Undated";
-  const pcAvatars = session.characters
-    .filter((c) => c.role === "PC")
-    .map((c) => c.portraitUrl)
-    .filter((u): u is string => !!u);
-
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-16 pt-6 sm:px-8 lg:px-12">
       <SessionHero
@@ -64,8 +58,9 @@ export default async function SessionDetailPage({
         title={session.title}
         prefix={dateLabel}
         coverUrl={session.imageUrl ?? campaign.imageUrl}
-        avatars={pcAvatars}
-        extraCount={session.characters.length > 5 ? session.characters.length - 5 : 0}
+        // No avatar group here. It read as "the author" when it was actually
+        // journal_characters portraits — a table almost nothing populates, so
+        // it usually showed exactly one face. The party is in the sidebar.
         action={
           <span className="flex items-center gap-2">
             {isOwner && (
@@ -84,27 +79,22 @@ export default async function SessionDetailPage({
         }
       />
 
-      {/* The party is the campaign roster, not journal_characters: that table
-          only holds characters someone explicitly linked to this session,
-          which in practice is almost none of them — so the strip showed a
-          single person. The roster is who actually plays, carries avatars,
-          and matches what the editor shows. */}
-      <SessionCast
-        party={players.map((p) => ({
-          id: p.userId,
-          name: p.characterName,
-          imageUrl: p.avatarUrl,
-          note: p.isDm ? "DM" : null,
-        }))}
-      />
-
       {/* Mobile stacks title (above) → recap/changelog → session image →
-          session info; the sidebar (image+info) trails the main content via
-          order, then moves back to its usual left column at lg. */}
+          party; the sidebar trails the main content via order, then moves back
+          to its usual left column at lg. */}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
         <SessionSidebar
           session={session}
           campaignId={campaignId}
+          // The campaign roster, not journal_characters: that table only holds
+          // characters someone explicitly linked to this session, which in
+          // practice is almost none of them. The roster is who actually plays.
+          party={players.map((p) => ({
+            id: p.userId,
+            name: p.characterName,
+            imageUrl: p.avatarUrl,
+            note: p.isDm ? "DM" : null,
+          }))}
           className="order-2 lg:order-1"
         />
         <div className="order-1 min-w-0 flex-1 lg:order-2">
