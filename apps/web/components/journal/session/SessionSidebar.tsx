@@ -3,7 +3,6 @@ import type { SessionDetail } from "@/lib/journal/session-detail";
 import { journal } from "@/lib/journal/links";
 import { DeleteSessionButton } from "./DeleteSessionButton";
 import { TalkTime } from "./TalkTime";
-import type { CastMember } from "./SessionCast";
 
 function Card({
   label,
@@ -30,15 +29,10 @@ function Card({
 export function SessionSidebar({
   session,
   campaignId,
-  party = [],
   className = "",
 }: {
   session: SessionDetail;
   campaignId: string;
-  /** The campaign roster — listed here rather than as a strip under the title,
-   *  where a wide row of faces competed with the session name. A column suits
-   *  a cast list better anyway: one member per line, all names fully legible. */
-  party?: CastMember[];
   className?: string;
 }) {
   return (
@@ -78,37 +72,11 @@ export function SessionSidebar({
         </Link>
       </Card>
 
-      {/* The Session Info card is gone: the date it held is now the label
-          above the title, and the author/last-edited bookkeeping it used to
-          carry lives on the changelog tab. */}
-      {party.length > 0 && (
-        <Card label="The Party">
-          <ul className="flex flex-col gap-2.5">
-            {party.map((m) => (
-              <li key={m.id} className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[12px] text-parchment ring-1 ring-[color-mix(in_srgb,var(--gold)_55%,var(--surface))]">
-                  {m.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.imageUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    m.name.charAt(0).toUpperCase()
-                  )}
-                </span>
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate font-body text-[14px] text-ink">{m.name}</span>
-                  {m.note && (
-                    <span className="truncate font-body text-[11px] text-muted">{m.note}</span>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {/* Under the party, because it's about the same people. Absent entirely
-          for hand-written sessions and for anything recorded before Familiar
-          started measuring it. */}
+      {/* No party card here: the recap's own Player Characters section
+          already renders the same people as avatar chips, and showing them
+          twice on one screen made the sidebar a duplicate of the page. */}
+      {/* Absent entirely for hand-written sessions, and for anything recorded
+          before Familiar started measuring it. */}
       {session.speakingStats && <TalkTime stats={session.speakingStats} />}
 
       {/* Deleting a session is not "session info" and doesn't belong in a

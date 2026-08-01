@@ -86,15 +86,6 @@ export default async function SessionDetailPage({
         <SessionSidebar
           session={session}
           campaignId={campaignId}
-          // The campaign roster, not journal_characters: that table only holds
-          // characters someone explicitly linked to this session, which in
-          // practice is almost none of them. The roster is who actually plays.
-          party={players.map((p) => ({
-            id: p.userId,
-            name: p.characterName,
-            imageUrl: p.avatarUrl,
-            note: p.isDm ? "DM" : null,
-          }))}
           className="order-2 lg:order-1"
         />
         <div className="order-1 min-w-0 flex-1 lg:order-2">
