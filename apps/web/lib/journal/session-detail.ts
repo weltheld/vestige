@@ -89,11 +89,12 @@ export async function getSessionDetail(
     { data: images },
     { data: reacts },
     { data: auth },
+    { data: stats },
   ] = await Promise.all([
     supabase
       .from("journal_sessions")
       .select(
-        "id, campaign_id, title, date, summary, player_characters, npcs, notes, image_url, speaking_stats, created_by, created_at, updated_at, updated_by",
+        "id, campaign_id, title, date, summary, player_characters, npcs, notes, image_url, created_by, created_at, updated_at, updated_by",
       )
       .eq("id", sessionId)
       .eq("campaign_id", campaignId)
@@ -125,6 +126,17 @@ export async function getSessionDetail(
       .eq("session_id", sessionId)
       .order("created_at", { ascending: true }),
     supabase.auth.getUser(),
+    // Read on its own, deliberately. speaking_stats is an additive column, and
+    // folding it into the session select meant that on a deployment where the
+    // migration hadn't been applied yet the WHOLE query failed — which read as
+    // "session not found" and 404'd the journal. An optional extra should
+    // never be able to do that: here a failure just leaves the card off.
+    supabase
+      .from("journal_sessions")
+      .select("speaking_stats")
+      .eq("id", sessionId)
+      .eq("campaign_id", campaignId)
+      .maybeSingle(),
   ]);
   if (!s) return null;
 
@@ -220,7 +232,7 @@ export async function getSessionDetail(
     npcs: s.npcs,
     notes: s.notes,
     imageUrl: s.image_url,
-    speakingStats: s.speaking_stats ?? null,
+    speakingStats: stats?.speaking_stats ?? null,
     images: images ?? [],
     authorName: name(profById.get(s.created_by)),
     authorAvatar: profById.get(s.created_by)?.avatar_url ?? null,
