@@ -26,13 +26,27 @@ function Card({
   );
 }
 
+export type SidebarPlayer = {
+  name: string;
+  avatarUrl: string | null;
+  isDm: boolean;
+};
+
 export function SessionSidebar({
   session,
   campaignId,
+  party = [],
+  isOwner = false,
   className = "",
 }: {
   session: SessionDetail;
   campaignId: string;
+  /** The session's own player list, matched to the campaign roster for
+   *  avatars. A roster is not a chapter of the write-up, so it reads better
+   *  beside the prose than interrupting it. */
+  party?: SidebarPlayer[];
+  /** Talk time is owner-only for now. */
+  isOwner?: boolean;
   className?: string;
 }) {
   return (
@@ -72,12 +86,36 @@ export function SessionSidebar({
         </Link>
       </Card>
 
-      {/* No party card here: the recap's own Player Characters section
-          already renders the same people as avatar chips, and showing them
-          twice on one screen made the sidebar a duplicate of the page. */}
-      {/* Absent entirely for hand-written sessions, and for anything recorded
-          before Familiar started measuring it. */}
-      {session.speakingStats && <TalkTime stats={session.speakingStats} />}
+      {party.length > 0 && (
+        <Card label="Player Characters">
+          <ul className="flex flex-col gap-2.5">
+            {party.map((p) => (
+              <li key={p.name} className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[12px] text-parchment ring-1 ring-[color-mix(in_srgb,var(--gold)_55%,var(--surface))]">
+                  {p.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    p.name.charAt(0).toUpperCase()
+                  )}
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate font-body text-[14px] text-ink">{p.name}</span>
+                  {p.isDm && (
+                    <span className="font-body text-[11px] text-muted">DM</span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {/* Owner-only for now — it's a measurement of the people at the table,
+          and worth deciding deliberately who sees it. Absent entirely for
+          hand-written sessions and anything recorded before Familiar started
+          measuring. */}
+      {isOwner && session.speakingStats && <TalkTime stats={session.speakingStats} />}
 
       {/* Deleting a session is not "session info" and doesn't belong in a
           card with anything else — it sits alone at the foot of the column,

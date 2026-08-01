@@ -51,6 +51,28 @@ export default async function SessionDetailPage({
   const dateLabel = session.date
     ? format(parseISO(session.date), "MMMM d, yyyy")
     : "Undated";
+
+  // The session's own player list — "- Name" lines written by the editor's
+  // chip toggler — matched against the campaign roster for avatars. Falls back
+  // to the roster when the session recorded nobody, so a hand-written entry
+  // still shows who plays instead of showing no party at all.
+  const rosterByName = new Map(
+    players.map((p) => [p.characterName.toLowerCase(), p] as const),
+  );
+  const listed = (session.playerCharacters ?? "")
+    .split("\n")
+    .map((line) => line.replace(/^[-*\s]+/, "").trim())
+    .filter(Boolean);
+  const party = listed.length
+    ? listed.map((name) => {
+        const p = rosterByName.get(name.toLowerCase());
+        return { name, avatarUrl: p?.avatarUrl ?? null, isDm: p?.isDm ?? false };
+      })
+    : players.map((p) => ({
+        name: p.characterName,
+        avatarUrl: p.avatarUrl,
+        isDm: p.isDm,
+      }));
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-16 pt-6 sm:px-8 lg:px-12">
       <SessionHero
@@ -86,6 +108,8 @@ export default async function SessionDetailPage({
         <SessionSidebar
           session={session}
           campaignId={campaignId}
+          party={party}
+          isOwner={isOwner}
           className="order-2 lg:order-1"
         />
         <div className="order-1 min-w-0 flex-1 lg:order-2">

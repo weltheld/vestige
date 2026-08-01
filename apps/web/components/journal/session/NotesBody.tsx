@@ -56,7 +56,10 @@ export function NotesBody({
 
   return (
     <div className="relative flex flex-col gap-9 pt-7">
-      {NOTE_SECTIONS.map(({ key, label }) => {
+      {/* Player Characters is rendered in the sidebar instead: it's a roster,
+          not a chapter of the write-up, and it interrupted the prose between
+          the summary and the NPCs. */}
+      {NOTE_SECTIONS.filter((s) => s.key !== "player_characters").map(({ key, label }) => {
         const blocks = blocksFor(key, text[key] ?? null);
         const sectionCommentCount = blocks.reduce(
           (n, b) => n + (session.annotationsByAnchor[b.anchor]?.length ?? 0),
