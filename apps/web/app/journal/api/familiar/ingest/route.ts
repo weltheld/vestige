@@ -5,6 +5,7 @@ import {
   seedCodexEntities,
   linkifyEntities,
 } from "@/lib/journal/codex-ingest";
+import { parseSpeakingStats } from "@/lib/journal/speaking-stats";
 
 /**
  * Recap ingestion endpoint for the self-hosted Familiar app.
@@ -23,6 +24,7 @@ import {
  *     "npcs":             string?  (markdown),
  *     "notes":            string?  (markdown — locations, loot, threads, …),
  *     "codexEntities":    [{name, kind: person|place|event, summary}]?
+ *     "speakingStats":    {spanSeconds, speakers:[{name, seconds}]}?
  *                         — Familiar's first-pass extraction; seeds the
  *                         campaign codex and links the names in the text.
  *   }
@@ -98,6 +100,10 @@ export async function POST(req: Request) {
       player_characters: str(body.playerCharacters),
       npcs: linked.npcs,
       notes: linked.notes,
+      // Validated rather than trusted: this arrives on an authenticated but
+      // external request, and an unparseable blob should leave the column
+      // NULL (no card) instead of half-populating one.
+      speaking_stats: parseSpeakingStats(body.speakingStats),
     })
     .select("id")
     .single();

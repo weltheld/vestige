@@ -113,10 +113,20 @@ export type JournalSessionRow = {
   npcs: string | null;
   notes: string | null;
   image_url: string | null;
+  /** Per-speaker talk time from the Familiar transcript. Null for sessions
+   *  written by hand, or recorded before the feature existed. */
+  speaking_stats: SpeakingStatsDb | null;
   created_by: string;
   created_at: string;
   updated_at: string;
   updated_by: string | null;
+};
+
+/** {spanSeconds, speakers:[{name, seconds}]} — validated at the ingest before
+ *  it is ever written, so readers can trust the shape. */
+export type SpeakingStatsDb = {
+  spanSeconds: number;
+  speakers: { name: string; seconds: number }[];
 };
 
 export type JournalCharacterRow = {
@@ -554,6 +564,7 @@ export type Database = {
           npcs?: string | null;
           notes?: string | null;
           image_url?: string | null;
+          speaking_stats?: SpeakingStatsDb | null;
           created_by: string;
           created_at?: string;
           updated_at?: string;

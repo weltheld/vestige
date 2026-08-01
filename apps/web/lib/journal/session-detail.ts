@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, JournalCharacterRoleDb } from "@vestige/db";
+import type { Database, JournalCharacterRoleDb, SpeakingStatsDb } from "@vestige/db";
 
 type SB = SupabaseClient<Database>;
 
@@ -49,6 +49,9 @@ export type SessionDetail = {
   npcs: string | null;
   notes: string | null;
   imageUrl: string | null;
+  /** Who spoke and for how long, when Familiar measured it. Null for sessions
+   *  written by hand or recorded before the feature existed. */
+  speakingStats: SpeakingStatsDb | null;
   /** The session's full image gallery — imageUrl is "the session image"
    *  (the one shown at the hero/highest level), a pointer into this list. */
   images: SessionImage[];
@@ -90,7 +93,7 @@ export async function getSessionDetail(
     supabase
       .from("journal_sessions")
       .select(
-        "id, campaign_id, title, date, summary, player_characters, npcs, notes, image_url, created_by, created_at, updated_at, updated_by",
+        "id, campaign_id, title, date, summary, player_characters, npcs, notes, image_url, speaking_stats, created_by, created_at, updated_at, updated_by",
       )
       .eq("id", sessionId)
       .eq("campaign_id", campaignId)
@@ -217,6 +220,7 @@ export async function getSessionDetail(
     npcs: s.npcs,
     notes: s.notes,
     imageUrl: s.image_url,
+    speakingStats: s.speaking_stats ?? null,
     images: images ?? [],
     authorName: name(profById.get(s.created_by)),
     authorAvatar: profById.get(s.created_by)?.avatar_url ?? null,

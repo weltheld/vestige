@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { SessionDetail } from "@/lib/journal/session-detail";
 import { journal } from "@/lib/journal/links";
 import { DeleteSessionButton } from "./DeleteSessionButton";
+import { TalkTime } from "./TalkTime";
 import type { CastMember } from "./SessionCast";
 
 function Card({
@@ -104,6 +105,11 @@ export function SessionSidebar({
           </ul>
         </Card>
       )}
+
+      {/* Under the party, because it's about the same people. Absent entirely
+          for hand-written sessions and for anything recorded before Familiar
+          started measuring it. */}
+      {session.speakingStats && <TalkTime stats={session.speakingStats} />}
 
       {/* Deleting a session is not "session info" and doesn't belong in a
           card with anything else — it sits alone at the foot of the column,
