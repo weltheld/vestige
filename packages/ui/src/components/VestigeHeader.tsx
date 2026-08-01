@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ScrollText, Library, LogOut, Pencil, ChevronDown, Check, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, ScrollText, Library, Users, LogOut, Pencil, ChevronDown, Check, SlidersHorizontal } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
@@ -23,7 +23,7 @@ export type VestigeHeaderCampaign = { name: string };
 type Props = {
   user: VestigeHeaderUser;
   /** Which module tab is active. `null` = neither (e.g. the campaign list). */
-  currentModule?: "calendar" | "journal" | "codex" | null;
+  currentModule?: "calendar" | "journal" | "codex" | "characters" | null;
   /** The active campaign — renders the campaign-selector pill when present. */
   currentCampaign?: HeaderCampaign | null;
   /** The user's campaigns (each with a precomputed `href`), for the dropdown. */
@@ -32,6 +32,7 @@ type Props = {
   calendarHref?: string;
   journalHref?: string;
   codexHref?: string;
+  charactersHref?: string;
   /** @deprecated merged into settingsHref — ignored. */
   manageHref?: string;
   /** "Settings" target in the selector dropdown — the tabbed campaign
@@ -57,6 +58,7 @@ export function VestigeHeader({
   calendarHref,
   journalHref,
   codexHref,
+  charactersHref,
   settingsHref,
 }: Props) {
   // Codex is a coequal module tab but its routes live inside the journal
@@ -114,6 +116,12 @@ export function VestigeHeader({
               active={activeModule === "codex"}
               href={codexHref}
             />
+            <ModuleTab
+              icon={<Users size={14} />}
+              label="Characters"
+              active={activeModule === "characters"}
+              href={charactersHref}
+            />
           </div>
         </nav>
 
@@ -149,6 +157,7 @@ export function VestigeHeader({
       calendarHref={calendarHref}
       journalHref={journalHref}
       codexHref={codexHref}
+      charactersHref={charactersHref}
     />
     </>
   );

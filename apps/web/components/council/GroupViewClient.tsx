@@ -500,6 +500,7 @@ export function GroupViewClient(props: Props) {
           calendarHref={`/calendar/g/${group.slug}`}
           journalHref={`/journal/c/${group.id}`}
           codexHref={`/journal/c/${group.id}/codex`}
+          charactersHref={`/characters/c/${group.id}`}
         />
 
       </div>

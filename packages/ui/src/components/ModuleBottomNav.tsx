@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CalendarDays, ScrollText, Library } from "lucide-react";
+import { Home, CalendarDays, ScrollText, Library, Users } from "lucide-react";
 
-export type BottomNavModule = "calendar" | "journal" | "codex";
+export type BottomNavModule = "calendar" | "journal" | "codex" | "characters";
 
 /**
- * Sticky mobile navigation: Home · Calendar · Journal · Codex. On < lg it
+ * Sticky mobile navigation: Home · Calendar · Journal · Codex · Characters.
+ * On < lg it
  * replaces the top-header module tabs entirely, freeing the header for the
  * crest, campaign switcher and profile chip. Hidden on lg+, where the header
  * shows the labelled segmented tabs instead.
@@ -26,11 +27,13 @@ export function ModuleBottomNav({
   calendarHref,
   journalHref,
   codexHref,
+  charactersHref,
 }: {
   active: BottomNavModule | null;
   calendarHref?: string;
   journalHref?: string;
   codexHref?: string;
+  charactersHref?: string;
 }) {
   const pathname = usePathname();
   const onHome = pathname === "/app";
@@ -40,6 +43,7 @@ export function ModuleBottomNav({
     { key: "calendar", label: "Calendar", href: calendarHref, active: active === "calendar", icon: <CalendarDays size={20} /> },
     { key: "journal", label: "Journal", href: journalHref, active: active === "journal", icon: <ScrollText size={20} /> },
     { key: "codex", label: "Codex", href: codexHref, active: active === "codex", icon: <Library size={20} /> },
+    { key: "characters", label: "Chars", href: charactersHref, active: active === "characters", icon: <Users size={20} /> },
   ];
 
   return (
@@ -47,7 +51,7 @@ export function ModuleBottomNav({
       aria-label="Navigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="mx-auto flex max-w-md items-stretch">
+      <div className="mx-auto flex max-w-lg items-stretch">
         {items.map((item) => {
           const isActive = item.active;
           const inner = (

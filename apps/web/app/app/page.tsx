@@ -65,6 +65,7 @@ export default async function AppHome() {
         calendarHref={defaultCampaign?.slug ? `/calendar/g/${defaultCampaign.slug}` : undefined}
         journalHref={defaultCampaign ? `/journal/c/${defaultCampaign.id}` : undefined}
         codexHref={defaultCampaign ? `/journal/c/${defaultCampaign.id}/codex` : undefined}
+        charactersHref={defaultCampaign ? `/characters/c/${defaultCampaign.id}` : undefined}
         settingsHref={defaultCampaign ? `/journal/c/${defaultCampaign.id}/settings` : undefined}
         currentCampaign={
           defaultCampaign

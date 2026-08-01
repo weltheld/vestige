@@ -25,3 +25,12 @@ export const journal = {
   newNpc: (id: string) => `/journal/c/${id}/codex/new`,
   npc: (id: string, npcId: string) => `/journal/c/${id}/codex/${npcId}`,
 };
+
+/** Characters routes. A top-level module rather than something nested under
+ *  the journal: an imported sheet belongs to a player, not to a session. */
+export const characters = {
+  campaign: (id: string) => `/characters/c/${id}`,
+  /** One sheet. The roster lives behind a switcher on the same page, so a
+   *  specific character is a query param rather than its own route. */
+  sheet: (id: string, sheetId: string) => `/characters/c/${id}?sheet=${sheetId}`,
+};

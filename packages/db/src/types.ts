@@ -138,6 +138,116 @@ export type NpcKindDb = "person" | "place" | "event" | "item" | "creature";
  *  a PC or an NPC, a creature may be a familiar or a monster. */
 export type NpcRoleDb = "pc" | "npc" | "companion";
 
+/**
+ * A character sheet imported from Foundry VTT.
+ *
+ * `data` is the parsed shape the UI renders; `raw_data` is the untouched
+ * export, kept so a better parser can re-derive `data` later without anyone
+ * having to re-upload.
+ */
+export type CharacterSheetRow = {
+  id: string;
+  campaign_id: string;
+  foundry_actor_id: string;
+  name: string;
+  data: CharacterSheetData;
+  raw_data: unknown | null;
+  imported_by: string | null;
+  imported_at: string;
+  updated_at: string;
+};
+
+export type AbilityKey = "str" | "dex" | "con" | "int" | "wis" | "cha";
+
+export type AbilityScore = { value: number; modifier: number };
+
+export type SheetItemType =
+  | "weapon"
+  | "equipment"
+  | "consumable"
+  | "tool"
+  | "loot"
+  | "container";
+
+export type SheetItem = {
+  id: string;
+  name: string;
+  type: SheetItemType;
+  quantity: number;
+  weight: number;
+  rarity?: string;
+  equipped: boolean;
+  /** Sanitized HTML — an allowlist of inline formatting tags only. */
+  description: string;
+  damage?: { formula: string; type: string };
+  properties?: string[];
+};
+
+export type SheetFeature = {
+  id: string;
+  name: string;
+  /** Where it comes from: a class, the race, a feat. */
+  source: string;
+  description: string;
+  /** A snapshot taken at import, never live — the UI says so explicitly. */
+  uses?: { value: number; max: number; recharge: string };
+  actionType?: string;
+};
+
+export type SheetSpell = {
+  id: string;
+  name: string;
+  level: number;
+  school: string;
+  castingTime: string;
+  range: string;
+  components: string;
+  duration: string;
+  description: string;
+  prepared: boolean;
+  /** Foundry's preparation.mode, humanised ("Prepared", "At Will", "Innate",
+   *  "Always Prepared", "Pact") — never collapsed to just the boolean. */
+  preparationMode: string;
+};
+
+/** The parsed sheet. Every derived number here is what Foundry computed;
+ *  Vestige is a display layer and recalculates nothing. */
+export type CharacterSheetData = {
+  identity: {
+    name: string;
+    race: string;
+    classes: { name: string; level: number; subclass?: string }[];
+    background: string;
+    alignment: string;
+    portraitUrl?: string;
+  };
+  stats: {
+    abilities: Record<AbilityKey, AbilityScore>;
+    ac: number;
+    hp: { value: number; max: number; temp: number };
+    speed: number;
+    proficiencyBonus: number;
+    savingThrows: Record<string, { modifier: number; proficient: boolean }>;
+    skills: Record<
+      string,
+      {
+        modifier: number;
+        proficient: boolean;
+        expertise: boolean;
+        /** Governing ability, so the Overview can group skills under it. */
+        ability: AbilityKey;
+      }
+    >;
+    currency: { pp: number; gp: number; ep: number; sp: number; cp: number };
+    encumbrance: { value: number; max: number };
+    /** Casters only — the Overview hides the block entirely otherwise. */
+    spellcasting?: { attackModifier: number; saveDc: number; ability: AbilityKey };
+  };
+  items: SheetItem[];
+  features: SheetFeature[];
+  spells: SheetSpell[];
+};
+
 export type NpcRow = {
   id: string;
   campaign_id: string;
@@ -497,6 +607,25 @@ export type Database = {
         Update: Partial<NpcRow>;
         Relationships: [
           Rel<"npcs_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+        ];
+      };
+      character_sheets: {
+        Row: CharacterSheetRow;
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          foundry_actor_id: string;
+          name: string;
+          data: CharacterSheetData;
+          raw_data?: unknown | null;
+          imported_by?: string | null;
+          imported_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<CharacterSheetRow>;
+        Relationships: [
+          Rel<"character_sheets_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+          Rel<"character_sheets_imported_by_fkey", ["imported_by"], "profiles", ["id"], false>,
         ];
       };
       npc_mentions: {
