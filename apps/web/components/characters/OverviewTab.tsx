@@ -78,7 +78,7 @@ function AbilityColumn({
 /** HP, AC, speed, proficiency — and spellcasting only when the character
  *  actually casts. A non-caster gets no empty box. */
 function Vitals({ sheet }: { sheet: CharacterSheetData }) {
-  const { hp, ac, speed, proficiencyBonus, spellcasting } = sheet.stats;
+  const { hp, ac, speed, proficiencyBonus, passivePerception, spellcasting } = sheet.stats;
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -92,6 +92,11 @@ function Vitals({ sheet }: { sheet: CharacterSheetData }) {
       <Box value={ac > 0 ? String(ac) : "—"} label="Armour class" />
       <Box value={`${speed} ft`} label="Speed" />
       <Box value={signed(proficiencyBonus)} label="Proficiency" />
+      {/* The one passive score the rules use, so it sits with the vitals
+          rather than as a column of eighteen numbers nobody consults. */}
+      {passivePerception !== undefined && (
+        <Box value={String(passivePerception)} label="Passive perception" />
+      )}
       {spellcasting && (
         <>
           <Box value={signed(spellcasting.attackModifier)} label="Spell attack" />
@@ -146,12 +151,19 @@ function SavingThrows({ saves }: { saves: CharacterSheetData["stats"]["savingThr
         {rows.map(([key, save]) => {
           const level = save.proficient ? "proficient" : "none";
           return (
-            <Line
-              key={key}
-              level={level}
-              name={ABILITY_LABEL[key]}
-              value={signed(save.modifier)}
-            />
+            <li key={key} className="flex items-center gap-2 py-[2px]">
+              <ProficiencyDot level={level} title={proficiencyLabel(level)} />
+              <span
+                className={`flex-1 truncate font-body text-[13px] ${
+                  level === "none" ? "text-ink-soft" : "text-ink"
+                }`}
+              >
+                {ABILITY_LABEL[key]}
+              </span>
+              <span className="font-display text-[13px] tabular-nums text-ink">
+                {signed(save.modifier)}
+              </span>
+            </li>
           );
         })}
       </ul>
@@ -160,77 +172,89 @@ function SavingThrows({ saves }: { saves: CharacterSheetData["stats"]["savingThr
 }
 
 /**
- * Skills grouped by governing ability, mirroring the column on the left — so
- * the eye pairs "DEX +2" with the DEX skills instead of hunting an
- * alphabetical list of eighteen. Nothing collapses: a character sheet you
- * have to expand to read is a worse character sheet.
+ * Skills as one alphabetical table, the way Foundry lists them.
+ *
+ * Grouping them under their governing ability was Vestige's own idea, and the
+ * wrong one: you look a skill up by its name, not by remembering that Stealth
+ * is Dexterity. The ability travels with the row as a tag instead, and the
+ * alphabet is the only order that stays put as a character levels.
+ *
+ * Split into two tables side by side on a wide screen rather than run as one
+ * column of eighteen — same rows, half the height. Each keeps its own header,
+ * because a column of numbers you have to scroll away from to identify is a
+ * column of numbers you can't read.
  */
 function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
-  const byAbility = new Map<
-    AbilityKey,
-    Array<[string, CharacterSheetData["stats"]["skills"][string]]>
-  >();
-  for (const entry of Object.entries(skills)) {
-    const list = byAbility.get(entry[1].ability) ?? [];
-    list.push(entry);
-    byAbility.set(entry[1].ability, list);
-  }
+  const rows = Object.entries(skills).sort((a, b) => a[0].localeCompare(b[0]));
+  if (rows.length === 0) return null;
 
-  const groups = ABILITIES.filter((a) => (byAbility.get(a)?.length ?? 0) > 0);
-  if (groups.length === 0) return null;
+  const half = Math.ceil(rows.length / 2);
+  const columns = [rows.slice(0, half), rows.slice(half)].filter((c) => c.length > 0);
 
   return (
     <Panel title="Skills">
-      <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-        {groups.map((ability) => (
-          <div key={ability}>
-            <p className="border-b border-hairline pb-0.5 font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
-              {ABILITY_LABEL[ability]}
-            </p>
-            <ul className="flex flex-col pt-0.5">
-              {byAbility
-                .get(ability)!
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .map(([name, skill]) => (
-                  <Line
+      <div className="grid gap-x-8 lg:grid-cols-2">
+        {columns.map((column, index) => (
+          <table key={index} className="w-full border-collapse">
+            <thead>
+              <tr className="border-b-[1.5px] border-ink">
+                <th scope="col" className="w-4 pb-0.5" />
+                <th
+                  scope="col"
+                  className="pb-0.5 text-left font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
+                >
+                  Skill
+                </th>
+                <th
+                  scope="col"
+                  className="pb-0.5 text-left font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
+                >
+                  Ability
+                </th>
+                <th
+                  scope="col"
+                  className="pb-0.5 text-right font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
+                >
+                  Mod
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {column.map(([name, skill]) => {
+                const level = skill.expertise
+                  ? "expertise"
+                  : skill.proficient
+                    ? "proficient"
+                    : "none";
+                return (
+                  <tr
                     key={name}
-                    level={
-                      skill.expertise ? "expertise" : skill.proficient ? "proficient" : "none"
-                    }
-                    name={name}
-                    value={signed(skill.modifier)}
-                  />
-                ))}
-            </ul>
-          </div>
+                    className="border-b border-[color-mix(in_srgb,var(--hairline)_50%,transparent)] last:border-0"
+                  >
+                    <td className="py-[2px] align-middle">
+                      <ProficiencyDot level={level} title={proficiencyLabel(level)} />
+                    </td>
+                    <td
+                      className={`max-w-0 truncate py-[2px] pr-2 font-body text-[13px] ${
+                        level === "none" ? "text-ink-soft" : "text-ink"
+                      }`}
+                    >
+                      {name}
+                    </td>
+                    <td className="py-[2px] pr-2 font-display text-[9px] uppercase tracking-[0.12em] text-muted">
+                      {skill.ability}
+                    </td>
+                    <td className="py-[2px] text-right font-display text-[13px] tabular-nums text-ink">
+                      {signed(skill.modifier)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         ))}
       </div>
     </Panel>
-  );
-}
-
-/** A ticked box, a name, and a number — the row this whole sheet is made of. */
-function Line({
-  level,
-  name,
-  value,
-}: {
-  level: "none" | "proficient" | "expertise";
-  name: string;
-  value: string;
-}) {
-  return (
-    <li className="flex items-center gap-2 py-[3px]">
-      <ProficiencyDot level={level} title={proficiencyLabel(level)} />
-      <span
-        className={`flex-1 truncate font-body text-[13px] ${
-          level === "none" ? "text-ink-soft" : "text-ink"
-        }`}
-      >
-        {name}
-      </span>
-      <span className="font-display text-[13px] tabular-nums text-ink">{value}</span>
-    </li>
   );
 }
 

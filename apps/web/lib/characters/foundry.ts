@@ -260,6 +260,7 @@ export function parseFoundryActor(raw: unknown): ParseResult {
         cp: num(at(system, "currency.cp")),
       },
       encumbrance: parseEncumbrance(system, items),
+      passivePerception: parsePassivePerception(system, derived),
       spellcasting: parseSpellcasting(system, derived),
     },
     items: parseItems(items),
@@ -460,6 +461,32 @@ function parseArmourClass(
   // wrong. The UI renders 0 as an em dash.
   if (calc === "custom" && !Number.isFinite(exported)) return 0;
   return total;
+}
+
+/**
+ * Passive Perception, if it can be known.
+ *
+ * Foundry computes it and the module sends it. Failing that, dnd5e sometimes
+ * writes it to `skills.prc.passive`; failing that it is 10 + the Perception
+ * modifier, which is the definition rather than a rules judgement. Undefined
+ * when there is no Perception skill at all, so the box is omitted instead of
+ * showing a confident 10.
+ */
+function parsePassivePerception(
+  system: Record<string, unknown>,
+  derived: Record<string, unknown>,
+): number | undefined {
+  const fromModule = numOrNull(derived.passivePerception);
+  if (fromModule !== null) return fromModule;
+
+  const prc = obj(at(system, "skills.prc"));
+  if (Object.keys(prc).length === 0) return undefined;
+
+  const exported = numOrNull(prc.passive);
+  if (exported !== null) return exported;
+
+  const total = numOrNull(prc.total) ?? numOrNull(prc.mod);
+  return total === null ? undefined : 10 + total;
 }
 
 function parseSpeed(system: Record<string, unknown>): number {

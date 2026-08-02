@@ -260,10 +260,17 @@ export type CharacterSheetData = {
         modifier: number;
         proficient: boolean;
         expertise: boolean;
-        /** Governing ability, so the Overview can group skills under it. */
+        /** Governing ability, shown as a tag on the skill's row. */
         ability: AbilityKey;
       }
     >;
+    /**
+     * Passive Perception only. Foundry carries a passive score for every
+     * skill, but the rules only ever use this one (and Investigation, at a
+     * DM's discretion) — so it sits with the vitals, where it gets read,
+     * rather than as a column of eighteen numbers nobody consults.
+     */
+    passivePerception?: number;
     currency: { pp: number; gp: number; ep: number; sp: number; cp: number };
     encumbrance: { value: number; max: number };
     /** Casters only — the Overview hides the block entirely otherwise. */
