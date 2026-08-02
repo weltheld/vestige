@@ -6,7 +6,14 @@ import { ImagePlus, Loader2 } from "lucide-react";
 import type { CharacterSheetData } from "@vestige/db";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { setCharacterArt } from "@/app/characters/c/[campaignId]/actions";
-import { candidatePaths, collectImagePaths, isImage, matchFiles, storageKey } from "@/lib/characters/art";
+import {
+  candidatePaths,
+  collectImagePaths,
+  isImage,
+  matchFiles,
+  storageKey,
+  whereToLook,
+} from "@/lib/characters/art";
 
 const BUCKET = "character-art";
 
@@ -40,6 +47,7 @@ export function ImportArtButton({
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<State>({ step: "idle" });
+  const [note, setNote] = useState<string | null>(null);
 
   const wanted = collectImagePaths(sheet);
   const already = Object.keys(sheet.art ?? {}).length;
@@ -64,8 +72,12 @@ export function ImportArtButton({
       }
     ).showDirectoryPicker;
     if (!picker) {
-      // Firefox and Safari have no directory handles; fall back to the input,
-      // which works but asks the scary question.
+      // Firefox, Safari and Brave (which disables it by default) have no
+      // directory handles. The input still works, but the browser insists on
+      // counting every file in the folder first — hence the alarming prompt.
+      setNote(
+        "This browser can't grant folder access directly, so it will ask about every file in the folder. Chrome or Edge skips that.",
+      );
       input.current?.click();
       return;
     }
@@ -89,11 +101,7 @@ export function ImportArtButton({
     }
 
     if (found.size === 0) {
-      setState({
-        step: "error",
-        message:
-          "None of this sheet's images were under that folder. Stock icons (icons/…) ship with the Foundry application — try the Foundry install folder. Your own art lives in the FoundryVTT Data folder.",
-      });
+      setState({ step: "error", message: `Nothing found there. ${whereToLook(wanted)}` });
       return;
     }
     await upload(found, missing);
@@ -138,11 +146,7 @@ export function ImportArtButton({
     const { matched, missing } = matchFiles(wanted, files);
     if (input.current) input.current.value = "";
     if (matched.size === 0) {
-      setState({
-        step: "error",
-        message:
-          "None of this sheet's images were in that folder. Stock icons (icons/…) ship with the Foundry application; your own art is in the FoundryVTT Data folder.",
-      });
+      setState({ step: "error", message: `Nothing found there. ${whereToLook(wanted)}` });
       return;
     }
     await upload(new Map([...matched].map(([k, v]) => [k, v.file])), missing);
@@ -222,6 +226,9 @@ export function ImportArtButton({
             : "Add artwork"}
       </button>
 
+      {note && state.step !== "error" && (
+        <p className="max-w-[420px] font-body text-[11px] text-muted">{note}</p>
+      )}
       {state.step === "error" && (
         <p className="max-w-[420px] font-body text-[12px] text-vote-no">{state.message}</p>
       )}

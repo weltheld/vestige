@@ -120,6 +120,40 @@ export function candidatePaths(foundryPath: string): string[] {
   return RESOLVE_PREFIXES.map((prefix) => prefix + clean);
 }
 
+/**
+ * Which Foundry root a path belongs to — so the UI can name the folder to pick
+ * instead of saying "not found" and leaving the user to guess.
+ */
+export function rootOf(foundryPath: string): "application" | "data" | "unknown" {
+  const p = normalisePath(foundryPath);
+  if (p.startsWith("icons/") || p.startsWith("ui/") || p.startsWith("sounds/")) {
+    return "application";
+  }
+  if (p.startsWith("systems/") || p.startsWith("modules/") || p.startsWith("worlds/")) {
+    return "data";
+  }
+  return "unknown";
+}
+
+/** A sentence naming where the given paths actually live, with examples. */
+export function whereToLook(paths: string[]): string {
+  const roots = new Set(paths.map(rootOf));
+  const sample = paths.slice(0, 3).join(", ");
+  const parts: string[] = [];
+  if (roots.has("application")) {
+    parts.push(
+      "icons/… ship with the Foundry APPLICATION — pick the Foundry install folder (the one containing resources/app/public)",
+    );
+  }
+  if (roots.has("data")) {
+    parts.push(
+      "systems/, modules/ and worlds/ are in the FoundryVTT DATA folder",
+    );
+  }
+  const where = parts.length ? ` ${parts.join("; ")}.` : "";
+  return `Looked for ${paths.length} image${paths.length === 1 ? "" : "s"}, e.g. ${sample}.${where}`;
+}
+
 /** Images only — a Foundry folder holds plenty that isn't. */
 export function isImage(name: string): boolean {
   return /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(name);
