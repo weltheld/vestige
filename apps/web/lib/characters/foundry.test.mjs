@@ -358,6 +358,35 @@ assert.equal(
   assert.equal(st.skills.Acrobatics.modifier, 4);   // dex 3 + floor(3/2)
 }
 
+// The 5e modifier table, asserted score by score. Every value in each band
+// must give the same modifier, and the boundaries are where an off-by-one
+// would hide.
+{
+  const BANDS = [
+    [[1], -5], [[2, 3], -4], [[4, 5], -3], [[6, 7], -2], [[8, 9], -1],
+    [[10, 11], 0], [[12, 13], 1], [[14, 15], 2], [[16, 17], 3],
+    [[18, 19], 4], [[20, 21], 5],
+    // Above 20 the same rule keeps going — 5e just stops printing
+    // the table there, and nothing about the arithmetic changes.
+    [[22, 23], 6], [[30], 10],
+  ];
+  for (const [scores, expected] of BANDS) {
+    for (const score of scores) {
+      const r = parseFoundryActor({
+        type: "character",
+        name: "T",
+        system: { id: "dnd5e", abilities: { str: { value: score } }, attributes: {} },
+        items: [],
+      });
+      assert.equal(
+        r.sheet.stats.abilities.str.modifier,
+        expected,
+        `score ${score} should give ${expected}`,
+      );
+    }
+  }
+}
+
 // What Foundry DID export always wins over the derivation.
 {
   const exported = parseFoundryActor({
