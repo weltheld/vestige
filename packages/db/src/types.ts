@@ -163,6 +163,9 @@ export type CharacterSheetRow = {
   data: CharacterSheetData;
   raw_data: unknown | null;
   imported_by: string | null;
+  /** Which campaign member plays this character. Allocated in Vestige — a
+   *  Foundry export has no idea who anyone's Vestige account is. */
+  player_id: string | null;
   imported_at: string;
   updated_at: string;
 };
@@ -656,6 +659,7 @@ export type Database = {
           data: CharacterSheetData;
           raw_data?: unknown | null;
           imported_by?: string | null;
+          player_id?: string | null;
           imported_at?: string;
           updated_at?: string;
         };
@@ -663,6 +667,7 @@ export type Database = {
         Relationships: [
           Rel<"character_sheets_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
           Rel<"character_sheets_imported_by_fkey", ["imported_by"], "profiles", ["id"], false>,
+          Rel<"character_sheets_player_id_fkey", ["player_id"], "profiles", ["id"], false>,
         ];
       };
       npc_mentions: {

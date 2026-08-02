@@ -52,6 +52,32 @@ export async function getCharacterSheet(
   return (data as CharacterSheetRow | null) ?? null;
 }
 
+/**
+ * Who plays which character, as sheet id -> player id.
+ *
+ * A separate query rather than a column on the roster select, and one that
+ * treats failure as "nobody is allocated yet". Vestige migrations are applied
+ * by hand, so there is always a window where the deployed code is ahead of
+ * the database — and during it the Characters page should be missing a
+ * byline, not missing the characters.
+ */
+export async function getSheetAllocations(
+  supabase: SB,
+  campaignId: string,
+): Promise<Map<string, string>> {
+  const { data, error } = await supabase
+    .from("character_sheets")
+    .select("id, player_id")
+    .eq("campaign_id", campaignId);
+  if (error || !data) return new Map();
+
+  return new Map(
+    data
+      .filter((r): r is { id: string; player_id: string } => !!r.player_id)
+      .map((r) => [r.id, r.player_id]),
+  );
+}
+
 /** The sheet to show when none was asked for: the most recently updated one,
  *  which is almost always the one the viewer just imported. */
 export async function getDefaultCharacterSheet(

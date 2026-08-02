@@ -1,12 +1,18 @@
 import { redirect } from "next/navigation";
 import { Users } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
-import { getViewer, getCampaignIfMember, isCampaignOwner } from "@/lib/journal/data";
+import {
+  getViewer,
+  getCampaignIfMember,
+  isCampaignOwner,
+  getCampaignPlayers,
+} from "@/lib/journal/data";
 import { getOrCreateFoundryConnection } from "@/lib/characters/foundry-link";
 import {
   getCharacterRoster,
   getCharacterSheet,
   getDefaultCharacterSheet,
+  getSheetAllocations,
 } from "@/lib/characters/data";
 import { appHref } from "@/lib/journal/links";
 import { CharacterSheetView } from "@/components/characters/CharacterSheetView";
@@ -15,6 +21,7 @@ import { ImportCharacterButton } from "@/components/characters/ImportCharacterBu
 import { DeleteSheetButton } from "@/components/characters/DeleteSheetButton";
 import { ImportArtButton } from "@/components/characters/ImportArtButton";
 import { FoundryConnectionCard } from "@/components/characters/FoundryConnectionCard";
+import { SheetPlayerSelect } from "@/components/characters/SheetPlayerSelect";
 
 export default async function CharactersPage({
   params,
@@ -37,6 +44,8 @@ export default async function CharactersPage({
   // what guarantees there is one to copy. Members see nothing.
   const owner = await isCampaignOwner(supabase, viewer.id, campaignId);
   const foundry = owner ? await getOrCreateFoundryConnection(supabase, campaignId) : null;
+  const players = await getCampaignPlayers(supabase, campaignId);
+  const allocations = await getSheetAllocations(supabase, campaignId);
   // A ?sheet that doesn't exist (deleted, or from another campaign) falls back
   // to the default rather than showing an error — the link is stale, not wrong.
   const current = sheetParam
@@ -62,6 +71,14 @@ export default async function CharactersPage({
             roster={roster}
             currentId={current.id}
           />
+          <SheetPlayerSelect
+            campaignId={campaignId}
+            sheetId={current.id}
+            players={players}
+            playerId={allocations.get(current.id) ?? null}
+            canEdit={owner}
+          />
+
           <CharacterSheetView sheet={current.data} importedAt={current.updated_at} />
 
           {/* The artwork step is separate from the import because the pictures

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@vestige/db/server";
 import { parseFoundryActor } from "@/lib/characters/foundry";
 import { rotateFoundryToken } from "@/lib/characters/foundry-link";
+import { isCampaignOwner } from "@/lib/journal/data";
 import type { CharacterSheetData } from "@vestige/db";
 import { characters } from "@/lib/journal/links";
 
@@ -164,6 +165,55 @@ export async function regenerateFoundryToken(
   }
   revalidatePath(characters.campaign(campaignId));
   return { ok: true, token: connection.token };
+}
+
+export type AssignResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Say which player a character belongs to, or clear it (`playerId: null`).
+ *
+ * DM-only. The RLS policy on character_sheets lets any member update the
+ * row — right for artwork and re-imports, too loose for deciding whose
+ * character is whose — so the ownership check is here, in front of it.
+ */
+export async function assignSheetPlayer(
+  campaignId: string,
+  sheetId: string,
+  playerId: string | null,
+): Promise<AssignResult> {
+  const supabase = await getServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+  if (!(await isCampaignOwner(supabase, user.id, campaignId))) {
+    return { ok: false, error: "Only the campaign's creator can allocate characters." };
+  }
+
+  // Guard against allocating to someone who isn't at this table — a stale
+  // form after a player leaves, mostly.
+  if (playerId) {
+    const { data: member } = await supabase
+      .from("campaign_members")
+      .select("user_id")
+      .eq("campaign_id", campaignId)
+      .eq("user_id", playerId)
+      .maybeSingle();
+    if (!member) return { ok: false, error: "That player is not a member of this campaign." };
+  }
+
+  const { error } = await supabase
+    .from("character_sheets")
+    .update({ player_id: playerId })
+    .eq("id", sheetId)
+    .eq("campaign_id", campaignId);
+  if (error) {
+    // The likeliest cause by far is the migration not having been run.
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(characters.campaign(campaignId));
+  return { ok: true };
 }
 
 export type DeleteResult = { ok: true } | { ok: false; error: string };
