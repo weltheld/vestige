@@ -157,7 +157,11 @@ export type NpcRoleDb = "pc" | "npc" | "companion";
  */
 export type CharacterSheetRow = {
   id: string;
-  campaign_id: string;
+  /** Whoever pushed or uploaded it. The sheet is theirs; the campaign is
+   *  where they filed it. */
+  owner_id: string;
+  /** Null while the sheet is still in its owner's library, unfiled. */
+  campaign_id: string | null;
   foundry_actor_id: string;
   name: string;
   data: CharacterSheetData;
@@ -340,7 +344,9 @@ export type FamiliarConnectionRow = {
 /** The vestige-foundry module's per-campaign push token. Same shape as
  *  FamiliarConnectionRow — one secret per campaign, validated server-side. */
 export type FoundryConnectionRow = {
-  campaign_id: string;
+  /** The token belongs to a person, not a campaign — sheets land in their
+   *  library and are filed into a campaign afterwards. */
+  owner_id: string;
   ingest_token: string;
   created_at: string;
   last_import_at: string | null;
@@ -653,7 +659,8 @@ export type Database = {
         Row: CharacterSheetRow;
         Insert: {
           id?: string;
-          campaign_id: string;
+          owner_id: string;
+          campaign_id?: string | null;
           foundry_actor_id: string;
           name: string;
           data: CharacterSheetData;
@@ -758,7 +765,7 @@ export type Database = {
       foundry_connections: {
         Row: FoundryConnectionRow;
         Insert: {
-          campaign_id: string;
+          owner_id: string;
           ingest_token: string;
           created_at?: string;
           last_import_at?: string | null;
@@ -767,7 +774,7 @@ export type Database = {
         };
         Update: Partial<FoundryConnectionRow>;
         Relationships: [
-          Rel<"foundry_connections_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+          Rel<"foundry_connections_owner_id_fkey", ["owner_id"], "profiles", ["id"], false>,
         ];
       };
       campaign_join_codes: {

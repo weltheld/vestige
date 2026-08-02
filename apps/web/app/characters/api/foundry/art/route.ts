@@ -25,9 +25,12 @@ import { characters } from "@/lib/journal/links";
  *                      field name keeps each file tied to its path without a
  *                      parallel array to keep in step.
  *
- * Uploads go under {campaign_id}/{sha1-of-path}.{ext}, the same keys the
- * browser flow writes, so the two paths share objects instead of storing the
- * same stock icon twice.
+ * Uploads go under {owner_id}/{sha1-of-path}.{ext} — the same key shape the
+ * browser flow writes, but folded under the pusher rather than a campaign,
+ * because a sheet in the library has no campaign yet. Both folders are
+ * public-read and the sheet stores full URLs, so nothing downstream cares
+ * which a picture came from. Keying on the source path still means the forty
+ * items sharing one stock icon upload it once.
  *
  * Reachable at  <platform>/characters/api/foundry/art.
  */
@@ -41,7 +44,7 @@ const MAX_BYTES = 25_000_000;
 export async function POST(req: Request) {
   const result = await authorize(req);
   if (!result.ok) return result.response;
-  const { campaignId } = result.auth;
+  const { ownerId } = result.auth;
 
   const declared = Number(req.headers.get("content-length") ?? 0);
   if (declared > MAX_BYTES) {
@@ -63,12 +66,12 @@ export async function POST(req: Request) {
   const admin = getServiceRoleSupabase();
   const { data: sheetRow } = await admin
     .from("character_sheets")
-    .select("id, data")
+    .select("id, data, campaign_id")
     .eq("id", sheetId)
-    .eq("campaign_id", campaignId)
+    .eq("owner_id", ownerId)
     .maybeSingle();
   if (!sheetRow) {
-    return json({ error: "Sheet not found in this campaign." }, 404);
+    return json({ error: "Sheet not found, or not yours." }, 404);
   }
 
   const art: Record<string, string> = {};
@@ -85,7 +88,7 @@ export async function POST(req: Request) {
       continue;
     }
 
-    const key = await storageKey(campaignId, field);
+    const key = await storageKey(ownerId, field);
     const { error } = await admin.storage.from(BUCKET).upload(key, file, {
       upsert: true,
       contentType: file.type || undefined,
@@ -111,7 +114,8 @@ export async function POST(req: Request) {
     .eq("id", sheetId);
   if (error) return json({ error: error.message }, 500);
 
-  revalidatePath(characters.campaign(campaignId));
+  revalidatePath(characters.library());
+  if (sheetRow.campaign_id) revalidatePath(characters.campaign(sheetRow.campaign_id));
   return json({
     ok: true,
     added: Object.keys(art).length,

@@ -33,4 +33,7 @@ export const characters = {
   /** One sheet. The roster lives behind a switcher on the same page, so a
    *  specific character is a query param rather than its own route. */
   sheet: (id: string, sheetId: string) => `/characters/c/${id}?sheet=${sheetId}`,
+  /** Your own pushed sheets, before and after they are filed into a
+   *  campaign. Not campaign-scoped — a library belongs to a person. */
+  library: () => "/characters/library",
 };

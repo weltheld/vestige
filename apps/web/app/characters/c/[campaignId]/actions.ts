@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@vestige/db/server";
 import { parseFoundryActor } from "@/lib/characters/foundry";
-import { rotateFoundryToken } from "@/lib/characters/foundry-link";
 import { isCampaignOwner } from "@/lib/journal/data";
 import type { CharacterSheetData } from "@vestige/db";
 import { characters } from "@/lib/journal/links";
@@ -67,10 +66,12 @@ export async function importFoundryCharacter(
 
   // Was this actor already here? Only to report "updated" vs "imported" —
   // the write is the same either way.
+  // Keyed on the uploader and the actor, the same as a Foundry push: one
+  // person's copy of one character is one row, wherever they have filed it.
   const { data: existing } = await supabase
     .from("character_sheets")
     .select("id")
-    .eq("campaign_id", campaignId)
+    .eq("owner_id", user.id)
     .eq("foundry_actor_id", parsed.actorId)
     .maybeSingle();
 
@@ -78,6 +79,7 @@ export async function importFoundryCharacter(
     .from("character_sheets")
     .upsert(
       {
+        owner_id: user.id,
         campaign_id: campaignId,
         foundry_actor_id: parsed.actorId,
         name: parsed.sheet.identity.name,
@@ -86,7 +88,7 @@ export async function importFoundryCharacter(
         imported_by: user.id,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "campaign_id,foundry_actor_id" },
+      { onConflict: "owner_id,foundry_actor_id" },
     )
     .select("id, name")
     .single();
@@ -147,24 +149,6 @@ export async function setCharacterArt(
 
   revalidatePath(characters.campaign(campaignId));
   return { ok: true, count: Object.keys(merged).length };
-}
-
-/**
- * Issue a fresh push token for the Foundry module.
- *
- * Creator-only via RLS on foundry_connections — this deliberately uses the
- * caller's client rather than the service role, so the policy is the check.
- */
-export async function regenerateFoundryToken(
-  campaignId: string,
-): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
-  const supabase = await getServerSupabase();
-  const connection = await rotateFoundryToken(supabase, campaignId);
-  if (!connection) {
-    return { ok: false, error: "Could not generate a new token." };
-  }
-  revalidatePath(characters.campaign(campaignId));
-  return { ok: true, token: connection.token };
 }
 
 export type AssignResult = { ok: true } | { ok: false; error: string };

@@ -34,10 +34,9 @@ export function json(body: unknown, status = 200) {
 }
 
 export type Authorized = {
-  campaignId: string;
-  /** campaigns.creator_id — sheets pushed from Foundry are attributed to the
-   *  campaign's creator, since the token identifies a campaign, not a person. */
-  creatorId: string;
+  /** The person the token belongs to. A pushed sheet is theirs; which
+   *  campaign it is for is decided in Vestige afterwards. */
+  ownerId: string;
   importCount: number;
 };
 
@@ -59,34 +58,18 @@ export async function authorize(
   const admin = getServiceRoleSupabase();
   const { data: conn } = await admin
     .from("foundry_connections")
-    .select("campaign_id, import_count")
+    .select("owner_id, import_count")
     .eq("ingest_token", token)
     .maybeSingle();
   if (!conn) {
     return {
       ok: false,
       response: json(
-        { error: "Invalid token. Copy it again from the campaign's Characters page." },
+        { error: "Invalid token. Copy it again from your Characters library in Vestige." },
         401,
       ),
     };
   }
 
-  const { data: campaign } = await admin
-    .from("campaigns")
-    .select("creator_id")
-    .eq("id", conn.campaign_id)
-    .maybeSingle();
-  if (!campaign?.creator_id) {
-    return { ok: false, response: json({ error: "Campaign not found." }, 404) };
-  }
-
-  return {
-    ok: true,
-    auth: {
-      campaignId: conn.campaign_id,
-      creatorId: campaign.creator_id,
-      importCount: conn.import_count,
-    },
-  };
+  return { ok: true, auth: { ownerId: conn.owner_id, importCount: conn.import_count } };
 }

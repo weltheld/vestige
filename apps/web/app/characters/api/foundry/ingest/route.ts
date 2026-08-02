@@ -18,11 +18,12 @@ import { characters } from "@/lib/journal/links";
  * hand. `raw_data` keeps the export so a better parser can re-derive `data`
  * later without anyone re-pushing.
  *
- * Mirrors the importFoundryCharacter server action, including the upsert on
- * (campaign_id, foundry_actor_id) — pushing the same actor twice replaces its
- * sheet rather than adding a second one. The one difference is attribution:
- * the token identifies a campaign rather than a person, so the import is
- * recorded against the campaign's creator.
+ * Pushed sheets land in the owner's library, not in a campaign: the token
+ * says whose they are, and which campaign they belong to is chosen in
+ * Vestige afterwards. The upsert is therefore keyed on
+ * (owner_id, foundry_actor_id), and it never writes campaign_id or
+ * player_id — pushing after every session updates the character in place and
+ * leaves the filing alone, which is the whole point of doing it this way.
  *
  * Reachable at  <platform>/characters/api/foundry/ingest.
  */
@@ -34,7 +35,7 @@ const MAX_BYTES = 8_000_000;
 export async function POST(req: Request) {
   const result = await authorize(req);
   if (!result.ok) return result.response;
-  const { campaignId, creatorId, importCount } = result.auth;
+  const { ownerId, importCount } = result.auth;
 
   const text = await req.text();
   if (text.length > MAX_BYTES) {
@@ -61,27 +62,30 @@ export async function POST(req: Request) {
   // for every icon that hasn't changed.
   const { data: existing } = await admin
     .from("character_sheets")
-    .select("id, data")
-    .eq("campaign_id", campaignId)
+    .select("id, data, campaign_id")
+    .eq("owner_id", ownerId)
     .eq("foundry_actor_id", parsed.actorId)
     .maybeSingle();
 
   const previousArt = (existing?.data as CharacterSheetData | undefined)?.art ?? {};
   const sheet: CharacterSheetData = { ...parsed.sheet, art: { ...previousArt } };
 
+  // campaign_id and player_id are absent from this write on purpose. The
+  // filing is Vestige's, and a push that undid it would make syncing after
+  // each session a chore rather than the point.
   const { data, error } = await admin
     .from("character_sheets")
     .upsert(
       {
-        campaign_id: campaignId,
+        owner_id: ownerId,
         foundry_actor_id: parsed.actorId,
         name: parsed.sheet.identity.name,
         data: sheet,
         raw_data: raw,
-        imported_by: creatorId,
+        imported_by: ownerId,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "campaign_id,foundry_actor_id" },
+      { onConflict: "owner_id,foundry_actor_id" },
     )
     .select("id, name")
     .single();
@@ -93,9 +97,10 @@ export async function POST(req: Request) {
   await admin
     .from("foundry_connections")
     .update({ last_import_at: new Date().toISOString(), import_count: importCount + 1 })
-    .eq("campaign_id", campaignId);
+    .eq("owner_id", ownerId);
 
-  revalidatePath(characters.campaign(campaignId));
+  revalidatePath(characters.library());
+  if (existing?.campaign_id) revalidatePath(characters.campaign(existing.campaign_id));
 
   // `missingArt` is the point of the response: the module reads it and
   // uploads exactly those files, skipping every icon this campaign already
@@ -115,6 +120,9 @@ export async function POST(req: Request) {
       sheetId: data.id,
       name: data.name,
       replaced: !!existing,
+      // So the module can say "sitting in your library" versus "updated in
+      // <campaign>" rather than leaving the user to go and look.
+      filed: !!existing?.campaign_id,
       missingArt,
       wantedArt,
     },

@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { CharacterSheetRow, Database } from "@vestige/db";
+import type { CharacterSheetData, CharacterSheetRow, Database } from "@vestige/db";
 
 type SB = SupabaseClient<Database>;
 
@@ -50,6 +50,46 @@ export async function getCharacterSheet(
     .maybeSingle();
 
   return (data as CharacterSheetRow | null) ?? null;
+}
+
+/** A sheet in someone's library: what it is, and where they have filed it. */
+export type LibraryEntry = {
+  id: string;
+  name: string;
+  updatedAt: string;
+  campaignId: string | null;
+  playerId: string | null;
+  portrait: string | null;
+};
+
+/**
+ * Everything the signed-in person has pushed or uploaded, newest first.
+ *
+ * Ordered by when it was last touched rather than by name: the library is
+ * mostly visited straight after a push, to file what just arrived.
+ */
+export async function getLibrary(supabase: SB, userId: string): Promise<LibraryEntry[]> {
+  const { data, error } = await supabase
+    .from("character_sheets")
+    .select("id, name, updated_at, campaign_id, player_id, data")
+    .eq("owner_id", userId)
+    .order("updated_at", { ascending: false });
+  if (error || !data) return [];
+
+  return data.map((row) => {
+    const sheet = row.data as CharacterSheetData;
+    const portraitPath = sheet.identity?.portraitPath;
+    return {
+      id: row.id,
+      name: row.name,
+      updatedAt: row.updated_at,
+      campaignId: row.campaign_id,
+      playerId: row.player_id,
+      // The stored art map is keyed by the Foundry path, so the portrait is
+      // only here once the artwork pass has run for it.
+      portrait: (portraitPath && sheet.art?.[portraitPath]) || null,
+    };
+  });
 }
 
 /**

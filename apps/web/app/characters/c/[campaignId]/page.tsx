@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { Users } from "lucide-react";
+import Link from "next/link";
+import { Feather, Users } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import {
   getViewer,
@@ -7,20 +8,18 @@ import {
   isCampaignOwner,
   getCampaignPlayers,
 } from "@/lib/journal/data";
-import { getOrCreateFoundryConnection } from "@/lib/characters/foundry-link";
 import {
   getCharacterRoster,
   getCharacterSheet,
   getDefaultCharacterSheet,
   getSheetAllocations,
 } from "@/lib/characters/data";
-import { appHref } from "@/lib/journal/links";
+import { appHref, characters } from "@/lib/journal/links";
 import { CharacterSheetView } from "@/components/characters/CharacterSheetView";
 import { CharacterSwitcher } from "@/components/characters/CharacterSwitcher";
 import { ImportCharacterButton } from "@/components/characters/ImportCharacterButton";
 import { DeleteSheetButton } from "@/components/characters/DeleteSheetButton";
 import { ImportArtButton } from "@/components/characters/ImportArtButton";
-import { FoundryConnectionCard } from "@/components/characters/FoundryConnectionCard";
 import { SheetPlayerSelect } from "@/components/characters/SheetPlayerSelect";
 import { CharacterAllocationTable } from "@/components/characters/CharacterAllocationTable";
 
@@ -41,10 +40,7 @@ export default async function CharactersPage({
   if (!campaign) redirect(appHref());
 
   const roster = await getCharacterRoster(supabase, campaignId);
-  // The push token is the creator's to hand out, and creating it on read is
-  // what guarantees there is one to copy. Members see nothing.
   const owner = await isCampaignOwner(supabase, viewer.id, campaignId);
-  const foundry = owner ? await getOrCreateFoundryConnection(supabase, campaignId) : null;
   const players = await getCampaignPlayers(supabase, campaignId);
   const allocations = await getSheetAllocations(supabase, campaignId);
   // A ?sheet that doesn't exist (deleted, or from another campaign) falls back
@@ -61,10 +57,20 @@ export default async function CharactersPage({
         {/* Importing, syncing and artwork are the DM's jobs — the roster
             arrives from one Foundry world, and everyone else is here to read
             their party's sheets rather than to manage them. */}
-        {owner && <ImportCharacterButton campaignId={campaignId} />}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Sending from Foundry is a personal setup step, not a campaign
+              one — the token is yours and one install serves every campaign
+              you are in. It lives in the library. */}
+          <Link
+            href={characters.library()}
+            className="inline-flex items-center gap-2 font-body text-[13px] text-ink-soft transition hover:text-gold"
+          >
+            <Feather size={14} />
+            Your characters
+          </Link>
+          {owner && <ImportCharacterButton campaignId={campaignId} />}
+        </div>
       </div>
-
-      {foundry && <FoundryConnectionCard campaignId={campaignId} connection={foundry} />}
 
       {owner && (
         <CharacterAllocationTable

@@ -5,22 +5,17 @@ import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { Check, Copy, Plug, RefreshCw } from "lucide-react";
 import type { FoundryConnection } from "@/lib/characters/foundry-link";
-import { regenerateFoundryToken } from "@/app/characters/c/[campaignId]/actions";
+import { regenerateFoundryToken } from "@/app/characters/library/actions";
 
 /**
- * Setup details for the vestige-foundry module — creator only.
+ * Setup details for the vestige-foundry module.
  *
- * Collapsed by default. It is a one-time setup step competing for space with
- * the thing people actually came for (the sheet), and once the module is
- * connected nobody needs to look at a token again.
+ * Yours, not a campaign's — the token identifies the person pushing, and one
+ * Foundry install serves however many campaigns they are in. Collapsed by
+ * default: it is a one-time step, and once connected nobody needs to look at
+ * a token again.
  */
-export function FoundryConnectionCard({
-  campaignId,
-  connection,
-}: {
-  campaignId: string;
-  connection: FoundryConnection;
-}) {
+export function FoundryConnectionCard({ connection }: { connection: FoundryConnection }) {
   const router = useRouter();
   const [token, setToken] = useState(connection.token);
   const [copied, setCopied] = useState<"token" | "url" | null>(null);
@@ -41,7 +36,7 @@ export function FoundryConnectionCard({
     )
       return;
     startTransition(async () => {
-      const result = await regenerateFoundryToken(campaignId);
+      const result = await regenerateFoundryToken();
       if (!result.ok) {
         setError(result.error);
         return;
@@ -62,7 +57,7 @@ export function FoundryConnectionCard({
             : ""
         }.`
       : connection.verifiedAt
-        ? "Verified — Foundry can reach this campaign. Push a character from its sheet."
+        ? "Verified — Foundry can reach your account. Send a character from its sheet."
         : "Not connected yet — paste the settings below into the Foundry module.";
 
   return (
@@ -135,8 +130,9 @@ export function FoundryConnectionCard({
         <p className="font-body text-[12px] italic text-ink-soft">
           Install the <span className="font-mono not-italic">vestige-foundry</span> module in your
           world, paste both values into its settings, then use{" "}
-          <em>Send to Vestige</em> on a character sheet. The module sends the sheet and its artwork
-          together — no export file, and no folder to find.
+          <em>Send to Vestige</em> on a character sheet. Sheet and artwork travel together — no
+          export file, and no folder to find. Characters arrive here; put each one in a campaign
+          below.
         </p>
       </div>
     </details>
