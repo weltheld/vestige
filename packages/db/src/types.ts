@@ -334,6 +334,17 @@ export type FamiliarConnectionRow = {
   verified_at: string | null;
 };
 
+/** The vestige-foundry module's per-campaign push token. Same shape as
+ *  FamiliarConnectionRow — one secret per campaign, validated server-side. */
+export type FoundryConnectionRow = {
+  campaign_id: string;
+  ingest_token: string;
+  created_at: string;
+  last_import_at: string | null;
+  import_count: number;
+  verified_at: string | null;
+};
+
 export type AiProviderDb = "anthropic" | "groq";
 
 /** A user's own AI provider key, kept once and linkable from any of their
@@ -737,6 +748,21 @@ export type Database = {
         Update: Partial<FamiliarConnectionRow>;
         Relationships: [
           Rel<"familiar_connections_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
+        ];
+      };
+      foundry_connections: {
+        Row: FoundryConnectionRow;
+        Insert: {
+          campaign_id: string;
+          ingest_token: string;
+          created_at?: string;
+          last_import_at?: string | null;
+          import_count?: number;
+          verified_at?: string | null;
+        };
+        Update: Partial<FoundryConnectionRow>;
+        Relationships: [
+          Rel<"foundry_connections_campaign_id_fkey", ["campaign_id"], "campaigns", ["id"], false>,
         ];
       };
       campaign_join_codes: {
