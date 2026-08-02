@@ -1,58 +1,103 @@
 import type { AbilityKey, CharacterSheetData } from "@vestige/db";
 import { ABILITIES, ABILITY_LABEL } from "@/lib/characters/foundry";
 import { ProficiencyDot, proficiencyLabel, signed } from "./ProficiencyDot";
+import { RULED_PAPER } from "./paper";
 
 /**
- * Everything about the character except what has its own tab.
+ * Everything about the character except what has its own tab, set as a sheet
+ * of paper rather than a dashboard.
  *
- * Compact by construction rather than by a density toggle:
+ * The previous version was accurate and dense and read as a stat block. This
+ * one keeps every number and changes what the page is pretending to be:
  *
- *  - The saving throw lives ON its ability card. A save is a fact about an
- *    ability, not a parallel list of six — which is how paper sheets have
- *    always done it, and it removes a whole section.
- *  - Almost nothing is a card. Filled boxes around every group ate a third of
- *    the page and made a character sheet read as a dashboard; hairline rules
- *    and tighter leading say the same thing in less room.
- *  - Skills use the width the page already has instead of running down one
- *    column, so the Overview fits a screen without hiding anything behind a
- *    disclosure.
+ *  - Ruled stock, hard-boxed fields, and the label UNDER the number — the
+ *    arrangement every printed 5e sheet uses, and the reason this is legible
+ *    to someone who has never seen Vestige before.
+ *  - Saving throws get their own panel again. They sat on the ability card to
+ *    save space, but on paper they are a list you read down, and the ability
+ *    column is stronger for holding one number instead of three.
+ *  - Skills stay grouped by governing ability. That grouping is better than
+ *    the printed sheet's alphabetical run and worth keeping.
  */
 export function OverviewTab({ sheet }: { sheet: CharacterSheetData }) {
   const { stats } = sheet;
 
   return (
-    <div className="flex flex-col gap-5">
-      <VitalsStrip sheet={sheet} />
-      <Purse currency={stats.currency} encumbrance={stats.encumbrance} />
-      <AbilityGrid abilities={stats.abilities} saves={stats.savingThrows} />
-      <Skills skills={stats.skills} />
+    <div
+      className="border-[1.5px] border-ink bg-surface p-4 sm:p-6"
+      style={RULED_PAPER}
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+        <AbilityColumn abilities={stats.abilities} />
+
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <Vitals sheet={sheet} />
+          <SavingThrows saves={stats.savingThrows} />
+          <Skills skills={stats.skills} />
+          <Purse currency={stats.currency} encumbrance={stats.encumbrance} />
+        </div>
+      </div>
     </div>
   );
 }
 
-/** HP, AC, speed, proficiency — and spell attack/DC only when the character
- *  actually casts. A non-caster gets no empty spellcasting box. */
-function VitalsStrip({ sheet }: { sheet: CharacterSheetData }) {
+/**
+ * The six abilities down the left edge, as they are on paper.
+ *
+ * The modifier is the big number because it is what gets used at the table;
+ * the raw score is the small pill beneath, the way the printed sheet puts it
+ * in a circle at the bottom of the box.
+ */
+function AbilityColumn({
+  abilities,
+}: {
+  abilities: Record<AbilityKey, { value: number; modifier: number }>;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-6 lg:w-[7.5rem] lg:shrink-0 lg:grid-cols-1">
+      {ABILITIES.map((key) => (
+        <div
+          key={key}
+          className="flex flex-col items-center border-[1.5px] border-ink bg-surface px-2 py-1.5"
+        >
+          <span className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+            {ABILITY_LABEL[key]}
+          </span>
+          <span className="font-display text-[24px] leading-tight tabular-nums text-ink">
+            {signed(abilities[key].modifier)}
+          </span>
+          <span className="mt-0.5 rounded-full border border-ink bg-parchment px-2 font-body text-[11px] tabular-nums text-ink-soft">
+            {abilities[key].value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** HP, AC, speed, proficiency — and spellcasting only when the character
+ *  actually casts. A non-caster gets no empty box. */
+function Vitals({ sheet }: { sheet: CharacterSheetData }) {
   const { hp, ac, speed, proficiencyBonus, spellcasting } = sheet.stats;
 
   return (
-    <div className="flex flex-wrap items-stretch gap-x-6 gap-y-2 rounded-xl bg-cod-soft px-5 py-3">
-      <Vital
-        label="HP"
+    <div className="flex flex-wrap gap-2">
+      <Box
         value={`${hp.value}/${hp.max}`}
+        label="Hit points"
         note={hp.temp > 0 ? `+${hp.temp} temp` : undefined}
       />
       {/* 0 is the parser saying it couldn't work the AC out — a custom formula
           it won't guess at. An em dash says that; "0" lies. */}
-      <Vital label="AC" value={ac > 0 ? String(ac) : "—"} />
-      <Vital label="Speed" value={`${speed} ft`} />
-      <Vital label="Prof" value={signed(proficiencyBonus)} />
+      <Box value={ac > 0 ? String(ac) : "—"} label="Armour class" />
+      <Box value={`${speed} ft`} label="Speed" />
+      <Box value={signed(proficiencyBonus)} label="Proficiency" />
       {spellcasting && (
         <>
-          <Vital label="Spell atk" value={signed(spellcasting.attackModifier)} />
-          <Vital
-            label="Save DC"
+          <Box value={signed(spellcasting.attackModifier)} label="Spell attack" />
+          <Box
             value={String(spellcasting.saveDc)}
+            label="Save DC"
             note={ABILITY_LABEL[spellcasting.ability]}
           />
         </>
@@ -61,75 +106,64 @@ function VitalsStrip({ sheet }: { sheet: CharacterSheetData }) {
   );
 }
 
-/** One vital. No box of its own — the strip is the box. */
-function Vital({ label, value, note }: { label: string; value: string; note?: string }) {
+/** One boxed field: number above, what it is below. */
+function Box({ value, label, note }: { value: string; label: string; note?: string }) {
   return (
-    <div className="flex items-baseline gap-2">
-      <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+    <div className="flex min-w-[5.5rem] flex-1 flex-col items-center border-[1.5px] border-ink bg-surface px-3 py-1.5">
+      <span className="font-display text-[22px] leading-tight tabular-nums text-ink">
+        {value}
+      </span>
+      <span className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
         {label}
       </span>
-      <span className="font-display text-[19px] leading-none text-ink">{value}</span>
-      {note && <span className="font-body text-[11px] text-muted">{note}</span>}
+      {note && <span className="font-body text-[10px] text-muted">{note}</span>}
     </div>
   );
 }
 
-/**
- * The six abilities, each carrying its own saving throw.
- *
- * The modifier is the big number because it's what gets used at the table; the
- * raw score is a footnote. The save sits beneath with the same gold dot the
- * sheet uses everywhere for "this one is proficient".
- */
-function AbilityGrid({
-  abilities,
-  saves,
-}: {
-  abilities: Record<AbilityKey, { value: number; modifier: number }>;
-  saves: CharacterSheetData["stats"]["savingThrows"];
-}) {
+/** A panel with a stamped header bar — the sheet's one piece of solid ink,
+ *  which is what makes the ruled stock behind it read as paper. */
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section>
-      <SectionHeading>Abilities &amp; saves</SectionHeading>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        {ABILITIES.map((key) => {
-          const save = saves[key];
-          const level = save?.proficient ? "proficient" : "none";
-          return (
-            <div
-              key={key}
-              className="rounded-lg border border-hairline px-2 py-2 text-center"
-            >
-              <p className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                {key}
-              </p>
-              <p className="mt-0.5 font-display text-[22px] leading-none text-ink">
-                {signed(abilities[key].modifier)}
-              </p>
-              <p className="font-body text-[11px] text-muted">{abilities[key].value}</p>
-              {save && (
-                <p
-                  title={`Saving throw — ${proficiencyLabel(level)}`}
-                  className="mt-1.5 flex items-center justify-center gap-1 border-t border-hairline pt-1 font-body text-[11px] text-ink-soft"
-                >
-                  <ProficiencyDot level={level} />
-                  <span className="tabular-nums">{signed(save.modifier)}</span>
-                  <span className="text-muted">save</span>
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+    <section className="border-[1.5px] border-ink bg-surface">
+      <h2 className="bg-ink px-3 py-1 font-display text-[9px] font-semibold uppercase tracking-[0.18em] text-surface">
+        {title}
+      </h2>
+      <div className="px-3 py-2">{children}</div>
     </section>
   );
 }
 
+function SavingThrows({ saves }: { saves: CharacterSheetData["stats"]["savingThrows"] }) {
+  const rows = ABILITIES.map((key) => [key, saves[key]] as const).filter(
+    (entry): entry is [AbilityKey, NonNullable<(typeof entry)[1]>] => !!entry[1],
+  );
+  if (rows.length === 0) return null;
+
+  return (
+    <Panel title="Saving throws">
+      <ul className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map(([key, save]) => {
+          const level = save.proficient ? "proficient" : "none";
+          return (
+            <Line
+              key={key}
+              level={level}
+              name={ABILITY_LABEL[key]}
+              value={signed(save.modifier)}
+            />
+          );
+        })}
+      </ul>
+    </Panel>
+  );
+}
+
 /**
- * Skills grouped by governing ability, mirroring the grid above — so the eye
- * pairs "DEX +3" with the DEX skills instead of hunting an alphabetical list of
- * eighteen. Nothing collapses: a character sheet you have to expand to read is
- * a worse character sheet.
+ * Skills grouped by governing ability, mirroring the column on the left — so
+ * the eye pairs "DEX +2" with the DEX skills instead of hunting an
+ * alphabetical list of eighteen. Nothing collapses: a character sheet you
+ * have to expand to read is a worse character sheet.
  */
 function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
   const byAbility = new Map<
@@ -146,43 +180,57 @@ function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
   if (groups.length === 0) return null;
 
   return (
-    <section>
-      <SectionHeading>Skills</SectionHeading>
-      {/* Three columns on a wide screen: the page is 1100px and this used to
-          run down the left half of it. */}
-      <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+    <Panel title="Skills">
+      <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
         {groups.map((ability) => (
           <div key={ability}>
-            <p className="border-b border-hairline pb-1 font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+            <p className="border-b border-hairline pb-0.5 font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
               {ABILITY_LABEL[ability]}
             </p>
-            <ul className="flex flex-col">
+            <ul className="flex flex-col pt-0.5">
               {byAbility
                 .get(ability)!
                 .sort((a, b) => a[0].localeCompare(b[0]))
-                .map(([name, skill]) => {
-                  const level = skill.expertise
-                    ? "expertise"
-                    : skill.proficient
-                      ? "proficient"
-                      : "none";
-                  return (
-                    <li key={name} className="flex items-center gap-2 py-[3px]">
-                      <ProficiencyDot level={level} title={proficiencyLabel(level)} />
-                      <span className="flex-1 truncate font-body text-[13px] text-ink">
-                        {name}
-                      </span>
-                      <span className="font-display text-[13px] tabular-nums text-ink-soft">
-                        {signed(skill.modifier)}
-                      </span>
-                    </li>
-                  );
-                })}
+                .map(([name, skill]) => (
+                  <Line
+                    key={name}
+                    level={
+                      skill.expertise ? "expertise" : skill.proficient ? "proficient" : "none"
+                    }
+                    name={name}
+                    value={signed(skill.modifier)}
+                  />
+                ))}
             </ul>
           </div>
         ))}
       </div>
-    </section>
+    </Panel>
+  );
+}
+
+/** A ticked box, a name, and a number — the row this whole sheet is made of. */
+function Line({
+  level,
+  name,
+  value,
+}: {
+  level: "none" | "proficient" | "expertise";
+  name: string;
+  value: string;
+}) {
+  return (
+    <li className="flex items-center gap-2 py-[3px]">
+      <ProficiencyDot level={level} title={proficiencyLabel(level)} />
+      <span
+        className={`flex-1 truncate font-body text-[13px] ${
+          level === "none" ? "text-ink-soft" : "text-ink"
+        }`}
+      >
+        {name}
+      </span>
+      <span className="font-display text-[13px] tabular-nums text-ink">{value}</span>
+    </li>
   );
 }
 
@@ -194,13 +242,8 @@ const COINS: Array<{ key: keyof CharacterSheetData["stats"]["currency"]; label: 
   { key: "cp", label: "cp" },
 ];
 
-/**
- * Coin and carried weight, as a quiet line under the vitals.
- *
- * No heading and no card: money is a fact you glance at, not a section you
- * visit. Coins the character doesn't hold are omitted — "0 ep" tells you
- * nothing.
- */
+/** Coin and carried weight. Coins the character doesn't hold are omitted —
+ *  "0 ep" tells you nothing. */
 function Purse({
   currency,
   encumbrance,
@@ -212,29 +255,26 @@ function Purse({
   if (held.length === 0 && encumbrance.max <= 0) return null;
 
   return (
-    <p className="-mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 font-body text-[12px] text-muted">
-      {held.map((c) => (
-        <span key={c.key}>
-          <span className="tabular-nums text-ink">{currency[c.key]}</span> {c.label}
-        </span>
-      ))}
-      {encumbrance.max > 0 && (
-        <span>
-          <span className="tabular-nums text-ink">{encumbrance.value}</span> / {encumbrance.max} lb
-          carried
-        </span>
-      )}
-    </p>
-  );
-}
-
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-2.5 pb-2">
-      <span className="h-3.5 w-0.5 bg-gold" />
-      <h2 className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-soft">
-        {children}
-      </h2>
-    </div>
+    <Panel title="Purse &amp; burden">
+      <p className="flex flex-wrap items-baseline gap-x-5 gap-y-1 font-body text-[13px] text-ink-soft">
+        {held.map((c) => (
+          <span key={c.key}>
+            <span className="font-display text-[15px] tabular-nums text-ink">
+              {currency[c.key]}
+            </span>{" "}
+            {c.label}
+          </span>
+        ))}
+        {encumbrance.max > 0 && (
+          <span>
+            Carrying{" "}
+            <span className="font-display text-[15px] tabular-nums text-ink">
+              {encumbrance.value}
+            </span>{" "}
+            of {encumbrance.max} lb
+          </span>
+        )}
+      </p>
+    </Panel>
   );
 }

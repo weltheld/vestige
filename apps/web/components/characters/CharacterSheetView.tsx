@@ -77,6 +77,16 @@ export function CharacterSheetView({
   );
 }
 
+/**
+ * The masthead of the sheet: portrait plate, then the identity as labelled
+ * fields.
+ *
+ * Field-under-value, the way a printed sheet is laid out — the value is what
+ * you read and the label is what tells you why, so it goes second. The
+ * portrait is given real size rather than being an avatar chip: it is the one
+ * thing on the page that isn't a number, and the module now goes to some
+ * trouble to fetch it.
+ */
 function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
   const { identity } = sheet;
   // A copied portrait beats the one Foundry pointed at: the export's path
@@ -86,34 +96,55 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
     identity.portraitUrl;
   // "Fighter 5 / Wizard 2" — the multiclass format, built from every class
   // Foundry exported rather than just the first.
-  const classLine = identity.classes
-    .map((c) => `${c.name} ${c.level}`)
-    .join(" / ");
+  const classLine = identity.classes.map((c) => `${c.name} ${c.level}`).join(" / ");
   const subclasses = identity.classes
     .map((c) => c.subclass)
     .filter((s): s is string => !!s);
 
-  const meta = [identity.race, classLine, identity.background, identity.alignment]
-    .map((s) => s?.trim())
-    .filter(Boolean);
+  const fields = [
+    { label: "Class & level", value: classLine },
+    { label: "Subclass", value: subclasses.join(" · ") },
+    { label: "Race", value: identity.race },
+    { label: "Background", value: identity.background },
+    { label: "Alignment", value: identity.alignment },
+  ].filter((f) => !!f.value?.trim());
 
   return (
-    <header className="flex items-center gap-4 border-b border-hairline pb-4">
-      <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[20px] text-parchment ring-1 ring-[color-mix(in_srgb,var(--gold)_55%,var(--surface))]">
+    <header className="flex items-stretch gap-4 border-b-2 border-ink pb-3">
+      <span className="flex h-[5.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden border-[1.5px] border-ink bg-cod-soft p-1">
         {portrait ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={portrait} alt="" className="h-full w-full object-cover" />
         ) : (
-          identity.name.charAt(0).toUpperCase()
+          <span className="font-display text-[26px] text-wine">
+            {identity.name.charAt(0).toUpperCase()}
+          </span>
         )}
       </span>
-      <div className="min-w-0">
-        <h1 className="font-display text-[22px] leading-tight text-ink">{identity.name}</h1>
-        {meta.length > 0 && (
-          <p className="mt-0.5 font-body text-[13px] text-ink-soft">{meta.join(" · ")}</p>
-        )}
-        {subclasses.length > 0 && (
-          <p className="font-body text-[12px] text-muted">{subclasses.join(" · ")}</p>
+
+      <div className="flex min-w-0 flex-1 flex-col justify-end gap-2">
+        <div className="min-w-0">
+          <h1 className="truncate font-display text-[28px] leading-none text-ink">
+            {identity.name}
+          </h1>
+          <p className="mt-1 font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+            Character name
+          </p>
+        </div>
+
+        {fields.length > 0 && (
+          <dl className="flex flex-wrap gap-x-6 gap-y-1.5">
+            {fields.map((field) => (
+              <div key={field.label} className="min-w-0">
+                <dd className="truncate font-body text-[14px] leading-tight text-ink">
+                  {field.value}
+                </dd>
+                <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+                  {field.label}
+                </dt>
+              </div>
+            ))}
+          </dl>
         )}
       </div>
     </header>
