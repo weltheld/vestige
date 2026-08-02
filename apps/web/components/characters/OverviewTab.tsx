@@ -9,6 +9,7 @@ export function OverviewTab({ sheet }: { sheet: CharacterSheetData }) {
   return (
     <div className="flex flex-col gap-6">
       <VitalsStrip sheet={sheet} />
+      <Purse currency={stats.currency} encumbrance={stats.encumbrance} />
       <AbilityGrid abilities={stats.abilities} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
@@ -16,7 +17,6 @@ export function OverviewTab({ sheet }: { sheet: CharacterSheetData }) {
         <Skills skills={stats.skills} />
       </div>
 
-      <PurseAndLoad currency={stats.currency} encumbrance={stats.encumbrance} />
     </div>
   );
 }
@@ -33,7 +33,9 @@ function VitalsStrip({ sheet }: { sheet: CharacterSheetData }) {
         value={`${hp.value} / ${hp.max}`}
         note={hp.temp > 0 ? `+${hp.temp} temp` : undefined}
       />
-      <Vital label="Armour class" value={String(ac)} />
+      {/* 0 is the parser saying it couldn't work the AC out — a custom
+          formula it won't guess at. An em dash says that; "0" lies. */}
+      <Vital label="Armour class" value={ac > 0 ? String(ac) : "—"} />
       <Vital label="Speed" value={`${speed} ft`} />
       <Vital label="Proficiency" value={signed(proficiencyBonus)} />
       {spellcasting && (
@@ -184,48 +186,38 @@ const COINS: Array<{ key: keyof CharacterSheetData["stats"]["currency"]; label: 
   { key: "cp", label: "cp" },
 ];
 
-function PurseAndLoad({
+/**
+ * Coin and carried weight, as a quiet line under the vitals.
+ *
+ * No "Purse" heading and no card: money is a fact you glance at, not a section
+ * you visit, and a labelled box gave it the same weight as the ability scores.
+ * Coins the character doesn't hold are omitted entirely — "0 ep" tells you
+ * nothing.
+ */
+function Purse({
   currency,
   encumbrance,
 }: {
   currency: CharacterSheetData["stats"]["currency"];
   encumbrance: CharacterSheetData["stats"]["encumbrance"];
 }) {
-  // Coins the character doesn't carry are noise — "0 ep" tells you nothing.
   const held = COINS.filter((c) => currency[c.key] > 0);
+  if (held.length === 0 && encumbrance.max <= 0) return null;
 
   return (
-    <section className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl bg-cod-soft px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-          Purse
+    <p className="-mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 font-body text-[12px] text-muted">
+      {held.map((c) => (
+        <span key={c.key}>
+          <span className="tabular-nums text-ink">{currency[c.key]}</span> {c.label}
         </span>
-        {held.length === 0 ? (
-          <span className="font-body text-[13px] italic text-muted">Empty</span>
-        ) : (
-          <span className="flex flex-wrap gap-2.5">
-            {held.map((c) => (
-              <span key={c.key} className="font-body text-[13px] text-ink">
-                <span className="tabular-nums">{currency[c.key]}</span>{" "}
-                <span className="text-muted">{c.label}</span>
-              </span>
-            ))}
-          </span>
-        )}
-      </div>
-
+      ))}
       {encumbrance.max > 0 && (
-        <div className="flex items-center gap-3">
-          <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-            Carried
-          </span>
-          <span className="font-body text-[13px] text-ink">
-            <span className="tabular-nums">{encumbrance.value}</span>
-            <span className="text-muted"> / {encumbrance.max} lb</span>
-          </span>
-        </div>
+        <span>
+          <span className="tabular-nums text-ink">{encumbrance.value}</span> / {encumbrance.max} lb
+          carried
+        </span>
       )}
-    </section>
+    </p>
   );
 }
 

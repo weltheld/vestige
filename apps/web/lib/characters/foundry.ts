@@ -227,7 +227,7 @@ export function parseFoundryActor(raw: unknown): ParseResult {
     },
     stats: {
       abilities,
-      ac: num(at(system, "attributes.ac.value")),
+      ac: parseArmourClass(system, items, abilities),
       hp: {
         value: num(at(system, "attributes.hp.value")),
         max: num(at(system, "attributes.hp.max")),
@@ -370,6 +370,68 @@ function parseSkills(
     };
   }
   return out;
+}
+
+/**
+ * Armour class — derived when Foundry didn't export it.
+ *
+ * Same shape of problem as the ability modifiers: dnd5e computes AC in
+ * prepareData from equipped armour and Dex, so a plain export usually carries
+ * only `{ calc: "default", flat: null }` and no `value`. Reading that as 0 put
+ * a confident, wrong number on the sheet.
+ *
+ * This is a genuine rules calculation rather than pure arithmetic, so it's
+ * kept to the cases that are unambiguous, and returns 0 (rendered as "—")
+ * rather than a guess when it can't tell:
+ *
+ *   flat / natural   the number Foundry stored, used as-is
+ *   default          equipped armour base + Dex (capped by the armour) + shield
+ *   unarmoured       10 + Dex + shield — the 5e default; a monk's or
+ *                    barbarian's class bonus is NOT added, because it depends
+ *                    on Wis/Con in ways an export doesn't state
+ *
+ * Anything Foundry did export always wins.
+ */
+function parseArmourClass(
+  system: Record<string, unknown>,
+  items: Record<string, unknown>[],
+  abilities: CharacterSheetData["stats"]["abilities"],
+): number {
+  const ac = obj(at(system, "attributes.ac"));
+  const exported = num(ac.value, NaN);
+  if (Number.isFinite(exported) && exported > 0) return exported;
+
+  const calc = str(ac.calc, "default");
+  const flat = num(ac.flat, NaN);
+  if ((calc === "flat" || calc === "natural") && Number.isFinite(flat)) return flat;
+
+  const dex = abilities.dex?.modifier ?? 0;
+  let base = 10 + dex;
+  let shield = 0;
+
+  for (const item of items) {
+    const s = obj(item.system);
+    if (!bool(s.equipped)) continue;
+    const armour = obj(s.armor);
+    const value = num(armour.value, NaN);
+    if (!Number.isFinite(value)) continue;
+
+    // dnd5e 3.x keeps the sub-type on system.type.value; 2.x used armor.type.
+    const subtype = str(obj(s.type).value) || str(armour.type);
+    if (subtype === "shield") {
+      shield += value;
+      continue;
+    }
+    // `armor.dex` is the Dex cap: 2 for medium, 0 for heavy, null for light.
+    const cap = armour.dex === null || armour.dex === undefined ? null : num(armour.dex);
+    base = value + (cap === null ? dex : Math.min(dex, cap));
+  }
+
+  const total = base + shield;
+  // A custom formula we can't evaluate: say nothing rather than something
+  // wrong. The UI renders 0 as an em dash.
+  if (calc === "custom" && !Number.isFinite(exported)) return 0;
+  return total;
 }
 
 function parseSpeed(system: Record<string, unknown>): number {

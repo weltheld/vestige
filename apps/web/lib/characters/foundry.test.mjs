@@ -387,6 +387,61 @@ assert.equal(
   }
 }
 
+// Armour class is derived too — dnd5e computes it at runtime, so a plain
+// export carries no `value` and the sheet was showing 0.
+{
+  const ac = (system, items = []) =>
+    parseFoundryActor({ type: "character", name: "AC", system: { id: "dnd5e", ...system }, items })
+      .sheet.stats.ac;
+
+  const dex16 = { abilities: { dex: { value: 16 } }, attributes: {} };
+
+  // Unarmoured: 10 + Dex.
+  assert.equal(ac(dex16), 13);
+
+  // Light armour (no Dex cap): 11 + 3.
+  assert.equal(
+    ac(dex16, [{ type: "equipment", name: "Leather", system: { equipped: true, armor: { value: 11, dex: null } } }]),
+    14,
+  );
+
+  // Medium armour caps Dex at 2: 14 + 2, not 14 + 3.
+  assert.equal(
+    ac(dex16, [{ type: "equipment", name: "Breastplate", system: { equipped: true, armor: { value: 14, dex: 2 } } }]),
+    16,
+  );
+
+  // Heavy armour ignores Dex entirely.
+  assert.equal(
+    ac(dex16, [{ type: "equipment", name: "Plate", system: { equipped: true, armor: { value: 18, dex: 0 } } }]),
+    18,
+  );
+
+  // A shield stacks on top.
+  assert.equal(
+    ac(dex16, [
+      { type: "equipment", name: "Plate", system: { equipped: true, armor: { value: 18, dex: 0 } } },
+      { type: "equipment", name: "Shield", system: { equipped: true, type: { value: "shield" }, armor: { value: 2 } } },
+    ]),
+    20,
+  );
+
+  // Unequipped armour is not worn.
+  assert.equal(
+    ac(dex16, [{ type: "equipment", name: "Plate", system: { equipped: false, armor: { value: 18, dex: 0 } } }]),
+    13,
+  );
+
+  // A flat AC (natural armour, monsters, effects) is used as stated.
+  assert.equal(ac({ abilities: {}, attributes: { ac: { calc: "flat", flat: 17 } } }), 17);
+
+  // And an exported value beats every derivation.
+  assert.equal(
+    ac({ abilities: { dex: { value: 16 } }, attributes: { ac: { value: 21, calc: "default" } } }),
+    21,
+  );
+}
+
 // What Foundry DID export always wins over the derivation.
 {
   const exported = parseFoundryActor({
