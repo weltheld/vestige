@@ -303,6 +303,95 @@ assert.equal(
   "realid",
 );
 
+// dnd5e derives `mod`, `save`, skill totals and the proficiency bonus at
+// runtime and does NOT export them — so they have to be derived here, or every
+// modifier renders as +0, which looks like a real answer.
+{
+  const derived = parseFoundryActor({
+    type: "character",
+    name: "Derived",
+    system: {
+      id: "dnd5e",
+      abilities: {
+        str: { value: 8 },
+        dex: { value: 16, proficient: 1 },
+        con: { value: 15 },
+        int: { value: 20, proficient: 1 },
+        wis: { value: 10 },
+        cha: { value: 11 },
+      },
+      skills: {
+        arc: { value: 2, ability: "int" },   // expertise
+        ste: { value: 1, ability: "dex" },   // proficient
+        ath: { value: 0, ability: "str" },   // neither
+        acr: { value: 0.5, ability: "dex" }, // half
+      },
+      attributes: {},
+    },
+    items: [
+      { _id: "c1", type: "class", name: "Rogue", system: { levels: 5, identifier: "rogue" } },
+    ],
+  });
+  assert.equal(derived.ok, true);
+  const st = derived.sheet.stats;
+
+  // floor((score - 10) / 2), including the negative and odd cases.
+  assert.equal(st.abilities.str.modifier, -1); // 8
+  assert.equal(st.abilities.dex.modifier, 3);  // 16
+  assert.equal(st.abilities.con.modifier, 2);  // 15 -> odd rounds down
+  assert.equal(st.abilities.int.modifier, 5);  // 20
+  assert.equal(st.abilities.cha.modifier, 0);  // 11
+
+  // Level 5 -> proficiency +3.
+  assert.equal(st.proficiencyBonus, 3);
+
+  // Saves: ability modifier, plus proficiency where proficient.
+  assert.equal(st.savingThrows.dex.modifier, 6); // 3 + 3
+  assert.equal(st.savingThrows.dex.proficient, true);
+  assert.equal(st.savingThrows.str.modifier, -1); // not proficient
+  assert.equal(st.savingThrows.str.proficient, false);
+
+  // Skills: expertise doubles, half-proficiency rounds down.
+  assert.equal(st.skills.Arcana.modifier, 11);      // int 5 + 3*2
+  assert.equal(st.skills.Stealth.modifier, 6);      // dex 3 + 3
+  assert.equal(st.skills.Athletics.modifier, -1);   // str -1 + 0
+  assert.equal(st.skills.Acrobatics.modifier, 4);   // dex 3 + floor(3/2)
+}
+
+// What Foundry DID export always wins over the derivation.
+{
+  const exported = parseFoundryActor({
+    type: "character",
+    name: "Exported",
+    system: {
+      id: "dnd5e",
+      // A deliberately "wrong" mod: a module or an effect may legitimately
+      // change it, and the export is the authority.
+      abilities: { str: { value: 16, mod: 99, save: 42, proficient: 1 } },
+      skills: { ath: { value: 1, ability: "str", total: 77 } },
+      attributes: { prof: 6 },
+    },
+    items: [],
+  });
+  assert.equal(exported.sheet.stats.abilities.str.modifier, 99);
+  assert.equal(exported.sheet.stats.savingThrows.str.modifier, 42);
+  assert.equal(exported.sheet.stats.skills.Athletics.modifier, 77);
+  assert.equal(exported.sheet.stats.proficiencyBonus, 6);
+}
+
+// Multiclass proficiency uses TOTAL level: 5 + 2 = 7 -> +3.
+{
+  const multi = parseFoundryActor({
+    type: "character", name: "M",
+    system: { id: "dnd5e", abilities: {}, attributes: {} },
+    items: [
+      { type: "class", name: "Wizard", system: { levels: 5, identifier: "wizard" } },
+      { type: "class", name: "Rogue", system: { levels: 2, identifier: "rogue" } },
+    ],
+  });
+  assert.equal(multi.sheet.stats.proficiencyBonus, 3);
+}
+
 // Hostile input must not throw.
 for (const junk of [null, undefined, 42, "nope", [], { items: "not-an-array" }]) {
   assert.equal(parseFoundryActor(junk).ok, false);

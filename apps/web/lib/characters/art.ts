@@ -91,6 +91,35 @@ export async function storageKey(campaignId: string, foundryPath: string): Promi
   return `${campaignId}/${hex}.${ext}`;
 }
 
+/**
+ * Where a Foundry path might sit relative to the folder the user picked.
+ *
+ * Foundry serves several roots as one URL space, and they are NOT in one place
+ * on disk:
+ *   icons/...                    ship with the APPLICATION
+ *                                (…/resources/app/public/icons)
+ *   systems/, modules/, worlds/  live in the user DATA folder
+ *
+ * So "icons/weapons/sword.webp" is not under Data at all, which is why picking
+ * Data alone finds none of the stock item art. Rather than make the user know
+ * this, each wanted path is tried against every plausible root — and since the
+ * artwork step merges, pointing it at the other folder afterwards fills in
+ * whatever the first pass missed.
+ */
+export const RESOLVE_PREFIXES = [
+  "",                      // they picked the exact root for these paths
+  "public/",               // …/resources/app
+  "resources/app/public/", // the Foundry install folder
+  "Data/",                 // the FoundryVTT folder above Data
+  "FoundryVTT/Data/",      // the folder above that
+];
+
+/** Every place a given path might be, in priority order. */
+export function candidatePaths(foundryPath: string): string[] {
+  const clean = foundryPath.replace(/^\/+/, "");
+  return RESOLVE_PREFIXES.map((prefix) => prefix + clean);
+}
+
 /** Images only — a Foundry folder holds plenty that isn't. */
 export function isImage(name: string): boolean {
   return /\.(webp|png|jpe?g|gif|svg|avif)$/i.test(name);

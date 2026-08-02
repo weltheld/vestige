@@ -205,6 +205,15 @@ export function parseFoundryActor(raw: unknown): ParseResult {
 
   const abilities = parseAbilities(system);
   const classes = parseClasses(items);
+  // Also derived at runtime in newer dnd5e versions. It's a fixed function of
+  // total character level (2 at 1-4, 3 at 5-8, …) — the same everywhere in 5e.
+  const totalLevel = classes.reduce((n, c) => n + c.level, 0);
+  const proficiencyBonus =
+    at(system, "attributes.prof") !== undefined
+      ? num(at(system, "attributes.prof"))
+      : totalLevel > 0
+        ? Math.floor((totalLevel - 1) / 4) + 2
+        : 0;
 
   const sheet: CharacterSheetData = {
     identity: {
@@ -225,9 +234,9 @@ export function parseFoundryActor(raw: unknown): ParseResult {
         temp: num(at(system, "attributes.hp.temp")),
       },
       speed: parseSpeed(system),
-      proficiencyBonus: num(at(system, "attributes.prof")),
-      savingThrows: parseSaves(system, abilities),
-      skills: parseSkills(system),
+      proficiencyBonus,
+      savingThrows: parseSaves(system, abilities, proficiencyBonus),
+      skills: parseSkills(system, abilities, proficiencyBonus),
       currency: {
         pp: num(at(system, "currency.pp")),
         gp: num(at(system, "currency.gp")),
@@ -274,12 +283,32 @@ function upsertKey(actor: Record<string, unknown>, name: string): string {
   return `name:${name.trim().toLowerCase()}`;
 }
 
+/**
+ * The one place arithmetic is unavoidable.
+ *
+ * dnd5e derives `mod` in prepareData at runtime and does NOT write it to the
+ * export, so a sheet says `value: 16` and nothing else. Reading the absent
+ * field as 0 made every modifier show +0 — worse than useless, since it looks
+ * like a real answer.
+ *
+ * floor((score - 10) / 2) is the definition of an ability modifier, not a
+ * rules interpretation: there is no variant, no feat and no module that
+ * changes it. Anything Foundry DID export still wins.
+ */
+function abilityModifier(score: number): number {
+  return Math.floor((score - 10) / 2);
+}
+
 function parseAbilities(system: Record<string, unknown>) {
   const src = obj(at(system, "abilities"));
   const out = {} as CharacterSheetData["stats"]["abilities"];
   for (const key of ABILITIES) {
     const a = obj(src[key]);
-    out[key] = { value: num(a.value, 10), modifier: num(a.mod) };
+    const value = num(a.value, 10);
+    out[key] = {
+      value,
+      modifier: a.mod !== undefined ? num(a.mod) : abilityModifier(value),
+    };
   }
   return out;
 }
@@ -287,35 +316,57 @@ function parseAbilities(system: Record<string, unknown>) {
 function parseSaves(
   system: Record<string, unknown>,
   abilities: CharacterSheetData["stats"]["abilities"],
+  proficiencyBonus: number,
 ) {
   const src = obj(at(system, "abilities"));
   const out: CharacterSheetData["stats"]["savingThrows"] = {};
   for (const key of ABILITIES) {
     const a = obj(src[key]);
     const save = obj(a.save);
+    const proficient = num(a.proficient) > 0;
+    // Same story as `mod`: the save total is derived at runtime and usually
+    // absent. Ability modifier plus the proficiency bonus when proficient is
+    // the definition of a saving throw, so it's derived rather than shown as
+    // a wrong number.
+    const derived = abilities[key].modifier + (proficient ? proficiencyBonus : 0);
+    const exported = a.save !== undefined ? num(a.save) : num(save.value, NaN);
     out[key] = {
-      // dnd5e has moved `save` between a number and an object across versions;
-      // fall back to the ability modifier so the row is never blank.
-      modifier: num(a.save, num(save.value, abilities[key].modifier)),
-      proficient: num(a.proficient) > 0,
+      modifier: Number.isFinite(exported) ? exported : derived,
+      proficient,
     };
   }
   return out;
 }
 
-function parseSkills(system: Record<string, unknown>) {
+function parseSkills(
+  system: Record<string, unknown>,
+  abilities: CharacterSheetData["stats"]["abilities"],
+  proficiencyBonus: number,
+) {
   const src = obj(at(system, "skills"));
   const out: CharacterSheetData["stats"]["skills"] = {};
   for (const [key, meta] of Object.entries(SKILLS)) {
     const s = obj(src[key]);
     if (Object.keys(s).length === 0) continue;
     const prof = num(s.value);
+    const ability = (str(s.ability) as AbilityKey) || meta.ability;
+    // 2 = expertise, 1 = proficient, 0.5 = half (Jack of All Trades).
+    const bonus =
+      prof >= 2
+        ? proficiencyBonus * 2
+        : prof >= 1
+          ? proficiencyBonus
+          : prof >= 0.5
+            ? Math.floor(proficiencyBonus / 2)
+            : 0;
+    const derived = (abilities[ability]?.modifier ?? 0) + bonus;
+    const exported = s.total !== undefined ? num(s.total) : num(s.mod, NaN);
     out[meta.label] = {
-      modifier: num(s.total, num(s.mod)),
+      modifier: Number.isFinite(exported) ? exported : derived,
       // 1 = proficient, 2 = expertise, 0.5 = half (jack of all trades).
       proficient: prof >= 1,
       expertise: prof >= 2,
-      ability: (str(s.ability) as AbilityKey) || meta.ability,
+      ability,
     };
   }
   return out;
