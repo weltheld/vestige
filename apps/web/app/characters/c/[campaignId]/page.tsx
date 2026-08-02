@@ -41,12 +41,7 @@ export default async function CharactersPage({
   return (
     <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl text-ink">Characters</h1>
-          <p className="mt-1 font-body text-[13px] text-ink-soft">
-            Sheets imported from Foundry — exactly as Foundry computed them.
-          </p>
-        </div>
+        <h1 className="font-display text-3xl text-ink">Characters</h1>
         <ImportCharacterButton campaignId={campaignId} />
       </div>
 
