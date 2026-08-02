@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
-import type { SheetFeature } from "@vestige/db";
+import type { CharacterSheetData, SheetFeature } from "@vestige/db";
 import { DetailPanel, PanelDescription, PanelField } from "./DetailPanel";
 import { Empty, GroupHeading } from "./ItemsTab";
+import { Thumb } from "./Thumb";
 
 /**
  * Class features, racial traits and feats, grouped by where they came from.
@@ -15,9 +16,11 @@ import { Empty, GroupHeading } from "./ItemsTab";
  */
 export function FeaturesTab({
   features,
+  art,
   importedAt,
 }: {
   features: SheetFeature[];
+  art: CharacterSheetData["art"];
   importedAt: string;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -54,6 +57,7 @@ export function FeaturesTab({
                     aria-expanded={openId === f.id}
                     className="flex w-full items-center gap-3 py-2.5 text-left transition hover:opacity-80"
                   >
+                    <Thumb art={art} path={f.imgPath} />
                     <span className="min-w-0 flex-1 truncate font-body text-[14px] text-ink">
                       {f.name}
                     </span>
@@ -79,6 +83,7 @@ export function FeaturesTab({
       >
         {open && (
           <div className="flex flex-col gap-4">
+            <Thumb art={art} path={open.imgPath} size={64} className="rounded-lg" />
             {(open.uses || open.actionType) && (
               <div>
                 {open.uses && (

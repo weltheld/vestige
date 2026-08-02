@@ -68,17 +68,22 @@ export function CharacterSheetView({
       </div>
 
       {tab === "overview" && <OverviewTab sheet={sheet} />}
-      {tab === "items" && <ItemsTab items={sheet.items} />}
+      {tab === "items" && <ItemsTab items={sheet.items} art={sheet.art} />}
       {tab === "features" && (
-        <FeaturesTab features={sheet.features} importedAt={importedAt} />
+        <FeaturesTab features={sheet.features} art={sheet.art} importedAt={importedAt} />
       )}
-      {tab === "spells" && <SpellsTab spells={sheet.spells} />}
+      {tab === "spells" && <SpellsTab spells={sheet.spells} art={sheet.art} />}
     </div>
   );
 }
 
 function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
   const { identity } = sheet;
+  // A copied portrait beats the one Foundry pointed at: the export's path
+  // means nothing outside that install, and only an http URL ever survived.
+  const portrait =
+    (identity.portraitPath ? sheet.art?.[identity.portraitPath] : undefined) ??
+    identity.portraitUrl;
   // "Fighter 5 / Wizard 2" — the multiclass format, built from every class
   // Foundry exported rather than just the first.
   const classLine = identity.classes
@@ -95,9 +100,9 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
   return (
     <header className="flex items-center gap-4 rounded-xl bg-cod-soft px-5 py-4">
       <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[20px] text-parchment ring-1 ring-[color-mix(in_srgb,var(--gold)_55%,var(--surface))]">
-        {identity.portraitUrl ? (
+        {portrait ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={identity.portraitUrl} alt="" className="h-full w-full object-cover" />
+          <img src={portrait} alt="" className="h-full w-full object-cover" />
         ) : (
           identity.name.charAt(0).toUpperCase()
         )}

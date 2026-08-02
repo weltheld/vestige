@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@vestige/db/server";
 import { parseFoundryActor } from "@/lib/characters/foundry";
+import type { CharacterSheetData } from "@vestige/db";
 import { characters } from "@/lib/journal/links";
 
 /** Foundry exports are verbose — a high-level character with a full compendium
@@ -98,6 +99,52 @@ export async function importFoundryCharacter(
 
   revalidatePath(characters.campaign(campaignId));
   return { ok: true, sheetId: data.id, name: data.name, replaced: !!existing };
+}
+
+export type ArtResult = { ok: true; count: number } | { ok: false; error: string };
+
+/**
+ * Record where a sheet's artwork ended up.
+ *
+ * The upload itself happens in the browser, straight to storage — the files
+ * come from a folder the user picked, and round-tripping tens of megabytes of
+ * icons through a server action to put them in the same bucket would only add
+ * a hop. This writes the resulting path -> URL map onto the sheet.
+ *
+ * It merges rather than replaces: running the artwork step twice, or pointing
+ * at a second Foundry folder for the icons a module added, should add to what
+ * is already there rather than start over.
+ */
+export async function setCharacterArt(
+  campaignId: string,
+  sheetId: string,
+  art: Record<string, string>,
+): Promise<ArtResult> {
+  const supabase = await getServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: sheet } = await supabase
+    .from("character_sheets")
+    .select("id, campaign_id, data")
+    .eq("id", sheetId)
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+  if (!sheet) return { ok: false, error: "Sheet not found." };
+
+  const data = sheet.data as CharacterSheetData;
+  const merged = { ...(data.art ?? {}), ...art };
+
+  const { error } = await supabase
+    .from("character_sheets")
+    .update({ data: { ...data, art: merged }, updated_at: new Date().toISOString() })
+    .eq("id", sheetId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(characters.campaign(campaignId));
+  return { ok: true, count: Object.keys(merged).length };
 }
 
 export type DeleteResult = { ok: true } | { ok: false; error: string };

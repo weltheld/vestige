@@ -214,6 +214,7 @@ export function parseFoundryActor(raw: unknown): ParseResult {
       background: parseBackground(system, items),
       alignment: str(at(system, "details.alignment")),
       portraitUrl: parsePortrait(actor),
+      portraitPath: imagePath(actor),
     },
     stats: {
       abilities,
@@ -409,6 +410,23 @@ function parseClasses(items: Record<string, unknown>[]) {
     .sort((a, b) => b.level - a.level);
 }
 
+/**
+ * Foundry's image reference, as written in the export.
+ *
+ * Kept even though it isn't a URL: it names a file inside the player's own
+ * Foundry install, and the artwork step matches it against the folder they
+ * point us at. Without it the pictures would be unrecoverable, since the JSON
+ * carries paths and never bytes.
+ */
+function imagePath(doc: Record<string, unknown>): string | undefined {
+  const src = str(doc.img) || str(at(doc, "prototypeToken.texture.src"));
+  if (!src) return undefined;
+  // An http(s) src is already handled as a URL; a data: URI is inline art we
+  // can't do anything useful with.
+  if (/^(https?:|data:)/i.test(src)) return undefined;
+  return src;
+}
+
 function parsePortrait(actor: Record<string, unknown>): string | undefined {
   const src = str(actor.img) || str(at(actor, "prototypeToken.texture.src"));
   // Foundry paths are relative to the Foundry server ("worlds/x/portrait.webp")
@@ -433,6 +451,7 @@ function parseItems(items: Record<string, unknown>[]): SheetItem[] {
       return {
         id: str(i._id) || str(i.id) || str(i.name),
         name: str(i.name, "Unnamed item"),
+        imgPath: imagePath(i),
         type: str(i.type) as SheetItemType,
         quantity: num(s.quantity, 1),
         weight,
@@ -461,6 +480,7 @@ function parseFeatures(
       return {
         id: str(i._id) || str(i.id) || str(i.name),
         name: str(i.name, "Unnamed feature"),
+        imgPath: imagePath(i),
         source: featureSource(s, classes),
         description: description(at(s, "description.value")),
         uses:
@@ -513,6 +533,7 @@ function parseSpells(items: Record<string, unknown>[]): SheetSpell[] {
       return {
         id: str(i._id) || str(i.id) || str(i.name),
         name: str(i.name, "Unnamed spell"),
+        imgPath: imagePath(i),
         level: num(s.level),
         school: SPELL_SCHOOL[str(s.school)] ?? str(s.school),
         castingTime: activationLabel(activation),

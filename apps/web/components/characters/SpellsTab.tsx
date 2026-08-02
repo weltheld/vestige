@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { SheetSpell } from "@vestige/db";
+import type { CharacterSheetData, SheetSpell } from "@vestige/db";
 import { DetailPanel, PanelDescription, PanelField } from "./DetailPanel";
 import { Empty, GroupHeading } from "./ItemsTab";
 import { ProficiencyDot } from "./ProficiencyDot";
+import { Thumb } from "./Thumb";
 
 const LEVEL_LABEL = [
   "Cantrips",
@@ -27,7 +28,13 @@ const LEVEL_LABEL = [
  * gold dot the sheet uses for skill proficiency, so "this is active right now"
  * reads identically wherever it appears.
  */
-export function SpellsTab({ spells }: { spells: SheetSpell[] }) {
+export function SpellsTab({
+  spells,
+  art,
+}: {
+  spells: SheetSpell[];
+  art: CharacterSheetData["art"];
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
   const open = spells.find((s) => s.id === openId) ?? null;
 
@@ -61,6 +68,7 @@ export function SpellsTab({ spells }: { spells: SheetSpell[] }) {
                         level={spell.prepared ? "proficient" : "none"}
                         title={spell.prepared ? spell.preparationMode : "Not prepared"}
                       />
+                      <Thumb art={art} path={spell.imgPath} />
                       <span className="min-w-0 flex-1">
                         <span className="truncate font-body text-[14px] text-ink">
                           {spell.name}
@@ -98,6 +106,7 @@ export function SpellsTab({ spells }: { spells: SheetSpell[] }) {
       >
         {open && (
           <div className="flex flex-col gap-4">
+            <Thumb art={art} path={open.imgPath} size={64} className="rounded-lg" />
             <div>
               <PanelField label="Casting time" value={open.castingTime} />
               <PanelField label="Range" value={open.range} />

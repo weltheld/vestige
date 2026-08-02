@@ -12,6 +12,7 @@ import { CharacterSheetView } from "@/components/characters/CharacterSheetView";
 import { CharacterSwitcher } from "@/components/characters/CharacterSwitcher";
 import { ImportCharacterButton } from "@/components/characters/ImportCharacterButton";
 import { DeleteSheetButton } from "@/components/characters/DeleteSheetButton";
+import { ImportArtButton } from "@/components/characters/ImportArtButton";
 
 export default async function CharactersPage({
   params,
@@ -59,6 +60,15 @@ export default async function CharactersPage({
             currentId={current.id}
           />
           <CharacterSheetView sheet={current.data} importedAt={current.updated_at} />
+
+          {/* The artwork step is separate from the import because the pictures
+              can't travel with the JSON — Foundry writes paths, not bytes. */}
+          <ImportArtButton
+            campaignId={campaignId}
+            sheetId={current.id}
+            sheet={current.data}
+          />
+
           <div className="pt-1">
             <DeleteSheetButton
               campaignId={campaignId}

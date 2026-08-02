@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import type { SheetItem, SheetItemType } from "@vestige/db";
+import type { CharacterSheetData } from "@vestige/db";
 import { DetailPanel, PanelDescription, PanelField } from "./DetailPanel";
+import { Thumb } from "./Thumb";
 
 /** Group order and headings. Foundry's `type` is the grouping key, so this
  *  stays in step with whatever the export actually contained. */
@@ -35,7 +37,13 @@ const RARITY_COLOR: Record<string, string> = {
   artifact: "#a56a3a",
 };
 
-export function ItemsTab({ items }: { items: SheetItem[] }) {
+export function ItemsTab({
+  items,
+  art,
+}: {
+  items: SheetItem[];
+  art: CharacterSheetData["art"];
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
   const open = items.find((i) => i.id === openId) ?? null;
 
@@ -61,6 +69,7 @@ export function ItemsTab({ items }: { items: SheetItem[] }) {
                       aria-expanded={openId === item.id}
                       className="flex w-full items-center gap-3 py-2.5 text-left transition hover:opacity-80"
                     >
+                      <Thumb art={art} path={item.imgPath} />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
                           <span
@@ -115,6 +124,7 @@ export function ItemsTab({ items }: { items: SheetItem[] }) {
       >
         {open && (
           <div className="flex flex-col gap-4">
+            <Thumb art={art} path={open.imgPath} size={64} className="rounded-lg" />
             <div>
               {open.damage && (
                 <PanelField

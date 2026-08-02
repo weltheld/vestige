@@ -182,6 +182,10 @@ export type SheetItemType =
 export type SheetItem = {
   id: string;
   name: string;
+  /** Foundry's own image path ("icons/weapons/sword.webp"). Not a URL — it
+   *  names a file inside the player's Foundry install, and is the key the
+   *  artwork step resolves against. */
+  imgPath?: string;
   type: SheetItemType;
   quantity: number;
   weight: number;
@@ -196,6 +200,7 @@ export type SheetItem = {
 export type SheetFeature = {
   id: string;
   name: string;
+  imgPath?: string;
   /** Where it comes from: a class, the race, a feat. */
   source: string;
   description: string;
@@ -207,6 +212,7 @@ export type SheetFeature = {
 export type SheetSpell = {
   id: string;
   name: string;
+  imgPath?: string;
   level: number;
   school: string;
   castingTime: string;
@@ -229,7 +235,10 @@ export type CharacterSheetData = {
     classes: { name: string; level: number; subclass?: string }[];
     background: string;
     alignment: string;
+    /** Only ever an absolute http(s) URL. */
     portraitUrl?: string;
+    /** Foundry's path for the portrait, for the artwork step. */
+    portraitPath?: string;
   };
   stats: {
     abilities: Record<AbilityKey, AbilityScore>;
@@ -256,6 +265,12 @@ export type CharacterSheetData = {
   items: SheetItem[];
   features: SheetFeature[];
   spells: SheetSpell[];
+  /**
+   * Foundry image path -> the URL it was copied to. Filled by the artwork
+   * step, absent until then. Keyed by path rather than by item so the stock
+   * icon shared by forty items is stored once.
+   */
+  art?: Record<string, string>;
 };
 
 export type NpcRow = {
