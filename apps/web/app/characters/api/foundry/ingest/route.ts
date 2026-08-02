@@ -100,8 +100,14 @@ export async function POST(req: Request) {
   // `missingArt` is the point of the response: the module reads it and
   // uploads exactly those files, skipping every icon this campaign already
   // has. On a second character sharing stock art that is most of the list.
-  const wanted = collectImagePaths(sheet);
-  const missingArt = wanted.filter((path) => !sheet.art?.[path]);
+  //
+  // `wantedArt` is everything the sheet references, for the module's
+  // re-send option — artwork is matched by PATH, so a file edited in place
+  // keeps its path and never shows up as missing. Rare enough that detecting
+  // it on every push (hashing every referenced file) would cost more than it
+  // saves; explicit enough that asking for it is easy.
+  const wantedArt = collectImagePaths(sheet);
+  const missingArt = wantedArt.filter((path) => !sheet.art?.[path]);
 
   return json(
     {
@@ -110,6 +116,7 @@ export async function POST(req: Request) {
       name: data.name,
       replaced: !!existing,
       missingArt,
+      wantedArt,
     },
     existing ? 200 : 201,
   );
