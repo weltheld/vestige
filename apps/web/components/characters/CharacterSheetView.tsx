@@ -40,7 +40,10 @@ export function CharacterSheetView({
       <div
         role="tablist"
         aria-label="Character sheet sections"
-        className="flex gap-1 overflow-x-auto border-b border-hairline"
+        // Scrollable so a caster's four tabs never wrap, but with the bar
+        // itself hidden: on Windows it's always visible, and a scrollbar
+        // parked beside the tabs reads as a broken layout.
+        className="flex gap-1 overflow-x-auto border-b border-hairline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {tabs.map((t) => (
           <button

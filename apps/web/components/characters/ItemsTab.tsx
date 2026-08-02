@@ -15,16 +15,24 @@ const GROUPS: Array<{ type: SheetItemType; label: string }> = [
   { type: "loot", label: "Loot" },
 ];
 
-/** Rarity is the one place the sheet uses colour to mean something. Kept to
- *  the theme's own tokens rather than the usual VTT rainbow, which would fight
- *  the parchment palette. */
-const RARITY_CLASS: Record<string, string> = {
-  common: "text-muted",
-  uncommon: "text-vote-yes",
-  rare: "text-wine",
-  "very rare": "text-wine",
-  legendary: "text-gold",
-  artifact: "text-gold",
+/**
+ * Rarity is the one place the sheet uses colour to mean something, and it uses
+ * the ladder players already know from the VTT rather than inventing one.
+ *
+ * Mid-tones, not Foundry's own values: those are picked for a dark UI and go
+ * illegible on parchment. These are chosen to hold up on both the light and
+ * dark themes, since the sheet renders in all five.
+ */
+const RARITY_COLOR: Record<string, string> = {
+  common: "#3f8f5b",
+  // Not mentioned in the brief, so it shares the green — in 5e this is the
+  // rarity that green normally means, and splitting them would need a second
+  // shade nobody asked for.
+  uncommon: "#3f8f5b",
+  rare: "#3b7fd4",
+  "very rare": "#7c4dd0",
+  legendary: "#d08a2c",
+  artifact: "#a56a3a",
 };
 
 export function ItemsTab({ items }: { items: SheetItem[] }) {
@@ -55,7 +63,14 @@ export function ItemsTab({ items }: { items: SheetItem[] }) {
                     >
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
-                          <span className="truncate font-body text-[14px] text-ink">
+                          <span
+                            className="truncate font-body text-[14px] text-ink"
+                            style={
+                              item.rarity && RARITY_COLOR[item.rarity.toLowerCase()]
+                                ? { color: RARITY_COLOR[item.rarity.toLowerCase()] }
+                                : undefined
+                            }
+                          >
                             {item.name}
                           </span>
                           {item.quantity > 1 && (
@@ -71,9 +86,8 @@ export function ItemsTab({ items }: { items: SheetItem[] }) {
                         </span>
                         {item.rarity && (
                           <span
-                            className={`font-body text-[11px] capitalize ${
-                              RARITY_CLASS[item.rarity.toLowerCase()] ?? "text-muted"
-                            }`}
+                            className="font-body text-[11px] font-medium capitalize"
+                            style={{ color: RARITY_COLOR[item.rarity.toLowerCase()] ?? "var(--muted)" }}
                           >
                             {item.rarity}
                           </span>
@@ -117,7 +131,17 @@ export function ItemsTab({ items }: { items: SheetItem[] }) {
               <PanelField label="Quantity" value={String(open.quantity)} />
               {open.weight > 0 && <PanelField label="Weight" value={`${round(open.weight)} lb each`} />}
               {open.rarity && (
-                <PanelField label="Rarity" value={<span className="capitalize">{open.rarity}</span>} />
+                <PanelField
+                  label="Rarity"
+                  value={
+                    <span
+                      className="font-medium capitalize"
+                      style={{ color: RARITY_COLOR[open.rarity.toLowerCase()] ?? "var(--ink)" }}
+                    >
+                      {open.rarity}
+                    </span>
+                  }
+                />
               )}
               <PanelField label="Equipped" value={open.equipped ? "Yes" : "No"} />
             </div>
