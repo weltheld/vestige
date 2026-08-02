@@ -7,29 +7,35 @@ import { Trash2, UserRound } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { LibraryEntry } from "@/lib/characters/data";
 import type { HeaderCampaign } from "@vestige/ui";
+import type { CampaignPlayer } from "@/lib/journal/data";
 import { characters } from "@/lib/journal/links";
 import { deleteLibrarySheet, fileSheetInCampaign } from "@/app/characters/library/actions";
+import { assignSheetPlayer } from "@/app/characters/c/[campaignId]/actions";
 
 /**
- * Everything you have pushed from Foundry, and which campaign each one is
- * for.
+ * Everything you have pushed from Foundry: which campaign each character is
+ * for, and who plays it.
  *
- * Filing is the only decision here. Who plays a character is the DM's call
- * and lives on the campaign's own page — the two are different jobs done by
- * different people, and one list that did both would be wrong for each.
+ * Both decisions in one row, because in practice one person makes them at
+ * one sitting — the party arrives from a single Foundry world and gets filed
+ * and handed out together. The player list follows the chosen campaign, and
+ * allocating is refused (with the reason) for a campaign you don't run.
  */
 export function LibraryList({
   entries,
   campaigns,
-  playerNames,
+  playersByCampaign,
 }: {
   entries: LibraryEntry[];
   campaigns: HeaderCampaign[];
-  playerNames: Record<string, string>;
+  playersByCampaign: Record<string, CampaignPlayer[]>;
 }) {
   const router = useRouter();
   const [filed, setFiled] = useState<Record<string, string>>(
     Object.fromEntries(entries.map((e) => [e.id, e.campaignId ?? ""])),
+  );
+  const [played, setPlayed] = useState<Record<string, string>>(
+    Object.fromEntries(entries.map((e) => [e.id, e.playerId ?? ""])),
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -37,11 +43,29 @@ export function LibraryList({
   function onFile(sheetId: string, next: string) {
     const previous = filed[sheetId] ?? "";
     setFiled((f) => ({ ...f, [sheetId]: next }));
+    // Moving a character out of a campaign takes its player with it — the
+    // server clears the allocation, and the control should agree.
+    if (!next) setPlayed((p) => ({ ...p, [sheetId]: "" }));
     setError(null);
     startTransition(async () => {
       const result = await fileSheetInCampaign(sheetId, next || null);
       if (!result.ok) {
         setFiled((f) => ({ ...f, [sheetId]: previous }));
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  function onAssign(sheetId: string, campaignId: string, next: string) {
+    const previous = played[sheetId] ?? "";
+    setPlayed((p) => ({ ...p, [sheetId]: next }));
+    setError(null);
+    startTransition(async () => {
+      const result = await assignSheetPlayer(campaignId, sheetId, next || null);
+      if (!result.ok) {
+        setPlayed((p) => ({ ...p, [sheetId]: previous }));
         setError(result.error);
         return;
       }
@@ -67,7 +91,7 @@ export function LibraryList({
     <div className="flex flex-col gap-2">
       {entries.map((entry) => {
         const campaignId = filed[entry.id] ?? "";
-        const player = entry.playerId ? playerNames[entry.playerId] : null;
+        const roster = campaignId ? (playersByCampaign[campaignId] ?? []) : [];
 
         return (
           <div
@@ -100,7 +124,6 @@ export function LibraryList({
               )}
               <span className="font-body text-[11px] text-muted">
                 Updated {format(parseISO(entry.updatedAt), "MMM d, yyyy")}
-                {player ? ` · played by ${player}` : ""}
               </span>
             </span>
 
@@ -115,6 +138,24 @@ export function LibraryList({
               {campaigns.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Disabled rather than hidden while unfiled: the control staying
+                put explains that a campaign comes first. */}
+            <select
+              value={played[entry.id] ?? ""}
+              disabled={pending || !campaignId}
+              onChange={(e) => onAssign(entry.id, campaignId, e.target.value)}
+              aria-label={`Who plays ${entry.name}`}
+              className="rounded-md border border-hairline bg-surface px-2 py-1.5 font-body text-[13px] text-ink disabled:opacity-40"
+            >
+              <option value="">{campaignId ? "Unallocated" : "No player"}</option>
+              {roster.map((p) => (
+                <option key={p.userId} value={p.userId}>
+                  {p.characterName}
+                  {p.isDm ? " (DM)" : ""}
                 </option>
               ))}
             </select>

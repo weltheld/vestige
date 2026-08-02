@@ -65,7 +65,7 @@ export default async function CharactersPage({
             className="inline-flex items-center gap-2 font-body text-[13px] text-ink-soft transition hover:text-gold"
           >
             <Feather size={14} />
-            Your characters
+            Manage characters
           </Link>
           {owner && <ImportCharacterButton campaignId={campaignId} />}
         </div>

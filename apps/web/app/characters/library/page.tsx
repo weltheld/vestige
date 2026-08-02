@@ -27,21 +27,22 @@ export default async function CharacterLibraryPage() {
     getMyCampaigns(supabase, viewer.id),
   ]);
 
-  // Names for the "played by" note. Only campaigns that actually hold one of
-  // these sheets are worth asking about.
-  const filedIn = [...new Set(entries.map((e) => e.campaignId).filter(Boolean))] as string[];
-  const rosters = await Promise.all(filedIn.map((id) => getCampaignPlayers(supabase, id)));
-  const playerNames = Object.fromEntries(
-    rosters.flat().map((p) => [p.userId, p.characterName] as const),
+  // Who is at each table, so the player dropdown can be filled in without a
+  // round trip when a campaign is chosen. Every campaign the viewer belongs
+  // to, not just the ones already holding a sheet — the point of the page is
+  // to file the ones that aren't.
+  const rosters = await Promise.all(
+    campaigns.map(async (c) => [c.id, await getCampaignPlayers(supabase, c.id)] as const),
   );
+  const playersByCampaign = Object.fromEntries(rosters);
 
   return (
     <main className="mx-auto flex w-full max-w-[900px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
       <div className="flex flex-col gap-1">
-        <h1 className="font-display text-3xl text-ink">Your characters</h1>
+        <h1 className="font-display text-3xl text-ink">Manage characters</h1>
         <p className="font-body text-[14px] text-ink-soft">
-          Characters you have sent from Foundry. Put one in a campaign and
-          everyone at that table can read it; your DM decides who plays it.
+          Everything you have sent from Foundry. Put each character in a
+          campaign and say who plays it — both survive the next sync.
         </p>
       </div>
 
@@ -54,7 +55,11 @@ export default async function CharacterLibraryPage() {
       {entries.length === 0 ? (
         <EmptyState hasConnection={!!connection} />
       ) : (
-        <LibraryList entries={entries} campaigns={campaigns} playerNames={playerNames} />
+        <LibraryList
+          entries={entries}
+          campaigns={campaigns}
+          playersByCampaign={playersByCampaign}
+        />
       )}
     </main>
   );
