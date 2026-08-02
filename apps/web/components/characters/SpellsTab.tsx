@@ -46,7 +46,7 @@ export function SpellsTab({
 
   return (
     <>
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         {levels.map((level) => {
           const group = spells.filter((s) => s.level === level);
           return (
@@ -55,14 +55,14 @@ export function SpellsTab({
                 label={LEVEL_LABEL[level] ?? `Level ${level}`}
                 count={group.length}
               />
-              <ul className="flex flex-col rounded-xl bg-cod-soft px-4 py-1.5">
+              <ul className="flex flex-col rounded-lg border border-hairline px-3">
                 {group.map((spell) => (
                   <li key={spell.id} className="border-b border-hairline last:border-b-0">
                     <button
                       type="button"
                       onClick={() => setOpenId(spell.id)}
                       aria-expanded={openId === spell.id}
-                      className="flex w-full items-center gap-2.5 py-2.5 text-left transition hover:opacity-80"
+                      className="flex w-full items-center gap-2.5 py-2 text-left transition hover:opacity-80"
                     >
                       <ProficiencyDot
                         level={spell.prepared ? "proficient" : "none"}

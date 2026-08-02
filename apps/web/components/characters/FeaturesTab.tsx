@@ -44,18 +44,18 @@ export function FeaturesTab({
 
   return (
     <>
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         {ordered.map(([source, list]) => (
           <section key={source}>
             <GroupHeading label={source} count={list.length} />
-            <ul className="flex flex-col rounded-xl bg-cod-soft px-4 py-1.5">
+            <ul className="flex flex-col rounded-lg border border-hairline px-3">
               {list.map((f) => (
                 <li key={f.id} className="border-b border-hairline last:border-b-0">
                   <button
                     type="button"
                     onClick={() => setOpenId(f.id)}
                     aria-expanded={openId === f.id}
-                    className="flex w-full items-center gap-3 py-2.5 text-left transition hover:opacity-80"
+                    className="flex w-full items-center gap-3 py-2 text-left transition hover:opacity-80"
                   >
                     <Thumb art={art} path={f.imgPath} />
                     <span className="min-w-0 flex-1 truncate font-body text-[14px] text-ink">

@@ -34,7 +34,7 @@ export function CharacterSheetView({
   const [tab, setTab] = useState<TabKey>("overview");
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <SheetHeader sheet={sheet} />
 
       <div
@@ -98,7 +98,7 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
     .filter(Boolean);
 
   return (
-    <header className="flex items-center gap-4 rounded-xl bg-cod-soft px-5 py-4">
+    <header className="flex items-center gap-4 border-b border-hairline pb-4">
       <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-wine font-display text-[20px] text-parchment ring-1 ring-[color-mix(in_srgb,var(--gold)_55%,var(--surface))]">
         {portrait ? (
           // eslint-disable-next-line @next/next/no-img-element
