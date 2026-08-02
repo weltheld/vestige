@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { Users } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
-import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
+import { getViewer, getCampaignIfMember, isCampaignOwner } from "@/lib/journal/data";
+import { getOrCreateFoundryConnection } from "@/lib/characters/foundry-link";
 import {
   getCharacterRoster,
   getCharacterSheet,
@@ -13,6 +14,7 @@ import { CharacterSwitcher } from "@/components/characters/CharacterSwitcher";
 import { ImportCharacterButton } from "@/components/characters/ImportCharacterButton";
 import { DeleteSheetButton } from "@/components/characters/DeleteSheetButton";
 import { ImportArtButton } from "@/components/characters/ImportArtButton";
+import { FoundryConnectionCard } from "@/components/characters/FoundryConnectionCard";
 
 export default async function CharactersPage({
   params,
@@ -31,6 +33,10 @@ export default async function CharactersPage({
   if (!campaign) redirect(appHref());
 
   const roster = await getCharacterRoster(supabase, campaignId);
+  // The push token is the creator's to hand out, and creating it on read is
+  // what guarantees there is one to copy. Members see nothing.
+  const owner = await isCampaignOwner(supabase, viewer.id, campaignId);
+  const foundry = owner ? await getOrCreateFoundryConnection(supabase, campaignId) : null;
   // A ?sheet that doesn't exist (deleted, or from another campaign) falls back
   // to the default rather than showing an error — the link is stale, not wrong.
   const current = sheetParam
@@ -44,6 +50,8 @@ export default async function CharactersPage({
         <h1 className="font-display text-3xl text-ink">Characters</h1>
         <ImportCharacterButton campaignId={campaignId} />
       </div>
+
+      {foundry && <FoundryConnectionCard campaignId={campaignId} connection={foundry} />}
 
       {!current ? (
         <EmptyState />

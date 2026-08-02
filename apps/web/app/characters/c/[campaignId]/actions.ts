@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@vestige/db/server";
 import { parseFoundryActor } from "@/lib/characters/foundry";
+import { rotateFoundryToken } from "@/lib/characters/foundry-link";
 import type { CharacterSheetData } from "@vestige/db";
 import { characters } from "@/lib/journal/links";
 
@@ -145,6 +146,24 @@ export async function setCharacterArt(
 
   revalidatePath(characters.campaign(campaignId));
   return { ok: true, count: Object.keys(merged).length };
+}
+
+/**
+ * Issue a fresh push token for the Foundry module.
+ *
+ * Creator-only via RLS on foundry_connections — this deliberately uses the
+ * caller's client rather than the service role, so the policy is the check.
+ */
+export async function regenerateFoundryToken(
+  campaignId: string,
+): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
+  const supabase = await getServerSupabase();
+  const connection = await rotateFoundryToken(supabase, campaignId);
+  if (!connection) {
+    return { ok: false, error: "Could not generate a new token." };
+  }
+  revalidatePath(characters.campaign(campaignId));
+  return { ok: true, token: connection.token };
 }
 
 export type DeleteResult = { ok: true } | { ok: false; error: string };
