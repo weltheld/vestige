@@ -136,6 +136,19 @@ function str(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
 }
 
+/**
+ * A number, or null if there isn't one.
+ *
+ * The gate in front of everything the vestige-foundry module sends in
+ * `flags.vestige.derived`. Distinguishing "absent" from 0 matters here: a
+ * character can legitimately have 0 speed, and `num()` returning a fallback
+ * would make that indistinguishable from a field the module didn't send.
+ */
+function numOrNull(value: unknown): number | null {
+  const n = typeof value === "string" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) ? n : null;
+}
+
 function bool(value: unknown): boolean {
   return value === true || value === 1;
 }
@@ -202,18 +215,20 @@ export function parseFoundryActor(raw: unknown): ParseResult {
 
   const system = obj(actor.system);
   const items = Array.isArray(actor.items) ? actor.items.map(obj) : [];
+  const derived = obj(at(actor, "flags.vestige.derived"));
 
-  const abilities = parseAbilities(system);
+  const abilities = parseAbilities(system, derived);
   const classes = parseClasses(items);
   // Also derived at runtime in newer dnd5e versions. It's a fixed function of
   // total character level (2 at 1-4, 3 at 5-8, …) — the same everywhere in 5e.
   const totalLevel = classes.reduce((n, c) => n + c.level, 0);
   const proficiencyBonus =
-    at(system, "attributes.prof") !== undefined
+    numOrNull(derived.proficiencyBonus) ??
+    (at(system, "attributes.prof") !== undefined
       ? num(at(system, "attributes.prof"))
       : totalLevel > 0
         ? Math.floor((totalLevel - 1) / 4) + 2
-        : 0;
+        : 0);
 
   const sheet: CharacterSheetData = {
     identity: {
@@ -227,16 +242,16 @@ export function parseFoundryActor(raw: unknown): ParseResult {
     },
     stats: {
       abilities,
-      ac: parseArmourClass(system, items, abilities),
+      ac: numOrNull(derived.ac) ?? parseArmourClass(system, items, abilities),
       hp: {
         value: num(at(system, "attributes.hp.value")),
         max: num(at(system, "attributes.hp.max")),
         temp: num(at(system, "attributes.hp.temp")),
       },
-      speed: parseSpeed(system),
+      speed: numOrNull(derived.speed) ?? parseSpeed(system),
       proficiencyBonus,
-      savingThrows: parseSaves(system, abilities, proficiencyBonus),
-      skills: parseSkills(system, abilities, proficiencyBonus),
+      savingThrows: parseSaves(system, abilities, proficiencyBonus, derived),
+      skills: parseSkills(system, abilities, proficiencyBonus, derived),
       currency: {
         pp: num(at(system, "currency.pp")),
         gp: num(at(system, "currency.gp")),
@@ -245,7 +260,7 @@ export function parseFoundryActor(raw: unknown): ParseResult {
         cp: num(at(system, "currency.cp")),
       },
       encumbrance: parseEncumbrance(system, items),
-      spellcasting: parseSpellcasting(system),
+      spellcasting: parseSpellcasting(system, derived),
     },
     items: parseItems(items),
     features: parseFeatures(items, classes),
@@ -299,15 +314,18 @@ function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
 
-function parseAbilities(system: Record<string, unknown>) {
+function parseAbilities(system: Record<string, unknown>, derived: Record<string, unknown>) {
   const src = obj(at(system, "abilities"));
+  const live = obj(derived.abilities);
   const out = {} as CharacterSheetData["stats"]["abilities"];
   for (const key of ABILITIES) {
     const a = obj(src[key]);
     const value = num(a.value, 10);
     out[key] = {
       value,
-      modifier: a.mod !== undefined ? num(a.mod) : abilityModifier(value),
+      modifier:
+        numOrNull(obj(live[key]).mod) ??
+        (a.mod !== undefined ? num(a.mod) : abilityModifier(value)),
     };
   }
   return out;
@@ -317,13 +335,20 @@ function parseSaves(
   system: Record<string, unknown>,
   abilities: CharacterSheetData["stats"]["abilities"],
   proficiencyBonus: number,
+  derived: Record<string, unknown>,
 ) {
   const src = obj(at(system, "abilities"));
+  const live = obj(derived.abilities);
   const out: CharacterSheetData["stats"]["savingThrows"] = {};
   for (const key of ABILITIES) {
     const a = obj(src[key]);
     const save = obj(a.save);
     const proficient = num(a.proficient) > 0;
+    const fromModule = numOrNull(obj(live[key]).save);
+    if (fromModule !== null) {
+      out[key] = { modifier: fromModule, proficient };
+      continue;
+    }
     // Same story as `mod`: the save total is derived at runtime and usually
     // absent. Ability modifier plus the proficiency bonus when proficient is
     // the definition of a saving throw, so it's derived rather than shown as
@@ -342,8 +367,10 @@ function parseSkills(
   system: Record<string, unknown>,
   abilities: CharacterSheetData["stats"]["abilities"],
   proficiencyBonus: number,
+  derived: Record<string, unknown>,
 ) {
   const src = obj(at(system, "skills"));
+  const live = obj(derived.skills);
   const out: CharacterSheetData["stats"]["skills"] = {};
   for (const [key, meta] of Object.entries(SKILLS)) {
     const s = obj(src[key]);
@@ -359,10 +386,11 @@ function parseSkills(
           : prof >= 0.5
             ? Math.floor(proficiencyBonus / 2)
             : 0;
-    const derived = (abilities[ability]?.modifier ?? 0) + bonus;
+    const computed = (abilities[ability]?.modifier ?? 0) + bonus;
     const exported = s.total !== undefined ? num(s.total) : num(s.mod, NaN);
     out[meta.label] = {
-      modifier: Number.isFinite(exported) ? exported : derived,
+      modifier:
+        numOrNull(live[key]) ?? (Number.isFinite(exported) ? exported : computed),
       // 1 = proficient, 2 = expertise, 0.5 = half (jack of all trades).
       proficient: prof >= 1,
       expertise: prof >= 2,
@@ -465,9 +493,25 @@ function parseEncumbrance(
 }
 
 /** Spell attack + save DC, only when the character actually casts. */
-function parseSpellcasting(system: Record<string, unknown>) {
+function parseSpellcasting(
+  system: Record<string, unknown>,
+  derived: Record<string, unknown>,
+) {
   const ability = str(at(system, "attributes.spellcasting")) as AbilityKey;
   if (!ability || !ABILITIES.includes(ability)) return undefined;
+
+  const liveDc = numOrNull(derived.spellDc);
+  const liveAttack = numOrNull(derived.spellAttack);
+  if (liveDc !== null || liveAttack !== null) {
+    const prof = num(at(system, "attributes.prof"));
+    const mod = num(at(system, `abilities.${ability}.mod`));
+    return {
+      ability,
+      saveDc: liveDc ?? 8 + prof + mod,
+      attackModifier: liveAttack ?? prof + mod,
+    };
+  }
+
   const dc = num(at(system, "attributes.spelldc"));
   const attack = at(system, "attributes.spellmod");
   const mod = num(obj(at(system, "abilities"))[ability] ? at(system, `abilities.${ability}.mod`) : 0);

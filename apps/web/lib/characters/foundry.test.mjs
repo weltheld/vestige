@@ -476,6 +476,70 @@ assert.equal(
   assert.equal(multi.sheet.stats.proficiencyBonus, 3);
 }
 
+// --- values the vestige-foundry module computed for us ----------------------
+// dnd5e derives AC, walking speed and the rest at runtime, so an export
+// carries none of them. What the module sends from inside Foundry wins over
+// anything this parser could work out on its own.
+{
+  const pushed = parseFoundryActor({
+    type: "character",
+    name: "Pushed",
+    flags: {
+      vestige: {
+        derived: {
+          ac: 17,
+          speed: 40,
+          proficiencyBonus: 3,
+          abilities: { str: { mod: 4, save: 7 } },
+          skills: { ath: 9 },
+        },
+      },
+    },
+    system: {
+      id: "dnd5e",
+      // Everything below would derive to something different.
+      abilities: { str: { value: 18, proficient: 1 } },
+      attributes: { ac: { calc: "default" }, movement: { walk: null } },
+      skills: { ath: { value: 1, ability: "str" } },
+    },
+    items: [],
+  });
+  assert.equal(pushed.sheet.stats.ac, 17);
+  assert.equal(pushed.sheet.stats.speed, 40);
+  assert.equal(pushed.sheet.stats.abilities.str.modifier, 4);
+  assert.equal(pushed.sheet.stats.savingThrows.str.modifier, 7);
+  assert.equal(pushed.sheet.stats.skills.Athletics.modifier, 9);
+}
+
+// A hand-uploaded export has no such flag, and must still derive as before.
+{
+  const uploaded = parseFoundryActor({
+    type: "character",
+    name: "Uploaded",
+    system: {
+      id: "dnd5e",
+      abilities: { dex: { value: 14 } },
+      attributes: { ac: { calc: "default" }, movement: { walk: 30 } },
+    },
+    items: [],
+  });
+  assert.equal(uploaded.sheet.stats.speed, 30);
+  // 10 + Dex, the unarmoured default.
+  assert.equal(uploaded.sheet.stats.ac, 12);
+}
+
+// A zero the module actually sent is a fact, not a missing field.
+{
+  const grappled = parseFoundryActor({
+    type: "character",
+    name: "Zero",
+    flags: { vestige: { derived: { speed: 0 } } },
+    system: { id: "dnd5e", abilities: {}, attributes: { movement: { walk: 30 } } },
+    items: [],
+  });
+  assert.equal(grappled.sheet.stats.speed, 0);
+}
+
 // Hostile input must not throw.
 for (const junk of [null, undefined, 42, "nope", [], { items: "not-an-array" }]) {
   assert.equal(parseFoundryActor(junk).ok, false);
