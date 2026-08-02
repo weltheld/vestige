@@ -244,11 +244,33 @@ export function parseFoundryActor(raw: unknown): ParseResult {
 
   return {
     ok: true,
-    // Exports use `_id` historically and `id` in newer versions; either works
-    // as the upsert key as long as we pick consistently.
-    actorId: str(actor._id) || str(actor.id) || str(at(actor, "flags.core.sourceId")),
+    actorId: upsertKey(actor, sheet.identity.name),
     sheet,
   };
+}
+
+/**
+ * The key a re-import replaces on.
+ *
+ * Foundry's "Export Data" STRIPS the actor `_id` — deliberately, so that
+ * importing the file elsewhere creates a new actor rather than colliding with
+ * an existing one. Requiring an id therefore rejected the very files the
+ * feature is meant to accept.
+ *
+ * Where an id survives (a world backup, a compendium source) it's used, since
+ * it's stable across renames. Otherwise the name is the key, which is how a
+ * player thinks about it anyway: re-importing Zibal replaces Zibal. The cost
+ * is that renaming a character and re-importing adds a second sheet instead of
+ * updating the first — visible, and fixable by deleting the old one.
+ */
+function upsertKey(actor: Record<string, unknown>, name: string): string {
+  const id =
+    str(actor._id) ||
+    str(actor.id) ||
+    str(at(actor, "_stats.compendiumSource")) ||
+    str(at(actor, "flags.core.sourceId"));
+  if (id) return id;
+  return `name:${name.trim().toLowerCase()}`;
 }
 
 function parseAbilities(system: Record<string, unknown>) {

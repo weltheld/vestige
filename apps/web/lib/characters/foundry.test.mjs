@@ -273,6 +273,36 @@ assert.equal(legacy.sheet.stats.speed, 30);
 // Encumbrance summed from items when Foundry didn't pre-total it: 5 × 2.
 assert.deepEqual(legacy.sheet.stats.encumbrance, { value: 10, max: 180 });
 
+// Foundry's Export Data STRIPS _id, so an export with no id is the normal
+// case, not a broken file. The name becomes the key instead, so re-importing
+// the same character replaces its sheet.
+{
+  const noId = parseFoundryActor({
+    type: "character",
+    name: "Zibal Faringray",
+    system: { id: "dnd5e", abilities: {} },
+    items: [],
+  });
+  assert.equal(noId.ok, true);
+  assert.equal(noId.actorId, "name:zibal faringray");
+  // Same character again -> same key -> an upsert, not a duplicate row.
+  const again = parseFoundryActor({
+    type: "character",
+    name: "  ZIBAL FARINGRAY  ",
+    system: { id: "dnd5e", abilities: {} },
+    items: [],
+  });
+  assert.equal(again.actorId, noId.actorId);
+}
+// A real id still wins over the name, since it survives a rename.
+assert.equal(
+  parseFoundryActor({
+    type: "character", name: "X", _id: "realid",
+    system: { id: "dnd5e", abilities: {} },
+  }).actorId,
+  "realid",
+);
+
 // Hostile input must not throw.
 for (const junk of [null, undefined, 42, "nope", [], { items: "not-an-array" }]) {
   assert.equal(parseFoundryActor(junk).ok, false);
