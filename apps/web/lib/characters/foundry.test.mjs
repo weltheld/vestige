@@ -463,6 +463,40 @@ assert.equal(
   assert.equal(exported.sheet.stats.proficiencyBonus, 6);
 }
 
+// Modern dnd5e writes a roll-config OBJECT at abilities.<key>.save
+// ({roll: {max, min, mode}}), not the total — the total is computed at
+// runtime and never exported. That object is present (not undefined), so a
+// check that only asked "did Foundry send something here" mistook it for an
+// already-computed number, ran it through the numeric coercion, and got that
+// helper's zero fallback for every single ability — proficient or not, high
+// modifier or low, all six saves landed on the same wrong constant. Each one
+// must come out different here, matching its own ability modifier and
+// proficiency, or the object is winning again.
+{
+  const modern = parseFoundryActor({
+    type: "character",
+    name: "Echo",
+    system: {
+      id: "dnd5e",
+      abilities: {
+        cha: { value: 16, save: { roll: { max: null, min: null, mode: 0 } }, proficient: 1 },
+        dex: { value: 16, save: { roll: { max: null, min: null, mode: 0 } }, proficient: 1 },
+        con: { value: 11, save: { roll: { max: null, min: null, mode: 0 } }, proficient: 0 },
+        wis: { value: 12, save: { roll: { max: null, min: null, mode: 0 } }, proficient: 0 },
+      },
+      attributes: { prof: 3 },
+    },
+    items: [],
+  });
+  const st = modern.sheet.stats.savingThrows;
+  assert.equal(st.cha.modifier, 6, "proficient +3 cha should be 3 (mod) + 3 (prof) = 6"); // 3 + 3
+  assert.equal(st.dex.modifier, 6, "proficient +3 dex should be 3 (mod) + 3 (prof) = 6"); // 3 + 3
+  assert.equal(st.con.modifier, 0, "non-proficient +0 con should stay 0"); // 0, not proficient
+  assert.equal(st.wis.modifier, 1, "non-proficient +1 wis should stay 1"); // 1, not proficient
+  assert.equal(st.cha.proficient, true);
+  assert.equal(st.con.proficient, false);
+}
+
 // Multiclass proficiency uses TOTAL level: 5 + 2 = 7 -> +3.
 {
   const multi = parseFoundryActor({

@@ -355,8 +355,17 @@ function parseSaves(
     // absent. Ability modifier plus the proficiency bonus when proficient is
     // the definition of a saving throw, so it's derived rather than shown as
     // a wrong number.
+    //
+    // `a.save` is a plain number only on very old exports. Modern dnd5e
+    // stores a roll-config object there instead (`{roll: {max, min, mode}}`)
+    // — present, but not the total. The old `a.save !== undefined` check
+    // treated that object as "already computed", ran it through num() (which
+    // returns its fallback for anything that isn't a number or numeric
+    // string), and took the resulting 0 as a real, finite saving throw —
+    // every ability, proficient or not, landed on the same wrong constant
+    // instead of falling through to the derived formula below.
     const derived = abilities[key].modifier + (proficient ? proficiencyBonus : 0);
-    const exported = a.save !== undefined ? num(a.save) : num(save.value, NaN);
+    const exported = typeof a.save === "number" ? a.save : num(save.value, NaN);
     out[key] = {
       modifier: Number.isFinite(exported) ? exported : derived,
       proficient,
