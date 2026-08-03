@@ -131,16 +131,49 @@
   --font-body: var(--font-geometric);
 }
 
-/* The part a palette can't carry: the stock. A 4px halftone dot screen over
-   the page ground, faint enough to read as paper tooth rather than pattern.
-   Scoped to the theme, so no other theme pays for it. */
+/* ── Paperback's four component-level touches ─────────────────────────
+   The palette gets the inks into the app, but the things that make a riso
+   print look printed are all structural, so this theme reaches past its
+   tokens the same way Retro does for corner radius. Each selector is
+   deliberately narrow — the reasoning is with each rule. */
+
+/* 1. The stock. A 4px halftone dot screen over the page ground — the grid
+      the whole look sits on. Same weight as the design draft; the first cut
+      was set fainter and read as nothing at all. */
 :root[data-theme="paperback"] body {
   background-image: radial-gradient(
     circle at 1px 1px,
-    rgba(27, 27, 27, 0.055) 1px,
+    rgba(27, 27, 27, 0.075) 1px,
     transparent 1.6px
   );
   background-size: 4px 4px;
+}
+
+/* 2. Stamped section headers printed in the bright teal rather than near-black
+      ink, with the label knocked back to ink so it still reads — dark type on
+      full-strength teal clears AA at 5.8:1, where white on it would sit at
+      2.9:1 and fail. Scoped to headings on purpose: the other `bg-ink` users
+      are modal scrims, the image cropper and the session hero's overlay, and
+      those must stay ink. */
+:root[data-theme="paperback"] h2.bg-ink,
+:root[data-theme="paperback"] h3.bg-ink {
+  background-color: var(--gold-soft);
+  color: var(--ink);
+}
+
+/* 3. Hard keylines take the second plate. All ten `border-ink` usages are
+      boxed fields on the character sheet plus one toggle, so a teal rule
+      reads as intended in every one of them — and a black-bordered box on
+      cream was the single most un-riso thing left in the theme. */
+:root[data-theme="paperback"] .border-ink {
+  border-color: var(--gold);
+}
+
+/* 4. Links in teal, underlined in pink: the two plates crossing in one
+      detail. Cheap, and it's the thing that sells two-colour printing. */
+:root[data-theme="paperback"] a {
+  text-decoration-color: var(--wine);
+  text-underline-offset: 2px;
 }
 
 /* Retro — an 8-bit console RPG: deep indigo ground, cyan chrome, and a magenta
