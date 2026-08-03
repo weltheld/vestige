@@ -229,8 +229,8 @@
    image, so it costs nothing and stays crisp at any zoom. */
 :root[data-theme="retro"] body {
   background-image:
-    linear-gradient(rgba(106, 208, 240, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(106, 208, 240, 0.09) 1px, transparent 1px);
+    linear-gradient(rgba(106, 208, 240, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(106, 208, 240, 0.14) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
