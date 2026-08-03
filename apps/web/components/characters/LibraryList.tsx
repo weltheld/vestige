@@ -154,7 +154,7 @@ export function LibraryList({
               <option value="">{campaignId ? "Unallocated" : "No player"}</option>
               {roster.map((p) => (
                 <option key={p.userId} value={p.userId}>
-                  {p.characterName}
+                  {p.playerName}
                   {p.isDm ? " (DM)" : ""}
                 </option>
               ))}

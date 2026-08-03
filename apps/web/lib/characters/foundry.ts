@@ -248,7 +248,7 @@ export function parseFoundryActor(raw: unknown): ParseResult {
         max: num(at(system, "attributes.hp.max")),
         temp: num(at(system, "attributes.hp.temp")),
       },
-      speed: numOrNull(derived.speed) ?? parseSpeed(system),
+      speed: numOrNull(derived.speed) ?? parseSpeed(system, items),
       proficiencyBonus,
       savingThrows: parseSaves(system, abilities, proficiencyBonus, derived),
       skills: parseSkills(system, abilities, proficiencyBonus, derived),
@@ -261,7 +261,7 @@ export function parseFoundryActor(raw: unknown): ParseResult {
       },
       encumbrance: parseEncumbrance(system, items),
       passivePerception: parsePassivePerception(system, derived),
-      spellcasting: parseSpellcasting(system, derived),
+      spellcasting: parseSpellcasting(system, derived, abilities, proficiencyBonus),
     },
     items: parseItems(items),
     features: parseFeatures(items, classes),
@@ -489,9 +489,21 @@ function parsePassivePerception(
   return total === null ? undefined : 10 + total;
 }
 
-function parseSpeed(system: Record<string, unknown>): number {
-  const walk = at(system, "attributes.movement.walk");
-  if (walk !== undefined) return num(walk);
+function parseSpeed(
+  system: Record<string, unknown>,
+  items: Record<string, unknown>[],
+): number {
+  const walk = numOrNull(at(system, "attributes.movement.walk"));
+  if (walk !== null) return walk;
+  // dnd5e 4.x applies the racial walking speed from the race item at runtime
+  // and never writes it back, so a real export's attributes.movement holds
+  // units and flags but no `walk` at all. The race item still carries it (as
+  // a string), and it is the actual speed for all but the rarest character.
+  for (const item of items) {
+    if (str(item.type).toLowerCase() !== "race") continue;
+    const fromRace = numOrNull(at(item, "system.movement.walk"));
+    if (fromRace !== null) return fromRace;
+  }
   // Very old exports kept speed as a string like "30 ft."
   const legacy = str(at(system, "attributes.speed.value"));
   const match = legacy.match(/\d+/);
@@ -519,36 +531,40 @@ function parseEncumbrance(
   return { value: Math.round(value * 100) / 100, max };
 }
 
-/** Spell attack + save DC, only when the character actually casts. */
+/**
+ * Spell attack + save DC, only when the character actually casts.
+ *
+ * The fallbacks use the ability modifier and proficiency bonus this parser
+ * already worked out, NOT `system.abilities.*.mod` and `system.attributes.prof`.
+ * dnd5e derives both of those at runtime and exports neither, so reading them
+ * here made every hand-uploaded caster show DC 8 and a +0 spell attack — the
+ * shape of a real answer, and wrong.
+ *
+ * 8 + proficiency + ability is the definition of a spell save DC, and
+ * proficiency + ability the definition of the attack bonus; anything Foundry
+ * did compute still wins over both.
+ */
 function parseSpellcasting(
   system: Record<string, unknown>,
   derived: Record<string, unknown>,
+  abilities: CharacterSheetData["stats"]["abilities"],
+  proficiencyBonus: number,
 ) {
   const ability = str(at(system, "attributes.spellcasting")) as AbilityKey;
   if (!ability || !ABILITIES.includes(ability)) return undefined;
 
-  const liveDc = numOrNull(derived.spellDc);
-  const liveAttack = numOrNull(derived.spellAttack);
-  if (liveDc !== null || liveAttack !== null) {
-    const prof = num(at(system, "attributes.prof"));
-    const mod = num(at(system, `abilities.${ability}.mod`));
-    return {
-      ability,
-      saveDc: liveDc ?? 8 + prof + mod,
-      attackModifier: liveAttack ?? prof + mod,
-    };
-  }
+  const mod = abilities[ability]?.modifier ?? 0;
 
-  const dc = num(at(system, "attributes.spelldc"));
-  const attack = at(system, "attributes.spellmod");
-  const mod = num(obj(at(system, "abilities"))[ability] ? at(system, `abilities.${ability}.mod`) : 0);
-  const prof = num(at(system, "attributes.prof"));
   return {
     ability,
-    saveDc: dc || 8 + prof + mod,
-    // Foundry exports this on newer versions; older ones don't, and prof + mod
-    // is the definition rather than a rules judgement.
-    attackModifier: attack !== undefined ? num(attack) : prof + mod,
+    saveDc:
+      numOrNull(derived.spellDc) ??
+      numOrNull(at(system, "attributes.spelldc")) ??
+      8 + proficiencyBonus + mod,
+    attackModifier:
+      numOrNull(derived.spellAttack) ??
+      numOrNull(at(system, "attributes.spellmod")) ??
+      proficiencyBonus + mod,
   };
 }
 

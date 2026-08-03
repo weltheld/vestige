@@ -129,6 +129,9 @@ export async function isCampaignOwner(
 export type CampaignPlayer = {
   userId: string;
   characterName: string;
+  /** The person, not their character — for places that name who is playing
+   *  rather than who they are playing. */
+  playerName: string;
   avatarUrl: string | null;
   isDm: boolean;
 };
@@ -151,7 +154,7 @@ export async function getCampaignPlayers(
 
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, character_name, display_name, avatar_url")
+    .select("id, character_name, first_name, display_name, avatar_url")
     .in(
       "id",
       members.map((m) => m.user_id),
@@ -163,6 +166,7 @@ export async function getCampaignPlayers(
     return {
       userId: m.user_id,
       characterName: m.character_name || p?.character_name || p?.display_name || "Adventurer",
+      playerName: p?.first_name?.trim() || p?.display_name?.trim() || "Adventurer",
       avatarUrl: m.avatar_url || p?.avatar_url || null,
       isDm: m.is_dm,
     };

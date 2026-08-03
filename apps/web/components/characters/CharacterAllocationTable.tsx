@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users } from "lucide-react";
 import type { CampaignPlayer } from "@/lib/journal/data";
 import type { CharacterSummary } from "@/lib/characters/data";
 import { characters } from "@/lib/journal/links";
@@ -17,6 +16,10 @@ import { assignSheetPlayer } from "@/app/characters/c/[campaignId]/actions";
  * through the switcher to find the unallocated ones. The table is the shape
  * the job actually has — the party arrives from Foundry in one push, and gets
  * handed out in one sitting.
+ *
+ * Rendered inside the header menu's dialog rather than on the page: it is a
+ * job the DM does once after an import, and it was taking up the top of a
+ * page everyone else only reads.
  */
 export function CharacterAllocationTable({
   campaignId,
@@ -51,54 +54,38 @@ export function CharacterAllocationTable({
     });
   }
 
-  const unallocated = roster.filter((c) => !values[c.id]).length;
-
   return (
-    <details className="rounded-xl border border-hairline bg-cod-soft px-5 py-4" open={unallocated > 0}>
-      <summary className="flex cursor-pointer list-none items-center gap-2">
-        <Users size={15} className="text-muted" />
-        <span className="font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-          Who plays what
-        </span>
-        {unallocated > 0 && (
-          <span className="font-body text-[12px] text-muted">
-            {unallocated} unallocated
-          </span>
-        )}
-      </summary>
-
-      <div className="flex flex-col gap-2 pt-4">
-        {roster.map((character) => (
-          <div
-            key={character.id}
-            className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-2 last:border-0 last:pb-0"
+    <div className="flex flex-col gap-2">
+      {roster.map((character) => (
+        <div
+          key={character.id}
+          className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-2 last:border-0 last:pb-0"
+        >
+          <Link
+            href={characters.sheet(campaignId, character.id)}
+            className="font-body text-[14px] text-ink transition hover:text-gold"
           >
-            <Link
-              href={characters.sheet(campaignId, character.id)}
-              className="font-body text-[14px] text-ink transition hover:text-gold"
-            >
-              {character.name}
-            </Link>
-            <select
-              value={values[character.id] ?? ""}
-              disabled={pending}
-              onChange={(e) => onChange(character.id, e.target.value)}
-              aria-label={`Who plays ${character.name}`}
-              className="rounded-md border border-hairline bg-surface px-2 py-1.5 font-body text-[13px] text-ink disabled:opacity-60"
-            >
-              <option value="">Unallocated</option>
-              {players.map((p) => (
-                <option key={p.userId} value={p.userId}>
-                  {p.characterName}
-                  {p.isDm ? " (DM)" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-        ))}
+            {character.name}
+          </Link>
+          <select
+            value={values[character.id] ?? ""}
+            disabled={pending}
+            onChange={(e) => onChange(character.id, e.target.value)}
+            aria-label={`Who plays ${character.name}`}
+            className="rounded-md border border-hairline bg-surface px-2 py-1.5 font-body text-[13px] text-ink disabled:opacity-60"
+          >
+            <option value="">Unallocated</option>
+            {players.map((p) => (
+              <option key={p.userId} value={p.userId}>
+                {p.playerName}
+                {p.isDm ? " (DM)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      ))}
 
-        {error && <p className="font-body text-[12px] text-vote-no">{error}</p>}
-      </div>
-    </details>
+      {error && <p className="font-body text-[12px] text-vote-no">{error}</p>}
+    </div>
   );
 }

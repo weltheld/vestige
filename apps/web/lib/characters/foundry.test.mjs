@@ -540,6 +540,53 @@ assert.equal(
   assert.equal(grappled.sheet.stats.speed, 0);
 }
 
+// A real dnd5e 4.x export: movement carries no `walk` (the race item applies
+// it at runtime), and neither `prof` nor `abilities.*.mod` survive the export.
+{
+  const real = parseFoundryActor({
+    type: "character",
+    name: "Echo",
+    system: {
+      id: "dnd5e",
+      abilities: { cha: { value: 16, proficient: 1 } },
+      attributes: {
+        movement: { hover: false, units: null },
+        spellcasting: "cha",
+        prof: null,
+        spelldc: null,
+      },
+    },
+    items: [
+      { type: "class", name: "Bard", system: { levels: 7 } },
+      { type: "race", name: "Centaur", system: { movement: { walk: "40", climb: "10" } } },
+    ],
+  });
+  assert.equal(real.sheet.stats.speed, 40);
+  assert.equal(real.sheet.stats.proficiencyBonus, 3);
+  // Charisma 16 is +3; 8 + 3 prof + 3 = 14, and the attack is 3 + 3.
+  assert.equal(real.sheet.stats.spellcasting.saveDc, 14);
+  assert.equal(real.sheet.stats.spellcasting.attackModifier, 6);
+}
+
+// Values Foundry did compute still win over the derived ones.
+{
+  const exported = parseFoundryActor({
+    type: "character",
+    name: "Exported",
+    flags: { vestige: { derived: { spellDc: 17, spellAttack: 9 } } },
+    system: {
+      id: "dnd5e",
+      abilities: { int: { value: 20 } },
+      attributes: { spellcasting: "int", movement: { walk: 30 } },
+    },
+    items: [{ type: "class", name: "Wizard", system: { levels: 5 } }],
+  });
+  assert.equal(exported.sheet.stats.spellcasting.saveDc, 17);
+  assert.equal(exported.sheet.stats.spellcasting.attackModifier, 9);
+  // The race item is only consulted when system movement has no walk.
+  assert.equal(exported.sheet.stats.speed, 30);
+}
+
 // Hostile input must not throw.
 for (const junk of [null, undefined, 42, "nope", [], { items: "not-an-array" }]) {
   assert.equal(parseFoundryActor(junk).ok, false);

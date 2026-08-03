@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Feather, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import {
   getViewer,
@@ -14,13 +13,12 @@ import {
   getDefaultCharacterSheet,
   getSheetAllocations,
 } from "@/lib/characters/data";
-import { appHref, characters } from "@/lib/journal/links";
+import { appHref } from "@/lib/journal/links";
 import { CharacterSheetView } from "@/components/characters/CharacterSheetView";
 import { CharacterSwitcher } from "@/components/characters/CharacterSwitcher";
-import { ImportCharacterButton } from "@/components/characters/ImportCharacterButton";
 import { DeleteSheetButton } from "@/components/characters/DeleteSheetButton";
 import { SheetPlayerSelect } from "@/components/characters/SheetPlayerSelect";
-import { CharacterAllocationTable } from "@/components/characters/CharacterAllocationTable";
+import { CharactersMenu } from "@/components/characters/CharactersMenu";
 
 export default async function CharactersPage({
   params,
@@ -51,34 +49,20 @@ export default async function CharactersPage({
 
   return (
     <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
+      {/* Importing, allocating and artwork are the DM's jobs — the roster
+          arrives from one Foundry world, and everyone else is here to read
+          their party's sheets rather than to manage them. All of it sits
+          behind one menu so the sheet leads the page. */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="font-display text-3xl text-ink">Characters</h1>
-        {/* Importing, syncing and artwork are the DM's jobs — the roster
-            arrives from one Foundry world, and everyone else is here to read
-            their party's sheets rather than to manage them. */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Sending from Foundry is a personal setup step, not a campaign
-              one — the token is yours and one install serves every campaign
-              you are in. It lives in the library. */}
-          <Link
-            href={characters.library()}
-            className="inline-flex items-center gap-2 font-body text-[13px] text-ink-soft transition hover:text-gold"
-          >
-            <Feather size={14} />
-            Manage characters
-          </Link>
-          {owner && <ImportCharacterButton campaignId={campaignId} />}
-        </div>
-      </div>
-
-      {owner && (
-        <CharacterAllocationTable
+        <CharactersMenu
           campaignId={campaignId}
+          owner={owner}
           roster={roster}
           players={players}
           allocations={Object.fromEntries(allocations)}
         />
-      )}
+      </div>
 
       {!current ? (
         <EmptyState owner={owner} />

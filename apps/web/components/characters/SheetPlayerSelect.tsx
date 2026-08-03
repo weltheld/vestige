@@ -23,7 +23,7 @@ export function SheetPlayerSelect({
   return (
     <p className="flex items-center gap-2 font-body text-[13px] text-muted">
       <UserRound size={14} />
-      Played by {player.characterName}
+      Played by {player.playerName}
     </p>
   );
 }

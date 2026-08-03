@@ -90,7 +90,10 @@ function Vitals({ sheet }: { sheet: CharacterSheetData }) {
       {/* 0 is the parser saying it couldn't work the AC out — a custom formula
           it won't guess at. An em dash says that; "0" lies. */}
       <Box value={ac > 0 ? String(ac) : "—"} label="Armour class" />
-      <Box value={`${speed} ft`} label="Speed" />
+      {/* Same reasoning as the AC above: an export that carried no walking
+          speed anywhere leaves this at 0, and "0 ft" reads as a character who
+          cannot move rather than a number we don't have. */}
+      <Box value={speed > 0 ? `${speed} ft` : "—"} label="Speed" />
       <Box value={signed(proficiencyBonus)} label="Proficiency" />
       {/* The one passive score the rules use, so it sits with the vitals
           rather than as a column of eighteen numbers nobody consults. */}
