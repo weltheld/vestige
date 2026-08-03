@@ -119,7 +119,7 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
     <header className="flex flex-col">
       {/* Option 3 from the drafted concepts: a colour band the portrait
           overlaps, rather than a box beside the text. The band is a gradient
-          in the theme's own --gold, not the character's photo — it never
+          in the theme's own --wine, not the character's photo — it never
           needs a real portrait to avoid looking empty, unlike a banner built
           from the image itself would. It fades to transparent rather than
           stopping at a hard edge, so it blends into the page's own
@@ -127,10 +127,17 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
           fade is most of the band's height (a third solid, the rest fading)
           so it's a genuine transition, not a band with a thin blur at its
           foot. All text stays below it, on the plain page background, so
-          nothing has to stay legible against a gradient mid-fade. */}
+          nothing has to stay legible against a gradient mid-fade.
+
+          --wine rather than --gold: two themes (Nebula, Retro) define --gold
+          as a cyan, and both of those also use a dark navy/indigo page
+          background — a cyan gradient fading into dark blue reads as flat
+          and muddy rather than as a colour band. --wine is a warm red/pink/
+          orange accent in every theme with no exception, so it contrasts
+          with a dark background the same way it warms a light one. */}
       <div
         className="h-24 w-full rounded-t-lg"
-        style={{ background: "linear-gradient(180deg, var(--gold) 0%, var(--gold) 20%, transparent 100%)" }}
+        style={{ background: "linear-gradient(180deg, var(--wine) 0%, var(--wine) 20%, transparent 100%)" }}
       />
       <div className="-mt-12 flex items-end gap-4 border-b-2 border-ink px-1 pb-3">
         {/* Overlaps the band by half its own height — center of the circle
