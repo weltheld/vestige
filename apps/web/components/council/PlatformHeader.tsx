@@ -1,4 +1,4 @@
-import { CalendarDays, ScrollText, Library } from "lucide-react";
+import { CalendarDays, ScrollText, Library, Users } from "lucide-react";
 import { Crest } from "./Crest";
 import { ProfileDialog } from "./ProfileDialog";
 import { CampaignSwitcher, type SwitcherCampaign } from "./CampaignSwitcher";
@@ -81,6 +81,17 @@ export function PlatformHeader({
             >
               <Library size={14} />
               Codex
+            </Link>
+            {/* Characters is a coequal module and was missing here: it was
+                added to @vestige/ui's VestigeHeader, which this file is a
+                port of, and the port didn't follow. The bottom nav on mobile
+                already had it, so the tab only vanished on desktop. */}
+            <Link
+              href={campaign ? `/characters/c/${campaign.id}` : "/characters"}
+              className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 font-body text-[13px] text-ink-soft transition hover:bg-[color-mix(in_srgb,var(--ink)_10%,var(--surface))] hover:text-wine"
+            >
+              <Users size={14} />
+              Characters
             </Link>
           </div>
         </nav>

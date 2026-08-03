@@ -82,11 +82,14 @@ function Vitals({ sheet }: { sheet: CharacterSheetData }) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      {/* No maximum means the export didn't carry one and it couldn't be
-          derived — "38/0" reads as a character at zero, so the current total
-          stands alone instead. */}
+      {/* An unknown maximum keeps its slot and shows an em dash, the same way
+          AC and speed do below. Dropping the "/ max" entirely was worse: two
+          sheets side by side then disagreed about the shape of the field, which
+          reads as one of them being broken rather than one number being
+          unavailable. ("38/0", the original bug, was worse still — it reads as
+          a character at zero.) */}
       <Box
-        value={hp.max > 0 ? `${hp.value}/${hp.max}` : String(hp.value)}
+        value={`${hp.value}/${hp.max > 0 ? hp.max : "—"}`}
         label="Hit points"
         note={hp.temp > 0 ? `+${hp.temp} temp` : undefined}
       />

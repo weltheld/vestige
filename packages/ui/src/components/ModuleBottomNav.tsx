@@ -1,23 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, CalendarDays, ScrollText, Library, Users } from "lucide-react";
+import { CalendarDays, ScrollText, Library, Users } from "lucide-react";
 
 export type BottomNavModule = "calendar" | "journal" | "codex" | "characters";
 
 /**
- * Sticky mobile navigation: Home · Calendar · Journal · Codex · Characters.
- * On < lg it
- * replaces the top-header module tabs entirely, freeing the header for the
+ * Sticky mobile navigation: Calendar · Journal · Codex · Characters. On < lg
+ * it replaces the top-header module tabs entirely, freeing the header for the
  * crest, campaign switcher and profile chip. Hidden on lg+, where the header
  * shows the labelled segmented tabs instead.
  *
+ * Four items, not five: Home used to sit at the front, duplicating the crest
+ * in the header, which links to /app from every screen. Dropping it gives the
+ * four modules — the only things this bar is for — a wider tap target each.
+ *
  * Fixed to the bottom of the viewport. Pages that render this must add
  * matching bottom padding (`pb-[…]` on the page shell) so the bar never
- * covers content or the footer — see the layouts that use it. Home always
- * renders (it needs no campaign context); the module items only appear once
- * their hrefs are known.
+ * covers content or the footer — see the layouts that use it. Items only
+ * appear once their hrefs are known.
  *
  * Variant B ("indicator bar"): a flat bar; the active item turns wine with a
  * short gold marker above it. Inactive items are muted.
@@ -35,11 +36,7 @@ export function ModuleBottomNav({
   codexHref?: string;
   charactersHref?: string;
 }) {
-  const pathname = usePathname();
-  const onHome = pathname === "/app";
-
   const items: Array<{ key: string; label: string; href?: string; active: boolean; icon: React.ReactNode }> = [
-    { key: "home", label: "Home", href: "/app", active: onHome, icon: <Home size={20} /> },
     { key: "calendar", label: "Calendar", href: calendarHref, active: active === "calendar", icon: <CalendarDays size={20} /> },
     { key: "journal", label: "Journal", href: journalHref, active: active === "journal", icon: <ScrollText size={20} /> },
     { key: "codex", label: "Codex", href: codexHref, active: active === "codex", icon: <Library size={20} /> },
