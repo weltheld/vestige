@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CharacterSheetData, CharacterSheetRow, Database } from "@vestige/db";
+import { getCampaignPlayers, getMyCampaigns } from "@/lib/journal/data";
+import { getOrCreateFoundryConnection } from "./foundry-link";
 
 type SB = SupabaseClient<Database>;
 
@@ -68,7 +70,7 @@ export type LibraryEntry = {
  * Ordered by when it was last touched rather than by name: the library is
  * mostly visited straight after a push, to file what just arrived.
  */
-export async function getLibrary(supabase: SB, userId: string): Promise<LibraryEntry[]> {
+async function getLibrary(supabase: SB, userId: string): Promise<LibraryEntry[]> {
   const { data, error } = await supabase
     .from("character_sheets")
     .select("id, name, updated_at, campaign_id, player_id, data")
@@ -92,32 +94,6 @@ export async function getLibrary(supabase: SB, userId: string): Promise<LibraryE
   });
 }
 
-/**
- * Who plays which character, as sheet id -> player id.
- *
- * A separate query rather than a column on the roster select, and one that
- * treats failure as "nobody is allocated yet". Vestige migrations are applied
- * by hand, so there is always a window where the deployed code is ahead of
- * the database — and during it the Characters page should be missing a
- * byline, not missing the characters.
- */
-export async function getSheetAllocations(
-  supabase: SB,
-  campaignId: string,
-): Promise<Map<string, string>> {
-  const { data, error } = await supabase
-    .from("character_sheets")
-    .select("id, player_id")
-    .eq("campaign_id", campaignId);
-  if (error || !data) return new Map();
-
-  return new Map(
-    data
-      .filter((r): r is { id: string; player_id: string } => !!r.player_id)
-      .map((r) => [r.id, r.player_id]),
-  );
-}
-
 /** The sheet to show when none was asked for: the most recently updated one,
  *  which is almost always the one the viewer just imported. */
 export async function getDefaultCharacterSheet(
@@ -133,4 +109,33 @@ export async function getDefaultCharacterSheet(
     .maybeSingle();
 
   return (data as CharacterSheetRow | null) ?? null;
+}
+
+/**
+ * Everything the "Manage characters" panel needs, in one place.
+ *
+ * Shared by the standalone page and the intercepted overlay so the two can't
+ * drift — the overlay is the same feature, not a reduced version of it.
+ */
+export async function getLibraryPanelData(supabase: SB, userId: string) {
+  const [connection, entries, campaigns] = await Promise.all([
+    getOrCreateFoundryConnection(supabase, userId),
+    getLibrary(supabase, userId),
+    getMyCampaigns(supabase, userId),
+  ]);
+
+  // Who is at each table, so the player dropdown can be filled in without a
+  // round trip when a campaign is chosen. Every campaign the viewer belongs
+  // to, not just the ones already holding a sheet — the point of the panel is
+  // to file the ones that aren't.
+  const rosters = await Promise.all(
+    campaigns.map(async (c) => [c.id, await getCampaignPlayers(supabase, c.id)] as const),
+  );
+
+  return {
+    connection,
+    entries,
+    campaigns,
+    playersByCampaign: Object.fromEntries(rosters),
+  };
 }

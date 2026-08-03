@@ -1,23 +1,16 @@
 import { redirect } from "next/navigation";
 import { Users } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
-import {
-  getViewer,
-  getCampaignIfMember,
-  isCampaignOwner,
-  getCampaignPlayers,
-} from "@/lib/journal/data";
+import { getViewer, getCampaignIfMember, isCampaignOwner } from "@/lib/journal/data";
 import {
   getCharacterRoster,
   getCharacterSheet,
   getDefaultCharacterSheet,
-  getSheetAllocations,
 } from "@/lib/characters/data";
 import { appHref } from "@/lib/journal/links";
 import { CharacterSheetView } from "@/components/characters/CharacterSheetView";
 import { CharacterSwitcher } from "@/components/characters/CharacterSwitcher";
 import { DeleteSheetButton } from "@/components/characters/DeleteSheetButton";
-import { SheetPlayerSelect } from "@/components/characters/SheetPlayerSelect";
 import { CharactersMenu } from "@/components/characters/CharactersMenu";
 
 export default async function CharactersPage({
@@ -38,8 +31,6 @@ export default async function CharactersPage({
 
   const roster = await getCharacterRoster(supabase, campaignId);
   const owner = await isCampaignOwner(supabase, viewer.id, campaignId);
-  const players = await getCampaignPlayers(supabase, campaignId);
-  const allocations = await getSheetAllocations(supabase, campaignId);
   // A ?sheet that doesn't exist (deleted, or from another campaign) falls back
   // to the default rather than showing an error — the link is stale, not wrong.
   const current = sheetParam
@@ -49,19 +40,13 @@ export default async function CharactersPage({
 
   return (
     <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
-      {/* Importing, allocating and artwork are the DM's jobs — the roster
-          arrives from one Foundry world, and everyone else is here to read
-          their party's sheets rather than to manage them. All of it sits
-          behind one menu so the sheet leads the page. */}
+      {/* Importing and filing are the DM's jobs — the roster arrives from one
+          Foundry world, and everyone else is here to read their party's sheets
+          rather than to manage them. Both sit behind one menu so the sheet
+          leads the page. */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="font-display text-3xl text-ink">Characters</h1>
-        <CharactersMenu
-          campaignId={campaignId}
-          owner={owner}
-          roster={roster}
-          players={players}
-          allocations={Object.fromEntries(allocations)}
-        />
+        <CharactersMenu campaignId={campaignId} owner={owner} />
       </div>
 
       {!current ? (
@@ -73,13 +58,9 @@ export default async function CharactersPage({
             roster={roster}
             currentId={current.id}
           />
-          {/* A byline for everyone, including the DM — the editing happens in
-              the roster table above, so the two can't disagree. */}
-          <SheetPlayerSelect
-            players={players}
-            playerId={allocations.get(current.id) ?? null}
-          />
-
+          {/* No "played by" byline: everyone who can reach this page is either
+              the player themselves or the DM who did the filing, so it only
+              ever told someone something they already knew. */}
           <CharacterSheetView sheet={current.data} importedAt={current.updated_at} />
 
           {/* Deleting goes with importing: a player who removed a sheet could
