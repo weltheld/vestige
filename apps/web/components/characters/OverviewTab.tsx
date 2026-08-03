@@ -82,8 +82,11 @@ function Vitals({ sheet }: { sheet: CharacterSheetData }) {
 
   return (
     <div className="flex flex-wrap gap-2">
+      {/* No maximum means the export didn't carry one and it couldn't be
+          derived — "38/0" reads as a character at zero, so the current total
+          stands alone instead. */}
       <Box
-        value={`${hp.value}/${hp.max}`}
+        value={hp.max > 0 ? `${hp.value}/${hp.max}` : String(hp.value)}
         label="Hit points"
         note={hp.temp > 0 ? `+${hp.temp} temp` : undefined}
       />

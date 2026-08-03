@@ -243,11 +243,7 @@ export function parseFoundryActor(raw: unknown): ParseResult {
     stats: {
       abilities,
       ac: numOrNull(derived.ac) ?? parseArmourClass(system, items, abilities),
-      hp: {
-        value: num(at(system, "attributes.hp.value")),
-        max: num(at(system, "attributes.hp.max")),
-        temp: num(at(system, "attributes.hp.temp")),
-      },
+      hp: parseHitPoints(system, items, abilities, derived),
       speed: numOrNull(derived.speed) ?? parseSpeed(system, items),
       proficiencyBonus,
       savingThrows: parseSaves(system, abilities, proficiencyBonus, derived),
@@ -487,6 +483,68 @@ function parsePassivePerception(
 
   const total = numOrNull(prc.total) ?? numOrNull(prc.mod);
   return total === null ? undefined : 10 + total;
+}
+
+/**
+ * Hit points. `value` is exported; `max` is not — dnd5e derives it in
+ * prepareData from the class hit dice and Constitution, so an export carries
+ * `max: null` and the sheet was reading it as 0 ("38/0").
+ *
+ * The dice are reconstructed from each class's HitPoints advancement, which
+ * DOES survive the export: level 1 takes the die's maximum, later levels take
+ * the stored roll or the system's average (`floor(d/2) + 1`). Constitution is
+ * added per level, and multiclassing sums each class's own die.
+ *
+ * That covers a character whose hit points come from the rules. It cannot
+ * cover one whose maximum is raised by something applied at runtime — a feat,
+ * a racial bonus, a manual override — and there is a clean tell for that: you
+ * cannot have more current hit points than your maximum. When the arithmetic
+ * lands below `value` it is provably missing something, so no maximum is
+ * claimed at all and the sheet shows the current total alone. A real number
+ * from Foundry always wins over both.
+ */
+function parseHitPoints(
+  system: Record<string, unknown>,
+  items: Record<string, unknown>[],
+  abilities: CharacterSheetData["stats"]["abilities"],
+  derived: Record<string, unknown>,
+) {
+  const value = num(at(system, "attributes.hp.value"));
+  const temp = num(at(system, "attributes.hp.temp"));
+
+  const exported = numOrNull(derived.hpMax) ?? numOrNull(at(system, "attributes.hp.max"));
+  if (exported !== null) return { value, max: exported, temp };
+
+  const conMod = abilities.con?.modifier ?? 0;
+  let dice = 0;
+  let levels = 0;
+  for (const item of items) {
+    if (str(item.type).toLowerCase() !== "class") continue;
+    const s = obj(item.system);
+    const faces = num(str(obj(s.hd).denomination).replace(/^d/i, ""));
+    const classLevels = num(s.levels);
+    if (!faces || classLevels <= 0) continue;
+
+    // The per-level record lives on the class's HitPoints advancement.
+    let rolls: Record<string, unknown> = {};
+    for (const advancement of Object.values(obj(s.advancement))) {
+      const a = obj(advancement);
+      if (str(a.type) === "HitPoints") rolls = obj(a.value);
+    }
+
+    for (let level = 1; level <= classLevels; level++) {
+      const roll = rolls[String(level)];
+      if (roll === "max") dice += faces;
+      else if (numOrNull(roll) !== null) dice += num(roll);
+      // "avg", or a level the advancement never recorded.
+      else dice += Math.floor(faces / 2) + 1;
+      levels++;
+    }
+  }
+
+  if (levels === 0) return { value, max: 0, temp };
+  const max = dice + conMod * levels;
+  return { value, max: max >= value ? max : 0, temp };
 }
 
 function parseSpeed(

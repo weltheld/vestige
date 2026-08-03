@@ -568,6 +568,100 @@ assert.equal(
   assert.equal(real.sheet.stats.spellcasting.attackModifier, 6);
 }
 
+// Max hit points: dnd5e exports hp.max as null and derives it at runtime, so
+// it is rebuilt from the class hit dice, the advancement record and Con.
+{
+  // Bard 7 on a d8 with Con 11 (+0): 8 at level 1, then six average rolls of 5.
+  const bard = parseFoundryActor({
+    type: "character",
+    name: "Echo",
+    system: {
+      id: "dnd5e",
+      abilities: { con: { value: 11 }, cha: { value: 16 } },
+      attributes: { hp: { value: 38, max: null, temp: 0 } },
+    },
+    items: [
+      {
+        type: "class",
+        name: "Bard",
+        system: {
+          levels: 7,
+          hd: { denomination: "d8" },
+          advancement: {
+            a1: {
+              type: "HitPoints",
+              value: { 1: "max", 2: "avg", 3: "avg", 4: "avg", 5: "avg", 6: "avg", 7: "avg" },
+            },
+          },
+        },
+      },
+    ],
+  });
+  assert.equal(bard.sheet.stats.hp.max, 38);
+  assert.equal(bard.sheet.stats.hp.value, 38);
+
+  // A maximum below the current total is provably missing a runtime bonus, so
+  // none is claimed rather than showing one that can't be true.
+  const boosted = parseFoundryActor({
+    type: "character",
+    name: "Arroth",
+    system: {
+      id: "dnd5e",
+      abilities: { con: { value: 16 } },
+      attributes: { hp: { value: 74, max: null, temp: 0 } },
+    },
+    items: [
+      {
+        type: "class",
+        name: "Fighter",
+        system: { levels: 7, hd: { denomination: "d10" } },
+      },
+    ],
+  });
+  assert.equal(boosted.sheet.stats.hp.max, 0);
+  assert.equal(boosted.sheet.stats.hp.value, 74);
+
+  // Rolled levels are used verbatim where the advancement recorded them.
+  const rolled = parseFoundryActor({
+    type: "character",
+    name: "Rolled",
+    system: {
+      id: "dnd5e",
+      abilities: { con: { value: 14 } },
+      attributes: { hp: { value: 20, max: null } },
+    },
+    items: [
+      {
+        type: "class",
+        name: "Rogue",
+        system: {
+          levels: 3,
+          hd: { denomination: "d8" },
+          advancement: { a: { type: "HitPoints", value: { 1: "max", 2: 7, 3: 3 } } },
+        },
+      },
+    ],
+  });
+  // 8 + 7 + 3 dice, plus +2 Con across three levels.
+  assert.equal(rolled.sheet.stats.hp.max, 24);
+}
+
+// A max Foundry did export is taken as given, derivation skipped.
+{
+  const exported = parseFoundryActor({
+    type: "character",
+    name: "Exact",
+    flags: { vestige: { derived: { hpMax: 81 } } },
+    system: {
+      id: "dnd5e",
+      abilities: { con: { value: 16 } },
+      attributes: { hp: { value: 74 } },
+    },
+    items: [{ type: "class", name: "Fighter", system: { levels: 7, hd: { denomination: "d10" } } }],
+  });
+  assert.equal(exported.sheet.stats.hp.max, 81);
+}
+
 // Values Foundry did compute still win over the derived ones.
 {
   const exported = parseFoundryActor({
