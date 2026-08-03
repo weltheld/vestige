@@ -197,6 +197,16 @@ function SavingThrows({ saves }: { saves: CharacterSheetData["stats"]["savingThr
  * header row would land mid-list rather than at the top of anything — every
  * table but the first hides its header until the layout actually splits them
  * back into columns.
+ *
+ * table-fixed with an explicit colgroup, not the browser's own auto-sizing:
+ * with table-layout: auto, each <table> sizes its columns from ITS OWN
+ * content and header, independently of its sibling. Hiding the second
+ * table's header (immediately above) removed that table's only width hint
+ * for the checkbox and skill-name columns, so it recomputed a narrower name
+ * column than the first table — the checkbox indented, and names that fit
+ * fine up top started truncating below. Fixed widths on every table via the
+ * same colgroup make the two columns identical regardless of which table's
+ * header happens to be visible.
  */
 function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
   const rows = Object.entries(skills).sort((a, b) => a[0].localeCompare(b[0]));
@@ -209,10 +219,19 @@ function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
     <Panel title="Skills">
       <div className="grid gap-x-8 lg:grid-cols-2">
         {columns.map((column, index) => (
-          <table key={index} className="w-full border-collapse">
+          <table key={index} className="w-full table-fixed border-collapse">
+            <colgroup>
+              <col className="w-6" />
+              {/* No width set — table-fixed hands it whatever the other three
+                  columns don't need, which is the point: the name gets every
+                  spare pixel instead of a guessed fraction. */}
+              <col />
+              <col className="w-9 sm:w-24" />
+              <col className="w-10" />
+            </colgroup>
             <thead className={index === 0 ? undefined : "hidden lg:table-header-group"}>
               <tr className="border-b-[1.5px] border-ink">
-                <th scope="col" className="w-4 pb-0.5" />
+                <th scope="col" className="pb-0.5" />
                 <th
                   scope="col"
                   className="pb-0.5 text-left font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
@@ -249,18 +268,19 @@ function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
                       <ProficiencyDot level={level} title={proficiencyLabel(level)} />
                     </td>
                     <td
-                      className={`max-w-0 truncate py-[2px] pr-3 font-body text-[13px] sm:pr-2 ${
+                      className={`truncate py-[2px] pr-3 font-body text-[13px] sm:pr-2 ${
                         level === "none" ? "text-ink-soft" : "text-ink"
                       }`}
                     >
                       {name}
                     </td>
-                    {/* Abbreviated on mobile (a fixed-width three letters, so
-                        it never wraps), spelled out from sm up — there is
-                        room for it, and "Dexterity" reads faster than
-                        remembering what DEX stands for. Both copies render;
-                        the breakpoint just swaps which is visible, so no
-                        client JS is needed for something this static. */}
+                    {/* Abbreviated on mobile (fits the col's fixed 9-unit
+                        width without wrapping), spelled out from sm up, where
+                        the col widens to fit it — there is room for it, and
+                        "Dexterity" reads faster than remembering what DEX
+                        stands for. Both copies render; the breakpoint just
+                        swaps which is visible, so no client JS is needed for
+                        something this static. */}
                     <td className="py-[2px] pr-2 font-display text-[9px] uppercase tracking-[0.12em] text-muted">
                       <span className="sm:hidden">{skill.ability}</span>
                       <span className="hidden whitespace-nowrap normal-case tracking-normal sm:inline">
