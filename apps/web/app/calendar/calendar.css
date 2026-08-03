@@ -43,7 +43,8 @@
 :root[data-theme="nebula"] [class*="bg-scene-"],
 :root[data-theme="ember"] [class*="bg-scene-"],
 :root[data-theme="slate"] [class*="bg-scene-"],
-:root[data-theme="paperback"] [class*="bg-scene-"] {
+:root[data-theme="paperback"] [class*="bg-scene-"],
+:root[data-theme="retro"] [class*="bg-scene-"] {
   background-color: var(--parchment);
 }
 

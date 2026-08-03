@@ -88,24 +88,38 @@
    grey newsprint. The only light theme besides Parchment, and deliberately
    nothing like it.
 
-   Every ink here is set a few steps darker than its true fluoro version so it
-   can carry small text: pink at 4.9:1, teal at 5.2:1, muted at 4.9:1, and
-   white on a pink button at 4.9:1 — all clearing WCAG AA, where the same
-   roles in Parchment sit around 2.6:1. The undarkened teal survives as
-   --gold-soft for fills and rules, where contrast doesn't apply. */
+   Both inks appear twice, at two strengths, because the two jobs have
+   different limits. As TEXT (--gold, --wine, --muted, the vote tints) they are
+   set darker than true fluoro so they clear WCAG AA — pink 4.9:1, teal 5.2:1,
+   muted 4.5:1, white on a pink button 4.9:1, against roughly 2.6:1 for the
+   same roles in Parchment. As INK ON PAPER (--hairline, --cod-soft,
+   --gold-soft) they stay the real colour, since none of them carries text.
+   Getting that split wrong is what made the first cut of this theme look
+   almost grey: the accents were correctly dark, but the borders and panels —
+   which is where a two-ink print is actually seen — were left neutral. */
 :root[data-theme="paperback"] {
   color-scheme: light;
   --parchment: #f2efe4;
   --surface: #ffffff;
   --ink: #1b1b1b;
   --ink-soft: #4a4741;
-  --muted: #6b6857;
-  --hairline: #d5d1c2;
+  /* Teal-shifted greys, not neutral ones: under two-ink printing even the
+     quiet type carries a trace of the second plate. */
+  --muted: #5a7170;
+  /* The teal lives HERE. --hairline draws every border and divider in the app
+     (200-odd of them) and --cod-soft fills every soft panel, so this is where
+     an ink is actually seen — the accent tokens are read as text and have to
+     stay dark enough to clear contrast. Neither of these carries text, so both
+     can be the real colour. */
+  --hairline: #a9d3ce;
+  --cod-soft: #eaf4f2;
   --wine: #d81e5b;
   --gold: #006f70;
   --gold-soft: #00a8a8;
-  --cod-soft: #faf8f0;
-  --vote-yes: #0f7a6c;
+  /* Green, not the theme's teal. A yes vote reading in the same ink as the
+     accent made the Calendar's tallies ambiguous — "yes" has meant green
+     everywhere else in Vestige, and that beats palette purity. */
+  --vote-yes: #237a44;
   --vote-maybe: #8f6410;
   --vote-no: #c42350;
   --dm-gold: #006f70;
@@ -126,6 +140,60 @@
     rgba(27, 27, 27, 0.055) 1px,
     transparent 1.6px
   );
+  background-size: 4px 4px;
+}
+
+/* Retro — an 8-bit console RPG: deep indigo ground, cyan chrome, and a magenta
+   that only ever means "act now". The loudest theme by design, and the one
+   that needs most from outside the palette (see the two rules below).
+
+   Everything reads on the indigo at 5:1 or better, which a dark ground makes
+   easy; the tight one is white on the magenta button at 4.5:1, so --wine is
+   not pushed any brighter than this. */
+:root[data-theme="retro"] {
+  color-scheme: dark;
+  --parchment: #1a1c3a;
+  --surface: #262a58;
+  --ink: #f4f4f4;
+  --ink-soft: #b8bee8;
+  --muted: #959dd6;
+  --hairline: #46508f;
+  --wine: #d8385a;
+  --gold: #6ad0f0;
+  --gold-soft: #9ee6f7;
+  --cod-soft: #20244a;
+  --vote-yes: #58d68d;
+  --vote-maybe: #f7c744;
+  --vote-no: #f2647f;
+  --dm-gold: #6ad0f0;
+  /* Silkscreen for headings only. A bitmap face can't hold a session recap at
+     13px — the theme study called that out as this direction's one real cost —
+     so running text goes to a mono instead of the app's humanist sans, which
+     would have fought the pixel headings. */
+  --font-display: var(--font-pixel);
+  --font-body: var(--font-pixel-body);
+}
+
+/* Sprites have no rounded corners. Corner radius isn't a design token here —
+   it's Tailwind classes on 500-odd components — so a theme can't opt out of it
+   the honest way, and rounded cards under a pixel font read as neither one
+   thing nor the other. This is the one place a theme reaches past the palette
+   to override components, deliberately and in one line. Squared avatars are a
+   bonus: a pixel portrait is a square. */
+:root[data-theme="retro"] *,
+:root[data-theme="retro"] *::before,
+:root[data-theme="retro"] *::after {
+  border-radius: 0 !important;
+}
+
+/* A 2px dither over the ground, the checkerboard an 8-bit palette used to fake
+   a third shade. Two offset gradients rather than an image, so it costs
+   nothing and scales with zoom. */
+:root[data-theme="retro"] body {
+  background-image:
+    linear-gradient(45deg, rgba(106, 208, 240, 0.045) 25%, transparent 25% 75%, rgba(106, 208, 240, 0.045) 75%),
+    linear-gradient(45deg, rgba(106, 208, 240, 0.045) 25%, transparent 25% 75%, rgba(106, 208, 240, 0.045) 75%);
+  background-position: 0 0, 2px 2px;
   background-size: 4px 4px;
 }
 

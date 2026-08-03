@@ -21,6 +21,7 @@ export const THEME_OPTIONS: ThemeOption[] = [
   { value: "nebula", label: "Nebula", swatch: "#151B33", accent: "#56D6EA" },
   { value: "ember", label: "Ember", swatch: "#241A15", accent: "#E2603A" },
   { value: "slate", label: "Slate", swatch: "#1D2127", accent: "#C9B36E" },
+  { value: "retro", label: "Retro", swatch: "#1A1C3A", accent: "#6AD0F0" },
 ];
 
 const STORAGE_KEY = "vestige-theme";

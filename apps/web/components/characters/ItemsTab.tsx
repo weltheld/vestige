@@ -23,7 +23,12 @@ const GROUPS: Array<{ type: SheetItemType; label: string }> = [
  *
  * Mid-tones, not Foundry's own values: those are picked for a dark UI and go
  * illegible on parchment. These are chosen to hold up on both the light and
- * dark themes, since the sheet renders in all five.
+ * dark themes, since the sheet renders in all of them.
+ *
+ * The colour is the whole indicator in the list — the word used to be printed
+ * under each name as well, which gave every magic item a second line and made
+ * the list ragged next to the plain gear. It survives on the row's title
+ * attribute and in full in the detail panel.
  */
 const RARITY_COLOR: Record<string, string> = {
   common: "#3f8f5b",
@@ -67,6 +72,11 @@ export function ItemsTab({
                       type="button"
                       onClick={() => setOpenId(item.id)}
                       aria-expanded={openId === item.id}
+                      // The colour carries the rarity in the list; this keeps a
+                      // non-colour path to the same fact without spending a
+                      // line on it, for anyone who can't tell the tints apart.
+                      // The full word is in the detail panel either way.
+                      title={item.rarity ? `${item.name} — ${item.rarity}` : item.name}
                       className="flex w-full items-center gap-3 py-2 text-left transition hover:opacity-80"
                     >
                       <Thumb art={art} path={item.imgPath} />
@@ -93,14 +103,6 @@ export function ItemsTab({
                             </span>
                           )}
                         </span>
-                        {item.rarity && (
-                          <span
-                            className="font-body text-[11px] font-medium capitalize"
-                            style={{ color: RARITY_COLOR[item.rarity.toLowerCase()] ?? "var(--muted)" }}
-                          >
-                            {item.rarity}
-                          </span>
-                        )}
                       </span>
                       {item.weight > 0 && (
                         <span className="shrink-0 font-body text-[12px] tabular-nums text-muted">

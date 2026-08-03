@@ -6,10 +6,6 @@ import { getServerSupabase } from "@vestige/db/server";
 import type { NpcKindDb, NpcRoleDb } from "@vestige/db";
 import { journal } from "@/lib/journal/links";
 import { draftEntitySummary } from "@/lib/journal/codex-summary";
-import {
-  translateCampaignCodex,
-  type CodexTranslation,
-} from "@/lib/journal/codex-translate";
 import { lookupSrd, type SrdMatch } from "@/lib/journal/open5e";
 import { lookupCriticalRole, type WikiMatch } from "@/lib/journal/criticalrole";
 import { isCampaignOwner } from "@/lib/journal/data";
@@ -129,27 +125,6 @@ export async function summarizeNpc(
     return { ok: false, error: "Entry not found." };
   }
   return draftEntitySummary(supabase, npc, campaignId);
-}
-
-export type TranslateCodexResult =
-  | { ok: true; result: CodexTranslation }
-  | { ok: false; error: string };
-
-/** Rewrite every non-English codex summary in this campaign into English,
- *  in place. Entries that already read as English are skipped, so re-running
- *  it is cheap and safe. Owner-only: it spends the campaign's API key. */
-export async function translateCodex(
-  campaignId: string,
-): Promise<TranslateCodexResult> {
-  const { supabase, userId } = await uid();
-  if (!(await isCampaignOwner(supabase, userId, campaignId))) {
-    return { ok: false, error: "Only the campaign owner can translate the codex." };
-  }
-  const outcome = await translateCampaignCodex(supabase, campaignId);
-  if (outcome.ok && outcome.result.translated > 0) {
-    revalidatePath(journal.codex(campaignId));
-  }
-  return outcome;
 }
 
 export type EnrichResult =
