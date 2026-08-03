@@ -249,14 +249,23 @@ function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
                       <ProficiencyDot level={level} title={proficiencyLabel(level)} />
                     </td>
                     <td
-                      className={`max-w-0 truncate py-[2px] pr-2 font-body text-[13px] ${
+                      className={`max-w-0 truncate py-[2px] pr-3 font-body text-[13px] sm:pr-2 ${
                         level === "none" ? "text-ink-soft" : "text-ink"
                       }`}
                     >
                       {name}
                     </td>
+                    {/* Abbreviated on mobile (a fixed-width three letters, so
+                        it never wraps), spelled out from sm up — there is
+                        room for it, and "Dexterity" reads faster than
+                        remembering what DEX stands for. Both copies render;
+                        the breakpoint just swaps which is visible, so no
+                        client JS is needed for something this static. */}
                     <td className="py-[2px] pr-2 font-display text-[9px] uppercase tracking-[0.12em] text-muted">
-                      {skill.ability}
+                      <span className="sm:hidden">{skill.ability}</span>
+                      <span className="hidden whitespace-nowrap normal-case tracking-normal sm:inline">
+                        {ABILITY_LABEL[skill.ability]}
+                      </span>
                     </td>
                     <td className="py-[2px] text-right font-display text-[13px] tabular-nums text-ink">
                       {signed(skill.modifier)}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cinzel, Alegreya_Sans, Jost, Silkscreen, Space_Mono } from "next/font/google";
+import { Cinzel, Alegreya_Sans, Jost, Space_Mono, IBM_Plex_Sans } from "next/font/google";
 import "@vestige/ui/tokens.css";
 import "./globals.css";
 
@@ -36,24 +36,43 @@ const geometric = Jost({
 });
 
 /**
- * The two faces the Retro theme runs on — Silkscreen for headings, the open
- * bitmap face the 8-bit direction is built around, and Space Mono for running
- * text. A bitmap face can't carry a session recap at 13px, so it is kept to
- * display sizes and the body falls to a mono, which is the pairing the theme
- * study specified. Both are OFL-licensed and self-hosted at build time.
+ * The Retro theme's one face — Space Mono, for both headings and running
+ * text. It started as a pairing with Silkscreen, a true bitmap font, for
+ * headings only; the design draft this theme is built from never used a
+ * bitmap face at all — every card in it is set in one plain monospace, with
+ * the "pixel" read coming from the hard keylines, the offset box-shadows and
+ * a hard-edged coloured text-shadow under headings (see .journal-scope's
+ * h1 rule in tokens.css) instead of from the glyphs themselves. Matching that
+ * is more legible at every size, including the running text a bitmap face
+ * was kept away from in the first place, so the second face was dropped
+ * rather than kept as a heading-only exception. OFL-licensed and self-hosted
+ * at build time.
  */
-const pixel = Silkscreen({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-pixel",
-  display: "swap",
-});
-
 const pixelBody = Space_Mono({
   subsets: ["latin"],
   weight: ["400", "700"],
   style: ["normal", "italic"],
   variable: "--font-pixel-body",
+  display: "swap",
+});
+
+/**
+ * Retro's second face, for Journal and Codex content specifically — a
+ * session recap or a codex entry read at length is a different job from a
+ * heading, and stays in mono for both roles the way this theme's own body
+ * text does. IBM Plex Sans carries no retro trace of its own (that would
+ * fight the mono headings) but its squared-off, slightly technical
+ * letterforms come from IBM's own hardware-manual heritage, so it doesn't
+ * read as a theme-less fallback either. See tokens.css for where the scoping
+ * actually happens — .journal-scope resets both --font-display and
+ * --font-body to this inside Journal/Codex, and .module-title claws the two
+ * page-root headings ("Journal", "Codex") back to the theme's own mono.
+ */
+const retroContent = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-retro-content",
   display: "swap",
 });
 
@@ -84,7 +103,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${display.variable} ${body.variable} ${geometric.variable} ${pixel.variable} ${pixelBody.variable}`}
+      className={`${display.variable} ${body.variable} ${geometric.variable} ${pixelBody.variable} ${retroContent.variable}`}
     >
       <body className="min-h-screen bg-parchment text-ink antialiased">
         {/* Apply the user's saved theme before paint to avoid a flash — or

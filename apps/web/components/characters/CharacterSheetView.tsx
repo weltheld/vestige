@@ -106,7 +106,6 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
     { label: "Subclass", value: subclasses.join(" · ") },
     { label: "Race", value: identity.race },
     { label: "Background", value: identity.background },
-    { label: "Alignment", value: identity.alignment },
   ].filter((f) => !!f.value?.trim());
 
   return (

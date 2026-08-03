@@ -55,7 +55,9 @@ export default async function CampaignLayout({
         // be intercepted as the blurred-overlay modal.
         settingsHref={journal.settings(campaignId)}
       />
-      <div className="flex-1">{children}</div>
+      {/* Scoped for the Retro theme only — see tokens.css. Every other theme
+          ignores the class entirely. */}
+      <div className="journal-scope flex-1">{children}</div>
       <PlatformFooter />
       {modal}
     </div>

@@ -40,7 +40,7 @@ export default async function CodexPage({
     <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl text-ink">Codex</h1>
+          <h1 className="module-title font-display text-3xl text-ink">Codex</h1>
           <p className="mt-1 font-body text-[13px] text-ink-soft">
             The people, places, events, creatures, and items of your campaign.
           </p>

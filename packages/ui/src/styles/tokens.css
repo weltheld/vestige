@@ -178,7 +178,7 @@
 
 /* Retro — an 8-bit console RPG: deep indigo ground, cyan chrome, and a magenta
    that only ever means "act now". The loudest theme by design, and the one
-   that needs most from outside the palette (see the two rules below).
+   that needs most from outside the palette (see the four rules below).
 
    Everything reads on the indigo at 5:1 or better, which a dark ground makes
    easy; the tight one is white on the magenta button at 4.5:1, so --wine is
@@ -199,11 +199,11 @@
   --vote-maybe: #f7c744;
   --vote-no: #f2647f;
   --dm-gold: #6ad0f0;
-  /* Silkscreen for headings only. A bitmap face can't hold a session recap at
-     13px — the theme study called that out as this direction's one real cost —
-     so running text goes to a mono instead of the app's humanist sans, which
-     would have fought the pixel headings. */
-  --font-display: var(--font-pixel);
+  /* One mono face for both roles — matching the design draft, which never
+     used a bitmap font at all: every card in it is set in plain monospace,
+     and the "pixel" read comes from the keylines, the offset shadows below
+     and the hard headline shadow further down, not from the letterforms. */
+  --font-display: var(--font-pixel-body);
   --font-body: var(--font-pixel-body);
 }
 
@@ -228,6 +228,41 @@
     linear-gradient(45deg, rgba(106, 208, 240, 0.045) 25%, transparent 25% 75%, rgba(106, 208, 240, 0.045) 75%);
   background-position: 0 0, 2px 2px;
   background-size: 4px 4px;
+}
+
+/* The theme's own mono carries the header, navigation and every OTHER
+   module's own heading fine — but a page you actually read, a session recap
+   or a codex entry, is a different job, and mono at running-text weight and
+   size is heavier and harder to hold a line on than at display size (the
+   theme study named that as this direction's real cost even back when the
+   heading face was a true bitmap font). `.journal-scope` (added around the
+   Journal/Codex route tree, the one place long-form prose lives) resets both
+   font roles for everything inside it to a plain sans; `.module-title` claws
+   the two page roots ("Journal", "Codex" — the module chrome, not its
+   content) back to the mono, matching every other module's own title. */
+:root[data-theme="retro"] .journal-scope {
+  --font-display: var(--font-retro-content);
+  --font-body: var(--font-retro-content);
+}
+:root[data-theme="retro"] .journal-scope .module-title {
+  font-family: var(--font-pixel-body), var(--font-display), monospace;
+}
+
+/* The design draft's whole "pixel" read on a headline was never a bitmap
+   font — it was a hard, unblurred offset in the theme's magenta, the
+   two-colour-print trick of a second plate printed slightly proud of the
+   first. `text-shadow: 2px 2px 0 <ink>` on every `.w-ttl` in that draft,
+   translated directly rather than approximated: 2px, one solid colour, no
+   blur radius (a blurred shadow reads as a glow, not a second plate).
+
+   Scoped to h1 specifically, checked against every h1 in the app: every one
+   of them is already a real headline (18px and up — page titles, the hero,
+   session and codex-entry names), so nothing needed excluding by size. The
+   one exclusion that IS needed is the Calendar banner title, which already
+   carries its own soft shadow for legibility over a photo; a second, hard
+   shadow fighting it there would just look broken. */
+:root[data-theme="retro"] h1:not([class*="text-shadow"]) {
+  text-shadow: 2px 2px 0 var(--wine);
 }
 
 :root[data-theme="slate"] {
