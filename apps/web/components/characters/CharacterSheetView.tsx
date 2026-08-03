@@ -121,31 +121,30 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
         )}
       </span>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-end gap-2">
+      <dl className="flex min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5">
+        {/* Same size as Class & level, Race, etc. below — it used to be set
+            at 28px, nearly double the fields it introduces, which made the
+            whole header read as two unrelated tiers rather than one row of
+            facts about one character. */}
         <div className="min-w-0">
-          <h1 className="truncate font-display text-[28px] leading-none text-ink">
+          <dd className="truncate font-display text-[14px] leading-tight text-ink">
             {identity.name}
-          </h1>
-          <p className="mt-1 font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+          </dd>
+          <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
             Character name
-          </p>
+          </dt>
         </div>
-
-        {fields.length > 0 && (
-          <dl className="flex flex-wrap gap-x-6 gap-y-1.5">
-            {fields.map((field) => (
-              <div key={field.label} className="min-w-0">
-                <dd className="truncate font-body text-[14px] leading-tight text-ink">
-                  {field.value}
-                </dd>
-                <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
-                  {field.label}
-                </dt>
-              </div>
-            ))}
-          </dl>
-        )}
-      </div>
+        {fields.map((field) => (
+          <div key={field.label} className="min-w-0">
+            <dd className="truncate font-body text-[14px] leading-tight text-ink">
+              {field.value}
+            </dd>
+            <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+              {field.label}
+            </dt>
+          </div>
+        ))}
+      </dl>
     </header>
   );
 }

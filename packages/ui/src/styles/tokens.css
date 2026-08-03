@@ -137,16 +137,20 @@
    tokens the same way Retro does for corner radius. Each selector is
    deliberately narrow — the reasoning is with each rule. */
 
-/* 1. The stock. A 4px halftone dot screen over the page ground — the grid
-      the whole look sits on. Same weight as the design draft; the first cut
-      was set fainter and read as nothing at all. */
+/* 1. The stock. A halftone dot screen over the page ground — the texture the
+      whole look sits on. This matched the design draft's own CSS numbers
+      verbatim (4px tile, 7.5% opacity) and, exactly like Retro's background
+      grid, that turned out to be true to the draft's INTENT but invisible on
+      an actual screen: at 4px a dot this faint blends into a flat tint
+      rather than reading as dots. Bigger tile, bigger dot, real contrast —
+      checked live rather than trusted from the numbers this time. */
 :root[data-theme="paperback"] body {
   background-image: radial-gradient(
     circle at 1px 1px,
-    rgba(27, 27, 27, 0.075) 1px,
-    transparent 1.6px
+    rgba(27, 27, 27, 0.16) 1.4px,
+    transparent 2px
   );
-  background-size: 4px 4px;
+  background-size: 7px 7px;
 }
 
 /* 2. Stamped section headers printed in the bright teal rather than near-black
