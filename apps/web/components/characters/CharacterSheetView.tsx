@@ -163,7 +163,14 @@ function SheetHeader({
           />
         )}
       </div>
-      <div className="-mt-12 flex items-end gap-4 border-b-2 border-ink px-1 pb-3">
+      {/* `relative` here isn't decorative — the band above is `position:
+          relative` too (it has to be, to contain its own absolutely-
+          positioned image/overlay), and CSS paints ANY positioned element
+          above a plain static sibling regardless of DOM order. Without this,
+          the band painted over the portrait wherever the negative margin
+          made them overlap, even though the portrait comes later in the
+          markup. */}
+      <div className="relative -mt-12 flex items-end gap-4 border-b-2 border-ink px-1 pb-3">
         {/* Overlaps the band by half its own height — center of the circle
             sits right where the gradient is fading through, so it visibly
             emerges from the colour rather than sitting beside it. */}
