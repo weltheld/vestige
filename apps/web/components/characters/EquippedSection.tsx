@@ -1,40 +1,86 @@
-import type { CharacterSheetData } from "@vestige/db";
+"use client";
+
+import { useState } from "react";
+import type { CharacterSheetData, SheetItem, SheetSpell } from "@vestige/db";
 import { Panel } from "./SheetPanel";
 import { Thumb } from "./Thumb";
+import { DetailPanel, PanelDescription, PanelField } from "./DetailPanel";
+import { RARITY_COLOR } from "./ItemsTab";
+import { ProficiencyDot } from "./ProficiencyDot";
+
+type Open = { kind: "item"; item: SheetItem } | { kind: "spell"; spell: SheetSpell } | null;
 
 /**
- * What the character currently has equipped, and — only for a class that
- * casts — how many spell slots remain of each level.
+ * What the character currently has equipped and prepared: gear in hand right
+ * now, spells ready to cast, and — only for a class that casts — how many
+ * slots are left of each level.
  *
- * Sits below the identity fields and above the tabs: these are the two
- * facts about a character that change from moment to moment during a
- * session, which is a different kind of thing from the fixed stats the
- * Overview tab holds. A non-caster gets no slot half at all rather than an
- * empty one — the same rule the rest of the sheet uses everywhere.
+ * Sits below the identity fields and above the tabs: these are the facts
+ * about a character that change moment to moment during a session, a
+ * different kind of thing from the fixed stats the Overview tab holds. Both
+ * lists open the same detail panel the Items and Spells tabs use, so
+ * clicking something here behaves exactly like clicking it there — one
+ * interaction learned once, not a second version of it.
  */
 export function EquippedSection({ sheet }: { sheet: CharacterSheetData }) {
+  const [open, setOpen] = useState<Open>(null);
+
   const equipped = sheet.items.filter((i) => i.equipped);
+  const prepared = sheet.spells.filter((s) => s.prepared);
   const slots = sheet.stats.spellSlots;
   const hasSlots = !!slots && (slots.levels.length > 0 || !!slots.pact);
+  const hasPrepared = prepared.length > 0 || hasSlots;
 
-  if (equipped.length === 0 && !hasSlots) return null;
+  if (equipped.length === 0 && !hasPrepared) return null;
 
   return (
-    <Panel title={hasSlots ? "Equipped & prepared" : "Equipped"}>
-      <div className={hasSlots ? "grid gap-x-8 gap-y-3 lg:grid-cols-2" : undefined}>
-        <EquippedList items={equipped} art={sheet.art} />
-        {hasSlots && <SpellSlots slots={slots!} />}
-      </div>
-    </Panel>
+    <>
+      <Panel title={hasPrepared ? "Equipped & prepared" : "Equipped"}>
+        <div className={hasPrepared ? "grid gap-x-8 gap-y-3 lg:grid-cols-2" : undefined}>
+          <EquippedList
+            items={equipped}
+            art={sheet.art}
+            onSelect={(item) => setOpen({ kind: "item", item })}
+          />
+          {hasPrepared && (
+            <PreparedColumn
+              spells={prepared}
+              slots={slots}
+              art={sheet.art}
+              onSelect={(spell) => setOpen({ kind: "spell", spell })}
+            />
+          )}
+        </div>
+      </Panel>
+
+      <DetailPanel
+        open={!!open}
+        title={open ? (open.kind === "item" ? open.item.name : open.spell.name) : ""}
+        subtitle={open ? subtitleFor(open) : undefined}
+        onClose={() => setOpen(null)}
+      >
+        {open?.kind === "item" && <ItemDetail item={open.item} art={sheet.art} />}
+        {open?.kind === "spell" && <SpellDetail spell={open.spell} art={sheet.art} />}
+      </DetailPanel>
+    </>
   );
+}
+
+function subtitleFor(open: NonNullable<Open>): string {
+  if (open.kind === "item") return open.item.type;
+  return `${LEVEL_LABEL[open.spell.level] ?? `Level ${open.spell.level}`}${
+    open.spell.school ? ` · ${open.spell.school}` : ""
+  }`;
 }
 
 function EquippedList({
   items,
   art,
+  onSelect,
 }: {
-  items: CharacterSheetData["items"];
+  items: SheetItem[];
   art: CharacterSheetData["art"];
+  onSelect: (item: SheetItem) => void;
 }) {
   if (items.length === 0) {
     return <p className="font-body text-[13px] italic text-muted">Nothing equipped.</p>;
@@ -43,19 +89,67 @@ function EquippedList({
   return (
     <div className="flex flex-wrap gap-1.5">
       {items.map((item) => (
-        <span
+        <button
           key={item.id}
-          className="inline-flex items-center gap-1.5 border border-hairline bg-surface py-1 pl-1 pr-2"
+          type="button"
+          onClick={() => onSelect(item)}
+          className="inline-flex items-center gap-1.5 border border-hairline bg-surface py-1 pl-1 pr-2 text-left transition hover:border-gold"
         >
           <Thumb art={art} path={item.imgPath} size={18} />
-          <span className="font-body text-[13px] text-ink">{item.name}</span>
+          <span
+            className="font-body text-[13px] text-ink"
+            style={
+              item.rarity && RARITY_COLOR[item.rarity.toLowerCase()]
+                ? { color: RARITY_COLOR[item.rarity.toLowerCase()] }
+                : undefined
+            }
+          >
+            {item.name}
+          </span>
           {item.damage && (
             <span className="font-display text-[10px] uppercase tracking-[0.08em] text-muted">
               {item.damage.formula}
             </span>
           )}
-        </span>
+        </button>
       ))}
+    </div>
+  );
+}
+
+/** Prepared spells as the same kind of chip as equipped gear, then the slot
+ *  pip rows underneath — what's ready to cast, and what's left to cast it
+ *  with, read together as one column. */
+function PreparedColumn({
+  spells,
+  slots,
+  art,
+  onSelect,
+}: {
+  spells: SheetSpell[];
+  slots: CharacterSheetData["stats"]["spellSlots"];
+  art: CharacterSheetData["art"];
+  onSelect: (spell: SheetSpell) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      {spells.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {spells.map((spell) => (
+            <button
+              key={spell.id}
+              type="button"
+              onClick={() => onSelect(spell)}
+              className="inline-flex items-center gap-1.5 border border-hairline bg-surface py-1 pl-1 pr-2 text-left transition hover:border-gold"
+            >
+              <ProficiencyDot level="proficient" title={spell.preparationMode} />
+              <Thumb art={art} path={spell.imgPath} size={18} />
+              <span className="font-body text-[13px] text-ink">{spell.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {slots && (slots.levels.length > 0 || slots.pact) && <SpellSlots slots={slots} />}
     </div>
   );
 }
@@ -67,12 +161,7 @@ function SpellSlots({ slots }: { slots: NonNullable<CharacterSheetData["stats"][
   return (
     <ul className="flex flex-col gap-1.5">
       {slots.levels.map((slot) => (
-        <SlotRow
-          key={slot.level}
-          label={ordinal(slot.level)}
-          value={slot.value}
-          max={slot.max}
-        />
+        <SlotRow key={slot.level} label={ordinal(slot.level)} value={slot.value} max={slot.max} />
       ))}
       {slots.pact && (
         <SlotRow
@@ -131,4 +220,86 @@ function ordinal(n: number): string {
   const suffixes = ["th", "st", "nd", "rd"];
   const v = n % 100;
   return `${n}${suffixes[(v - 20) % 10] ?? suffixes[v] ?? suffixes[0]}`;
+}
+
+const LEVEL_LABEL = [
+  "Cantrip",
+  "1st level",
+  "2nd level",
+  "3rd level",
+  "4th level",
+  "5th level",
+  "6th level",
+  "7th level",
+  "8th level",
+  "9th level",
+];
+
+/** Same fields the Items tab shows for this item's detail — one definition
+ *  of "what a weapon detail looks like" rather than a second one here. */
+function ItemDetail({
+  item,
+  art,
+}: {
+  item: SheetItem;
+  art: CharacterSheetData["art"];
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <Thumb art={art} path={item.imgPath} size={64} className="rounded-lg" />
+      <div>
+        {item.damage && (
+          <PanelField
+            label="Damage"
+            value={`${item.damage.formula}${item.damage.type ? ` ${item.damage.type}` : ""}`}
+          />
+        )}
+        {item.properties && item.properties.length > 0 && (
+          <PanelField label="Properties" value={item.properties.join(", ")} />
+        )}
+        <PanelField label="Quantity" value={String(item.quantity)} />
+        {item.weight > 0 && (
+          <PanelField label="Weight" value={`${Math.round(item.weight * 100) / 100} lb each`} />
+        )}
+        {item.rarity && (
+          <PanelField
+            label="Rarity"
+            value={
+              <span
+                className="font-medium capitalize"
+                style={{ color: RARITY_COLOR[item.rarity.toLowerCase()] ?? "var(--ink)" }}
+              >
+                {item.rarity}
+              </span>
+            }
+          />
+        )}
+        <PanelField label="Equipped" value={item.equipped ? "Yes" : "No"} />
+      </div>
+      <PanelDescription text={item.description} />
+    </div>
+  );
+}
+
+/** Same fields the Spells tab shows for this spell's detail. */
+function SpellDetail({
+  spell,
+  art,
+}: {
+  spell: SheetSpell;
+  art: CharacterSheetData["art"];
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <Thumb art={art} path={spell.imgPath} size={64} className="rounded-lg" />
+      <div>
+        <PanelField label="Casting time" value={spell.castingTime} />
+        <PanelField label="Range" value={spell.range} />
+        <PanelField label="Components" value={spell.components} />
+        <PanelField label="Duration" value={spell.duration} />
+        <PanelField label="Preparation" value={spell.preparationMode} />
+      </div>
+      <PanelDescription text={spell.description} />
+    </div>
+  );
 }

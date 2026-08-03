@@ -30,7 +30,7 @@ const GROUPS: Array<{ type: SheetItemType; label: string }> = [
  * the list ragged next to the plain gear. It survives on the row's title
  * attribute and in full in the detail panel.
  */
-const RARITY_COLOR: Record<string, string> = {
+export const RARITY_COLOR: Record<string, string> = {
   common: "#3f8f5b",
   // Not mentioned in the brief, so it shares the green — in 5e this is the
   // rarity that green normally means, and splitting them would need a second
