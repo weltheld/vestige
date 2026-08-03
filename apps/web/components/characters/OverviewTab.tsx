@@ -189,9 +189,14 @@ function SavingThrows({ saves }: { saves: CharacterSheetData["stats"]["savingThr
  * alphabet is the only order that stays put as a character levels.
  *
  * Split into two tables side by side on a wide screen rather than run as one
- * column of eighteen — same rows, half the height. Each keeps its own header,
- * because a column of numbers you have to scroll away from to identify is a
- * column of numbers you can't read.
+ * column of eighteen — same rows, half the height. Each keeps its own header
+ * at that width, because a column of numbers you have to scroll away from to
+ * identify is a column of numbers you can't read.
+ *
+ * Below lg the two columns stack into one, so a second copy of the same
+ * header row would land mid-list rather than at the top of anything — every
+ * table but the first hides its header until the layout actually splits them
+ * back into columns.
  */
 function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
   const rows = Object.entries(skills).sort((a, b) => a[0].localeCompare(b[0]));
@@ -205,7 +210,7 @@ function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
       <div className="grid gap-x-8 lg:grid-cols-2">
         {columns.map((column, index) => (
           <table key={index} className="w-full border-collapse">
-            <thead>
+            <thead className={index === 0 ? undefined : "hidden lg:table-header-group"}>
               <tr className="border-b-[1.5px] border-ink">
                 <th scope="col" className="w-4 pb-0.5" />
                 <th
