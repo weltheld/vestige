@@ -76,6 +76,7 @@ export async function POST(req: Request) {
 
   const art: Record<string, string> = {};
   const rejected: string[] = [];
+  const failed: Record<string, string> = {};
 
   for (const [field, value] of form.entries()) {
     if (field === "sheetId" || typeof value === "string") continue;
@@ -94,14 +95,20 @@ export async function POST(req: Request) {
       contentType: file.type || undefined,
       cacheControl: "31536000",
     });
+    // One image failing to store (a bucket problem, a transient error)
+    // used to abort the whole request, silently losing every other image
+    // already fetched in the same batch — including a portrait that would
+    // otherwise have gone through fine. Recorded and skipped instead, so a
+    // single bad file never costs its neighbours.
     if (error) {
-      return json({ error: `Upload failed for ${field}: ${error.message}` }, 502);
+      failed[field] = error.message;
+      continue;
     }
     art[field] = admin.storage.from(BUCKET).getPublicUrl(key).data.publicUrl;
   }
 
   if (Object.keys(art).length === 0) {
-    return json({ ok: true, added: 0, total: 0, rejected });
+    return json({ ok: true, added: 0, total: 0, rejected, failed });
   }
 
   // Merge, never replace — the module uploads in batches, and each batch has
@@ -121,6 +128,7 @@ export async function POST(req: Request) {
     added: Object.keys(art).length,
     total: Object.keys(merged).length,
     rejected,
+    failed,
   });
 }
 
