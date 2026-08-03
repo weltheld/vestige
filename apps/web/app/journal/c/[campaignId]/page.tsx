@@ -36,9 +36,6 @@ export default async function SessionListPage({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="module-title font-display text-3xl text-ink">Journal</h1>
-          <p className="mt-1 font-body text-[13px] text-ink-soft">
-            The written chronicle of your campaign, one entry per session.
-          </p>
         </div>
         <Link
           href={journal.newSession(campaignId)}
