@@ -696,4 +696,67 @@ assert.equal(junkItems.ok, true);
 assert.equal(junkItems.sheet.items.length, 1);
 assert.equal(junkItems.sheet.items[0].name, "Axe");
 
+// Race, background, class and subclass items each carry their own icon
+// (dnd5e ships one per compendium entry), and each is kept as its own path —
+// not merged into one field — since a multiclass character has more than one
+// class icon and there's no single field to fold them into.
+{
+  const iconed = parseFoundryActor({
+    type: "character",
+    name: "Echo",
+    system: { id: "dnd5e", abilities: {} },
+    items: [
+      { type: "race", name: "Centaur", img: "modules/phb/icons/species/centaur.webp" },
+      { type: "background", name: "Sage", img: "modules/phb/icons/backgrounds/sage.webp" },
+      {
+        type: "class",
+        name: "Bard",
+        img: "modules/phb/icons/classes/bard.webp",
+        system: { levels: 7, identifier: "bard" },
+      },
+      {
+        type: "subclass",
+        name: "College of Lore",
+        img: "modules/phb/icons/classes/lore.webp",
+        system: { classIdentifier: "bard" },
+      },
+    ],
+  });
+  assert.equal(iconed.ok, true);
+  assert.equal(iconed.sheet.identity.raceIconPath, "modules/phb/icons/species/centaur.webp");
+  assert.equal(
+    iconed.sheet.identity.backgroundIconPath,
+    "modules/phb/icons/backgrounds/sage.webp",
+  );
+  assert.equal(iconed.sheet.identity.classes.length, 1);
+  assert.equal(iconed.sheet.identity.classes[0].iconPath, "modules/phb/icons/classes/bard.webp");
+  assert.equal(
+    iconed.sheet.identity.classes[0].subclassIconPath,
+    "modules/phb/icons/classes/lore.webp",
+  );
+
+  // The legacy string-based race/background (no item, just details.race) has
+  // no icon to carry — the field stays undefined, not a broken empty string.
+  const legacyNoIcon = parseFoundryActor({
+    type: "character",
+    name: "Old",
+    system: { id: "dnd5e", abilities: {}, details: { race: "Dwarf", background: "Soldier" } },
+    items: [],
+  });
+  assert.equal(legacyNoIcon.sheet.identity.race, "Dwarf");
+  assert.equal(legacyNoIcon.sheet.identity.raceIconPath, undefined);
+  assert.equal(legacyNoIcon.sheet.identity.backgroundIconPath, undefined);
+
+  // An http(s)-hosted icon (never happens in practice, but imagePath()
+  // deliberately drops those — they're not a Foundry-relative path the
+  // artwork step could resolve) is dropped, not kept as a broken reference.
+  const httpIcon = parseFoundryActor({
+    type: "character",
+    name: "Hosted",
+    system: { id: "dnd5e", abilities: {} },
+    items: [{ type: "race", name: "Elf", img: "https://example.com/elf.webp" }],
+  });
+  assert.equal(httpIcon.sheet.identity.raceIconPath, undefined);
+}
+
 console.log("foundry parser: all assertions passed");

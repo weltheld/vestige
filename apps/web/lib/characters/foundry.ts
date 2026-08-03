@@ -230,12 +230,17 @@ export function parseFoundryActor(raw: unknown): ParseResult {
         ? Math.floor((totalLevel - 1) / 4) + 2
         : 0);
 
+  const race = parseRace(system, items);
+  const background = parseBackground(system, items);
+
   const sheet: CharacterSheetData = {
     identity: {
       name: str(actor.name, "Unnamed character"),
-      race: parseRace(system, items),
+      race: race.name,
+      raceIconPath: race.iconPath,
       classes,
-      background: parseBackground(system, items),
+      background: background.name,
+      backgroundIconPath: background.iconPath,
       alignment: str(at(system, "details.alignment")),
       portraitUrl: parsePortrait(actor),
       portraitPath: imagePath(actor),
@@ -629,26 +634,29 @@ function parseSpellcasting(
 function parseRace(
   system: Record<string, unknown>,
   items: Record<string, unknown>[],
-): string {
+): { name: string; iconPath?: string } {
   // dnd5e 3.x moved race from a details string to a `race` item.
   const raceItem = items.find((i) => str(i.type) === "race");
-  if (raceItem) return str(raceItem.name);
+  if (raceItem) return { name: str(raceItem.name), iconPath: imagePath(raceItem) };
   const details = at(system, "details.race");
-  return typeof details === "string" ? details : str(obj(details).name);
+  const name = typeof details === "string" ? details : str(obj(details).name);
+  return { name };
 }
 
 function parseBackground(
   system: Record<string, unknown>,
   items: Record<string, unknown>[],
-): string {
+): { name: string; iconPath?: string } {
   const bgItem = items.find((i) => str(i.type) === "background");
-  if (bgItem) return str(bgItem.name);
+  if (bgItem) return { name: str(bgItem.name), iconPath: imagePath(bgItem) };
   const details = at(system, "details.background");
-  return typeof details === "string" ? details : str(obj(details).name);
+  const name = typeof details === "string" ? details : str(obj(details).name);
+  return { name };
 }
 
 /** Classes, with subclass. Multiclass characters keep every class — the header
- *  renders "Fighter 5 / Wizard 2". */
+ *  renders "Fighter 5 / Wizard 2". Icons come along with each: a class badge
+ *  next to "Bard 7", a subclass badge next to "College of Lore". */
 function parseClasses(items: Record<string, unknown>[]) {
   const subclasses = items.filter((i) => str(i.type) === "subclass");
   return items
@@ -662,7 +670,9 @@ function parseClasses(items: Record<string, unknown>[]) {
       return {
         name: str(i.name, "Class"),
         level: num(s.levels, num(s.level)),
+        iconPath: imagePath(i),
         subclass: sub ? str(sub.name) : str(obj(s.subclass).name) || undefined,
+        subclassIconPath: sub ? imagePath(sub) : undefined,
       };
     })
     .sort((a, b) => b.level - a.level);

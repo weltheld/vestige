@@ -5,19 +5,40 @@ import { collectImagePaths, normalisePath, matchFiles, isImage } from "./art.ts"
 
 const f = (relativePath) => ({ name: relativePath.split("/").pop(), relativePath });
 
-// Collected once each, from every part of the sheet.
+// Collected once each, from every part of the sheet — including the
+// race/background/class/subclass icons, one per class for a multiclass
+// character, none of them merged into the class icon's own slot.
 {
   const paths = collectImagePaths({
-    identity: { portraitPath: "worlds/w/eldrin.webp" },
+    identity: {
+      portraitPath: "worlds/w/eldrin.webp",
+      raceIconPath: "icons/race.webp",
+      backgroundIconPath: "icons/background.webp",
+      classes: [
+        { iconPath: "icons/fighter.webp", subclassIconPath: "icons/champion.webp" },
+        { iconPath: "icons/wizard.webp" },
+      ],
+    },
     items: [{ imgPath: "icons/sword.webp" }, { imgPath: "icons/sword.webp" }],
     features: [{ imgPath: "icons/feat.webp" }, {}],
     spells: [{ imgPath: "icons/spell.webp" }],
   });
   assert.deepEqual(paths.sort(), [
-    "icons/feat.webp", "icons/spell.webp", "icons/sword.webp", "worlds/w/eldrin.webp",
+    "icons/background.webp",
+    "icons/champion.webp",
+    "icons/feat.webp",
+    "icons/fighter.webp",
+    "icons/race.webp",
+    "icons/spell.webp",
+    "icons/sword.webp",
+    "icons/wizard.webp",
+    "worlds/w/eldrin.webp",
   ]);
 }
 assert.deepEqual(collectImagePaths({}), []);
+// An identity with no icons at all (legacy string-based race/background)
+// contributes nothing — not a list of undefineds.
+assert.deepEqual(collectImagePaths({ identity: { classes: [{}] } }), []);
 
 // Normalisation: backslashes, leading slash, case, URL escapes.
 // Windows separators. Built from a char code so the backslashes can't be

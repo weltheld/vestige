@@ -239,8 +239,20 @@ export type CharacterSheetData = {
   identity: {
     name: string;
     race: string;
-    classes: { name: string; level: number; subclass?: string }[];
+    /** Foundry's icon for the race item, for the artwork step. */
+    raceIconPath?: string;
+    classes: {
+      name: string;
+      level: number;
+      /** Foundry's icon for the class item. */
+      iconPath?: string;
+      subclass?: string;
+      /** Foundry's icon for the subclass item. */
+      subclassIconPath?: string;
+    }[];
     background: string;
+    /** Foundry's icon for the background item. */
+    backgroundIconPath?: string;
     alignment: string;
     /** Only ever an absolute http(s) URL. */
     portraitUrl?: string;

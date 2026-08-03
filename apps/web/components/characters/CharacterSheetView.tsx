@@ -6,6 +6,7 @@ import { OverviewTab } from "./OverviewTab";
 import { ItemsTab } from "./ItemsTab";
 import { FeaturesTab } from "./FeaturesTab";
 import { SpellsTab } from "./SpellsTab";
+import { Thumb } from "./Thumb";
 
 type TabKey = "overview" | "items" | "features" | "spells";
 
@@ -100,12 +101,18 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
   const subclasses = identity.classes
     .map((c) => c.subclass)
     .filter((s): s is string => !!s);
+  // A multiclass character has more than one class badge and this field is
+  // one combined string ("Fighter 5 / Wizard 2") — showing the first class's
+  // icon is a simplification, not wrong exactly, since there's no single
+  // icon that could represent a combined line truthfully either way.
+  const classIconPath = identity.classes[0]?.iconPath;
+  const subclassIconPath = identity.classes.find((c) => c.subclass)?.subclassIconPath;
 
   const fields = [
-    { label: "Class & level", value: classLine },
-    { label: "Subclass", value: subclasses.join(" · ") },
-    { label: "Race", value: identity.race },
-    { label: "Background", value: identity.background },
+    { label: "Class & level", value: classLine, iconPath: classIconPath },
+    { label: "Subclass", value: subclasses.join(" · "), iconPath: subclassIconPath },
+    { label: "Race", value: identity.race, iconPath: identity.raceIconPath },
+    { label: "Background", value: identity.background, iconPath: identity.backgroundIconPath },
   ].filter((f) => !!f.value?.trim());
 
   return (
@@ -155,8 +162,12 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
           </div>
           {fields.map((field) => (
             <div key={field.label} className="min-w-0">
-              <dd className="truncate font-body text-[14px] leading-tight text-ink">
-                {field.value}
+              {/* Thumb renders nothing when the artwork step hasn't copied
+                  this icon yet, so a field with no matched art still lines
+                  up exactly like it did before this existed. */}
+              <dd className="flex items-center gap-1.5 truncate font-body text-[14px] leading-tight text-ink">
+                <Thumb art={sheet.art} path={field.iconPath} size={18} />
+                <span className="truncate">{field.value}</span>
               </dd>
               <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
                 {field.label}

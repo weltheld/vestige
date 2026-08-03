@@ -19,7 +19,12 @@
 
 /** Every Foundry image path a sheet refers to, deduplicated. */
 export function collectImagePaths(sheet: {
-  identity?: { portraitPath?: string };
+  identity?: {
+    portraitPath?: string;
+    raceIconPath?: string;
+    backgroundIconPath?: string;
+    classes?: Array<{ iconPath?: string; subclassIconPath?: string }>;
+  };
   items?: Array<{ imgPath?: string }>;
   features?: Array<{ imgPath?: string }>;
   spells?: Array<{ imgPath?: string }>;
@@ -30,6 +35,12 @@ export function collectImagePaths(sheet: {
     if (v) paths.add(v);
   };
   add(sheet.identity?.portraitPath);
+  add(sheet.identity?.raceIconPath);
+  add(sheet.identity?.backgroundIconPath);
+  for (const c of sheet.identity?.classes ?? []) {
+    add(c.iconPath);
+    add(c.subclassIconPath);
+  }
   for (const list of [sheet.items, sheet.features, sheet.spells]) {
     for (const entry of list ?? []) add(entry.imgPath);
   }
