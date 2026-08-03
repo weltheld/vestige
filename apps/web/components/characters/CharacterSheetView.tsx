@@ -109,47 +109,62 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
   ].filter((f) => !!f.value?.trim());
 
   return (
-    <header className="flex items-stretch gap-4 border-b-2 border-ink pb-3">
-      {/* ~1.9× the previous 88×72px box, same 4:5-ish proportions and the
-          same fallback-monogram treatment for a sheet with no real portrait
-          — picked over a hero banner because most imports don't have a real
-          photo, and a huge gradient box with one letter in it would look
-          emptier than a small one does today. */}
-      <span className="flex h-[10rem] w-[8rem] shrink-0 items-center justify-center overflow-hidden border-[1.5px] border-ink bg-cod-soft p-1">
-        {portrait ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={portrait} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="font-display text-[46px] text-wine">
-            {identity.name.charAt(0).toUpperCase()}
-          </span>
-        )}
-      </span>
+    <header className="flex flex-col">
+      {/* Option 3 from the drafted concepts: a colour band the portrait
+          overlaps, rather than a box beside the text. The band is a gradient
+          in the theme's own --gold, not the character's photo — it never
+          needs a real portrait to avoid looking empty, unlike a banner built
+          from the image itself would. It fades to transparent rather than
+          stopping at a hard edge, so it blends into the page's own
+          background instead of reading as a rectangle laid on top of it; the
+          fade is most of the band's height (a third solid, the rest fading)
+          so it's a genuine transition, not a band with a thin blur at its
+          foot. All text stays below it, on the plain page background, so
+          nothing has to stay legible against a gradient mid-fade. */}
+      <div
+        className="h-24 w-full rounded-t-lg"
+        style={{ background: "linear-gradient(180deg, var(--gold) 0%, var(--gold) 20%, transparent 100%)" }}
+      />
+      <div className="-mt-12 flex items-end gap-4 border-b-2 border-ink px-1 pb-3">
+        {/* Overlaps the band by half its own height — center of the circle
+            sits right where the gradient is fading through, so it visibly
+            emerges from the colour rather than sitting beside it. */}
+        <span className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-parchment bg-cod-soft shadow-md">
+          {portrait ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={portrait} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="font-display text-[34px] text-wine">
+              {identity.name.charAt(0).toUpperCase()}
+            </span>
+          )}
+        </span>
 
-      <dl className="flex min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5">
-        {/* Same size as Class & level, Race, etc. below — it used to be set
-            at 28px, nearly double the fields it introduces, which made the
-            whole header read as two unrelated tiers rather than one row of
-            facts about one character. */}
-        <div className="min-w-0">
-          <dd className="truncate font-display text-[14px] leading-tight text-ink">
-            {identity.name}
-          </dd>
-          <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
-            Character name
-          </dt>
-        </div>
-        {fields.map((field) => (
-          <div key={field.label} className="min-w-0">
-            <dd className="truncate font-body text-[14px] leading-tight text-ink">
-              {field.value}
+        <dl className="flex min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5 pb-1">
+          {/* Same size as Class & level, Race, etc. below — it used to be set
+              at 28px, nearly double the fields it introduces, which made the
+              whole header read as two unrelated tiers rather than one row of
+              facts about one character. */}
+          <div className="min-w-0">
+            <dd className="truncate font-display text-[14px] leading-tight text-ink">
+              {identity.name}
             </dd>
             <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
-              {field.label}
+              Character name
             </dt>
           </div>
-        ))}
-      </dl>
+          {fields.map((field) => (
+            <div key={field.label} className="min-w-0">
+              <dd className="truncate font-body text-[14px] leading-tight text-ink">
+                {field.value}
+              </dd>
+              <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+                {field.label}
+              </dt>
+            </div>
+          ))}
+        </dl>
+      </div>
     </header>
   );
 }

@@ -10,16 +10,19 @@ export default function Loading() {
     <div className="flex min-h-screen flex-col bg-parchment">
       <HeaderSkeleton />
       <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
-        <div className="flex items-stretch gap-4 border-b-2 border-hairline pb-3">
-          <Skeleton className="h-[10rem] w-[8rem] shrink-0" />
-          <div className="flex min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5">
-            <div className="flex flex-col gap-1">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-2.5 w-16" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-2.5 w-16" />
+        <div className="flex flex-col">
+          <Skeleton className="h-24 w-full rounded-t-lg" />
+          <div className="-mt-12 flex items-end gap-4 border-b-2 border-hairline px-1 pb-3">
+            <Skeleton className="h-24 w-24 shrink-0 rounded-full border-[3px] border-parchment" />
+            <div className="flex min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5 pb-1">
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-2.5 w-16" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-2.5 w-16" />
+              </div>
             </div>
           </div>
         </div>
