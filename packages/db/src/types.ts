@@ -288,6 +288,18 @@ export type CharacterSheetData = {
     encumbrance: { value: number; max: number };
     /** Casters only — the Overview hides the block entirely otherwise. */
     spellcasting?: { attackModifier: number; saveDc: number; ability: AbilityKey };
+    /**
+     * Remaining / total slots. Absent for a non-caster, and absent (rather
+     * than a guessed value) for a caster whose export simply didn't carry
+     * slot totals — multiclass slot math is a genuine rules calculation, not
+     * arithmetic Vestige will do on its own.
+     */
+    spellSlots?: {
+      levels: Array<{ level: number; value: number; max: number }>;
+      /** Warlock's separate pool. `level` is the slot level it casts at
+       *  (e.g. 3rd at character level 5), not the character's level. */
+      pact?: { level: number; value: number; max: number };
+    };
   };
   items: SheetItem[];
   features: SheetFeature[];

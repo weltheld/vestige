@@ -307,6 +307,7 @@ export function parseFoundryActor(raw: unknown): ParseResult {
       encumbrance: parseEncumbrance(system, items),
       passivePerception: parsePassivePerception(system, derived),
       spellcasting: parseSpellcasting(system, derived, abilities, proficiencyBonus),
+      spellSlots: parseSpellSlots(system, derived),
     },
     items: parseItems(items),
     features: parseFeatures(items, classes),
@@ -682,6 +683,51 @@ function parseSpellcasting(
       numOrNull(at(system, "attributes.spellmod")) ??
       proficiencyBonus + mod,
   };
+}
+
+/**
+ * Remaining / total spell slots.
+ *
+ * dnd5e persists these directly on `system.spells` as an actual resource
+ * pool (what's been spent this rest), not something computed fresh every
+ * `prepareData` the way AC or a skill total is — so reading the export
+ * usually just works. Multiclass and Pact Magic math is a genuine rules
+ * calculation, though, and one this parser won't attempt on its own: with
+ * no module data and nothing in the export, the character simply gets no
+ * slot section rather than a guessed table.
+ */
+function parseSpellSlots(
+  system: Record<string, unknown>,
+  derived: Record<string, unknown>,
+): CharacterSheetData["stats"]["spellSlots"] {
+  const fromModule = obj(derived.spellSlots);
+  if (Object.keys(fromModule).length > 0) {
+    const levels = (Array.isArray(fromModule.levels) ? fromModule.levels : [])
+      .map((l) => {
+        const entry = obj(l);
+        return { level: num(entry.level), value: num(entry.value), max: num(entry.max) };
+      })
+      .filter((l) => l.max > 0);
+    const pactSrc = obj(fromModule.pact);
+    const pact =
+      num(pactSrc.max) > 0
+        ? { level: num(pactSrc.level, 1), value: num(pactSrc.value), max: num(pactSrc.max) }
+        : undefined;
+    if (levels.length > 0 || pact) return { levels, pact };
+  }
+
+  const spellsObj = obj(at(system, "spells"));
+  const levels: Array<{ level: number; value: number; max: number }> = [];
+  for (let n = 1; n <= 9; n++) {
+    const entry = obj(spellsObj[`spell${n}`]);
+    const max = num(entry.max);
+    if (max > 0) levels.push({ level: n, value: num(entry.value), max });
+  }
+  const pactEntry = obj(spellsObj.pact);
+  const pactMax = num(pactEntry.max);
+  const pact = pactMax > 0 ? { level: num(pactEntry.level, 1), value: num(pactEntry.value), max: pactMax } : undefined;
+
+  return levels.length > 0 || pact ? { levels, pact } : undefined;
 }
 
 function parseRace(

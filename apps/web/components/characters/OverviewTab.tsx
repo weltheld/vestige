@@ -2,6 +2,7 @@ import type { AbilityKey, CharacterSheetData } from "@vestige/db";
 import { ABILITIES, ABILITY_LABEL } from "@/lib/characters/foundry";
 import { ProficiencyDot, proficiencyLabel, signed } from "./ProficiencyDot";
 import { RULED_PAPER } from "./paper";
+import { Panel } from "./SheetPanel";
 
 /**
  * Everything about the character except what has its own tab, set as a sheet
@@ -137,17 +138,6 @@ function Box({ value, label, note }: { value: string; label: string; note?: stri
 
 /** A panel with a stamped header bar — the sheet's one piece of solid ink,
  *  which is what makes the ruled stock behind it read as paper. */
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="border-[1.5px] border-ink bg-surface">
-      <h2 className="bg-ink px-3 py-1 font-display text-[9px] font-semibold uppercase tracking-[0.18em] text-surface">
-        {title}
-      </h2>
-      <div className="px-3 py-2">{children}</div>
-    </section>
-  );
-}
-
 function SavingThrows({ saves }: { saves: CharacterSheetData["stats"]["savingThrows"] }) {
   const rows = ABILITIES.map((key) => [key, saves[key]] as const).filter(
     (entry): entry is [AbilityKey, NonNullable<(typeof entry)[1]>] => !!entry[1],
