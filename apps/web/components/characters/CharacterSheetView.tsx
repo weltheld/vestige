@@ -110,12 +110,17 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
 
   return (
     <header className="flex items-stretch gap-4 border-b-2 border-ink pb-3">
-      <span className="flex h-[5.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden border-[1.5px] border-ink bg-cod-soft p-1">
+      {/* ~1.9× the previous 88×72px box, same 4:5-ish proportions and the
+          same fallback-monogram treatment for a sheet with no real portrait
+          — picked over a hero banner because most imports don't have a real
+          photo, and a huge gradient box with one letter in it would look
+          emptier than a small one does today. */}
+      <span className="flex h-[10rem] w-[8rem] shrink-0 items-center justify-center overflow-hidden border-[1.5px] border-ink bg-cod-soft p-1">
         {portrait ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={portrait} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="font-display text-[26px] text-wine">
+          <span className="font-display text-[46px] text-wine">
             {identity.name.charAt(0).toUpperCase()}
           </span>
         )}
