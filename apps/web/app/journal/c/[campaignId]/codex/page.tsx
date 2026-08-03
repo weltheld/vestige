@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Library } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
 import { getNpcs, getMentionCounts } from "@/lib/journal/npcs";
 import { appHref, journal } from "@/lib/journal/links";
 import { NpcRoleLabel } from "@/components/journal/codex/NpcRoleLabel";
 import { SummaryWithFootnotes } from "@/components/journal/codex/SummaryWithFootnotes";
+import { AddNpcCard } from "@/components/journal/codex/AddNpcCard";
 import type { NpcKindDb } from "@vestige/db";
 
 const SECTIONS: Array<{ kind: NpcKindDb; heading: string }> = [
@@ -38,21 +38,20 @@ export default async function CodexPage({
   ]);
   return (
     <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
-      {/* No page headline — the module tab already says "Codex". */}
-      <div className="flex flex-wrap items-end justify-end gap-3">
-        <Link
-          href={journal.newNpc(campaignId)}
-          className="rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-        >
-          + New entry
-        </Link>
+      {/* No page headline (the module tab already says "Codex") and no header
+          row for "New entry": that used to be the only thing left in a
+          full-height band once the headline was dropped. It's a tile in its
+          own small grid instead — see AddNpcCard — sized to match a real
+          entry card in whichever column count is active, always shown so
+          there's still a way in with zero entries. */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <AddNpcCard href={journal.newNpc(campaignId)} />
       </div>
 
       {npcs.length === 0 ? (
         <div className="flex flex-col items-center gap-4 rounded-xl bg-cod-soft px-6 py-20 text-center">
-          <Library size={60} className="text-muted" strokeWidth={1.25} />
           <p className="font-body text-[15px] text-ink-soft">
-            No entries yet. Add a person, place, or event here — or type @
+            No entries yet. Add a person, place, or event above — or type @
             while writing a session to record one in passing.
           </p>
         </div>
