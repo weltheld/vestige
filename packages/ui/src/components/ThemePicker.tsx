@@ -16,6 +16,7 @@ export type ThemeOption = {
 // the default light look (the :root values), so it needs no override block.
 export const THEME_OPTIONS: ThemeOption[] = [
   { value: "parchment", label: "Parchment", swatch: "#EDE4D3", accent: "#6B2230" },
+  { value: "paperback", label: "Paperback", swatch: "#F2EFE4", accent: "#D81E5B" },
   { value: "midnight", label: "Midnight", swatch: "#1F1A13", accent: "#D9B45A" },
   { value: "nebula", label: "Nebula", swatch: "#151B33", accent: "#56D6EA" },
   { value: "ember", label: "Ember", swatch: "#241A15", accent: "#E2603A" },

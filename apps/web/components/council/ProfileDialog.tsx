@@ -7,7 +7,10 @@ import { Avatar } from "./Avatar";
 import { ProfileEditor } from "./ProfileEditor";
 import { signOutAction } from "@/app/calendar/auth/actions";
 import { type SwitcherCampaign } from "./CampaignSwitcher";
-import { ThemePicker } from "./ThemePicker";
+// The one theme picker, shared with VestigeHeader's own dropdown. This screen
+// used to carry a near-identical copy, which meant every new theme had to be
+// added to two lists that could silently disagree.
+import { ThemePicker } from "@vestige/ui";
 import Link from "next/link";
 
 type Props = {

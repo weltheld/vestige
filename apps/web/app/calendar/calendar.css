@@ -34,12 +34,16 @@
   background-color: #E0E7DD;
 }
 
-/* Under a dark theme the per-campaign background tints defer to the theme's
-   own page colour so the calendar page doesn't stay light. */
+/* Themes that commit to their own page colour override the per-campaign
+   tints, which are all warm light pastels: under the dark themes they would
+   keep the calendar page light, and under Paperback the warm tint fights the
+   grey newsprint the rest of that theme is built on. Parchment is the only
+   theme the tints were drawn for, so it keeps them. */
 :root[data-theme="midnight"] [class*="bg-scene-"],
 :root[data-theme="nebula"] [class*="bg-scene-"],
 :root[data-theme="ember"] [class*="bg-scene-"],
-:root[data-theme="slate"] [class*="bg-scene-"] {
+:root[data-theme="slate"] [class*="bg-scene-"],
+:root[data-theme="paperback"] [class*="bg-scene-"] {
   background-color: var(--parchment);
 }
 

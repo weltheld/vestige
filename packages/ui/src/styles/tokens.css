@@ -84,6 +84,51 @@
   --vote-no: #D8503A;
   --dm-gold: #E8A94B;
 }
+/* Paperback — a two-ink risograph zine: fluorescent pink and teal pulled on
+   grey newsprint. The only light theme besides Parchment, and deliberately
+   nothing like it.
+
+   Every ink here is set a few steps darker than its true fluoro version so it
+   can carry small text: pink at 4.9:1, teal at 5.2:1, muted at 4.9:1, and
+   white on a pink button at 4.9:1 — all clearing WCAG AA, where the same
+   roles in Parchment sit around 2.6:1. The undarkened teal survives as
+   --gold-soft for fills and rules, where contrast doesn't apply. */
+:root[data-theme="paperback"] {
+  color-scheme: light;
+  --parchment: #f2efe4;
+  --surface: #ffffff;
+  --ink: #1b1b1b;
+  --ink-soft: #4a4741;
+  --muted: #6b6857;
+  --hairline: #d5d1c2;
+  --wine: #d81e5b;
+  --gold: #006f70;
+  --gold-soft: #00a8a8;
+  --cod-soft: #faf8f0;
+  --vote-yes: #0f7a6c;
+  --vote-maybe: #8f6410;
+  --vote-no: #c42350;
+  --dm-gold: #006f70;
+  /* One face for everything, the way a zine is typeset — Jost, the open
+     Futura. The app's serif display would read as a different theme wearing
+     this palette. Both font tokens live on <html> alongside data-theme, and an
+     attribute selector outranks next/font's class, so this wins cleanly. */
+  --font-display: var(--font-geometric);
+  --font-body: var(--font-geometric);
+}
+
+/* The part a palette can't carry: the stock. A 4px halftone dot screen over
+   the page ground, faint enough to read as paper tooth rather than pattern.
+   Scoped to the theme, so no other theme pays for it. */
+:root[data-theme="paperback"] body {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(27, 27, 27, 0.055) 1px,
+    transparent 1.6px
+  );
+  background-size: 4px 4px;
+}
+
 :root[data-theme="slate"] {
   color-scheme: dark;
   --parchment: #13161A;
