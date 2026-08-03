@@ -19,9 +19,13 @@ type TabKey = "overview" | "items" | "features" | "spells";
 export function CharacterSheetView({
   sheet,
   importedAt,
+  bannerUrl,
 }: {
   sheet: CharacterSheetData;
   importedAt: string;
+  /** The campaign's own banner — used behind the header instead of a plain
+   *  colour when the campaign has one. */
+  bannerUrl?: string | null;
 }) {
   const tabs: Array<{ key: TabKey; label: string; count?: number }> = [
     { key: "overview", label: "Overview" },
@@ -36,7 +40,7 @@ export function CharacterSheetView({
 
   return (
     <div className="flex flex-col gap-4">
-      <SheetHeader sheet={sheet} />
+      <SheetHeader sheet={sheet} bannerUrl={bannerUrl} />
 
       <div
         role="tablist"
@@ -88,7 +92,13 @@ export function CharacterSheetView({
  * thing on the page that isn't a number, and the module now goes to some
  * trouble to fetch it.
  */
-function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
+function SheetHeader({
+  sheet,
+  bannerUrl,
+}: {
+  sheet: CharacterSheetData;
+  bannerUrl?: string | null;
+}) {
   const { identity } = sheet;
   // A copied portrait beats the one Foundry pointed at: the export's path
   // means nothing outside that install, and only an http URL ever survived.
@@ -117,28 +127,42 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
 
   return (
     <header className="flex flex-col">
-      {/* Option 3 from the drafted concepts: a colour band the portrait
-          overlaps, rather than a box beside the text. The band is a gradient
-          in the theme's own --wine, not the character's photo — it never
-          needs a real portrait to avoid looking empty, unlike a banner built
-          from the image itself would. It fades to transparent rather than
-          stopping at a hard edge, so it blends into the page's own
-          background instead of reading as a rectangle laid on top of it; the
-          fade is most of the band's height (a third solid, the rest fading)
-          so it's a genuine transition, not a band with a thin blur at its
-          foot. All text stays below it, on the plain page background, so
-          nothing has to stay legible against a gradient mid-fade.
-
-          --wine rather than --gold: two themes (Nebula, Retro) define --gold
-          as a cyan, and both of those also use a dark navy/indigo page
-          background — a cyan gradient fading into dark blue reads as flat
-          and muddy rather than as a colour band. --wine is a warm red/pink/
-          orange accent in every theme with no exception, so it contrasts
-          with a dark background the same way it warms a light one. */}
-      <div
-        className="h-24 w-full rounded-t-lg"
-        style={{ background: "linear-gradient(180deg, var(--wine) 0%, var(--wine) 20%, transparent 100%)" }}
-      />
+      {/* Option 3 from the drafted concepts: a band the portrait overlaps,
+          rather than a box beside the text. The campaign's own banner shows
+          here when it has one — same photo the Calendar/Journal hero use —
+          so the sheet picks up the campaign's own art instead of a plain
+          colour. Either way it fades rather than stopping at a hard edge, so
+          it blends into the page's own background instead of reading as a
+          rectangle laid on top of it: the fade covers most of the band's
+          height (solid for a fifth, fading the rest of the way) so it's a
+          genuine transition, not a hard cut with a thin blur at its foot.
+          All text stays below it, on the plain page background, so nothing
+          has to stay legible against a fade mid-transition — the overlay
+          fades to --parchment (solid), not to transparent, which is what
+          lets it fade a real photo smoothly into the page rather than just
+          revealing whatever happens to sit behind it. */}
+      <div className="relative h-24 w-full overflow-hidden rounded-t-lg">
+        {bannerUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <div
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(180deg, transparent 20%, var(--parchment) 100%)" }}
+            />
+          </>
+        ) : (
+          // No campaign banner: the same fade, in the theme's own --wine
+          // rather than --gold — two themes (Nebula, Retro) define --gold as
+          // a cyan, and both also use a dark navy/indigo page background, so
+          // a cyan fade into dark blue read as flat and muddy. --wine is a
+          // warm red/pink/orange accent in every theme with no exception.
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(180deg, var(--wine) 0%, var(--wine) 20%, var(--parchment) 100%)" }}
+          />
+        )}
+      </div>
       <div className="-mt-12 flex items-end gap-4 border-b-2 border-ink px-1 pb-3">
         {/* Overlaps the band by half its own height — center of the circle
             sits right where the gradient is fading through, so it visibly

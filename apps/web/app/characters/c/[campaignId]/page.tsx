@@ -55,7 +55,11 @@ export default async function CharactersPage({
           {/* No "played by" byline: everyone who can reach this page is either
               the player themselves or the DM who did the filing, so it only
               ever told someone something they already knew. */}
-          <CharacterSheetView sheet={current.data} importedAt={current.updated_at} />
+          <CharacterSheetView
+            sheet={current.data}
+            importedAt={current.updated_at}
+            bannerUrl={campaign.imageUrl}
+          />
 
           {/* Deleting goes with importing: a player who removed a sheet could
               no longer put it back. */}
