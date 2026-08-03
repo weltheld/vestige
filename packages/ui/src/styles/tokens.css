@@ -138,16 +138,19 @@
    deliberately narrow — the reasoning is with each rule. */
 
 /* 1. The stock. A halftone dot screen over the page ground — the texture the
-      whole look sits on. This matched the design draft's own CSS numbers
-      verbatim (4px tile, 7.5% opacity) and, exactly like Retro's background
-      grid, that turned out to be true to the draft's INTENT but invisible on
-      an actual screen: at 4px a dot this faint blends into a flat tint
-      rather than reading as dots. Bigger tile, bigger dot, real contrast —
-      checked live rather than trusted from the numbers this time. */
+      whole look sits on. Two rounds of "still can't see it," and both times
+      the fix was raising the number without actually measuring the result:
+      the deployed 7px/16% version, checked by rendering it to a canvas and
+      reading the real pixels rather than trusting the CSS math, measured a
+      genuinely-invisible 1.37:1 contrast — indistinguishable from the
+      draft's original 4px/7.5%. The same measurement at 50% opacity comes
+      out to 2.9:1, which is what "a grid, not a tint" needs: a texture meant
+      to be seen has no reason to stay near-invisible the way a hairline
+      divider does. */
 :root[data-theme="paperback"] body {
   background-image: radial-gradient(
     circle at 1px 1px,
-    rgba(27, 27, 27, 0.16) 1.4px,
+    rgba(27, 27, 27, 0.5) 1.4px,
     transparent 2px
   );
   background-size: 7px 7px;
