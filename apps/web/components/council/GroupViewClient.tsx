@@ -364,11 +364,12 @@ export function GroupViewClient(props: Props) {
           }
         />
 
-        {/* Same outer width and gutters as Journal/Codex/Characters
-            (max-w-[1440px], px-4 sm:px-8 lg:px-12) — this page previously had
-            no side padding at all, so it ran closer to the viewport edge than
-            every other module at the same max-width. */}
-        <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-4 sm:px-8 lg:grid lg:grid-cols-[280px_1fr] lg:px-12">
+        {/* Same outer width, gutters, and top/bottom padding as
+            Journal/Codex/Characters (max-w-[1440px], px-4 sm:px-8 lg:px-12,
+            pt-8 pb-16) — this page previously had none of that, so its
+            content ran closer to the viewport edge AND started flush against
+            the header instead of level with every other module. */}
+        <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-4 pb-16 pt-8 sm:px-8 lg:grid lg:grid-cols-[280px_1fr] lg:px-12">
           {/* Left sidebar: banner + party, quick fill, best day (desktop only) —
               moving the banner + avatars in here (instead of a full-width row
               above the grid) gives the calendar column more room. */}
