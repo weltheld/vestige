@@ -65,8 +65,7 @@ const pixelBody = Space_Mono({
  * letterforms come from IBM's own hardware-manual heritage, so it doesn't
  * read as a theme-less fallback either. See tokens.css for where the scoping
  * actually happens — .journal-scope resets both --font-display and
- * --font-body to this inside Journal/Codex, and .module-title claws the two
- * page-root headings ("Journal", "Codex") back to the theme's own mono.
+ * --font-body to this inside Journal/Codex.
  */
 const retroContent = IBM_Plex_Sans({
   subsets: ["latin"],

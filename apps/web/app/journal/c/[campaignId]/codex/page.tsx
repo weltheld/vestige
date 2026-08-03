@@ -38,18 +38,14 @@ export default async function CodexPage({
   ]);
   return (
     <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="module-title font-display text-3xl text-ink">Codex</h1>
-        </div>
-        <div className="flex flex-wrap items-start gap-3">
-          <Link
-            href={journal.newNpc(campaignId)}
-            className="rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-          >
-            + New entry
-          </Link>
-        </div>
+      {/* No page headline — the module tab already says "Codex". */}
+      <div className="flex flex-wrap items-end justify-end gap-3">
+        <Link
+          href={journal.newNpc(campaignId)}
+          className="rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+        >
+          + New entry
+        </Link>
       </div>
 
       {npcs.length === 0 ? (

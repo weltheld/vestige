@@ -1,12 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, ImagePlus, Loader2, Copy, Check, VenetianMask, LogOut, Crop, Trash2 } from "lucide-react";
+import Link from "next/link";
+import {
+  X,
+  ImagePlus,
+  Loader2,
+  Copy,
+  Check,
+  VenetianMask,
+  LogOut,
+  Crop,
+  Trash2,
+  Upload,
+  Feather,
+} from "lucide-react";
 import { getBrowserSupabase } from "@vestige/db/client";
 import type { CampaignSettings } from "@/lib/journal/campaign-settings";
 import type { ManageData } from "@/lib/manage";
-import { journal } from "@/lib/journal/links";
+import { journal, characters } from "@/lib/journal/links";
 import {
   renameCampaign,
   removeCampaignBanner,
@@ -15,6 +28,7 @@ import {
   deleteCampaign,
   leaveCampaign,
 } from "@/app/journal/c/[campaignId]/settings/actions";
+import { importFoundryCharacter } from "@/app/characters/c/[campaignId]/actions";
 import { Switch } from "@/components/council/OwnerSettings";
 import { uploadBannerAction } from "@/app/calendar/g/[slug]/bannerActions";
 import {
@@ -32,7 +46,7 @@ import { AiKeySettings } from "./AiKeySettings";
 // Same 4:3 frame the campaign header displays — what you crop is what shows.
 const BANNER_ASPECT = 4 / 3;
 
-type TabKey = "campaign" | "players" | "poll" | "familiar" | "codex";
+type TabKey = "campaign" | "players" | "poll" | "familiar" | "codex" | "characters";
 
 type Props = {
   settings: CampaignSettings;
@@ -49,11 +63,17 @@ type Props = {
 };
 
 /**
- * The merged campaign Settings layer — one dialog, four tabs:
- * Campaign / Players & Invites / Familiar / Codex. Absorbs the former
- * standalone Manage-campaign screen (invites, join code, roster) so there
- * is a single "Settings" entry point. Non-creators get the first two tabs
- * read-only (plus Leave); Familiar and Codex are creator-only.
+ * The merged campaign Settings layer — one dialog, six tabs: Campaign /
+ * Players & Invites / Poll / Familiar / Codex / Characters. Absorbs the
+ * former standalone Manage-campaign screen (invites, join code, roster) so
+ * there is a single "Settings" entry point. Non-creators get the first two
+ * tabs read-only (plus Leave); Poll, Familiar and Codex are creator-only.
+ *
+ * Characters is visible to everyone, unlike those three, because "Manage
+ * characters" (the personal Foundry library) isn't a creator privilege — any
+ * member can push their own character and file it here. Only the Import
+ * section within the tab is creator-only, matching who could reach it before
+ * this moved out of the Characters page's own header menu.
  */
 export function SettingsClient({ settings, manage, magicLink, variant = "page" }: Props) {
   const router = useRouter();
@@ -67,6 +87,7 @@ export function SettingsClient({ settings, manage, magicLink, variant = "page" }
     { key: "poll", label: "Poll", creatorOnly: true },
     { key: "familiar", label: "Familiar", creatorOnly: true },
     { key: "codex", label: "Codex", creatorOnly: true },
+    { key: "characters", label: "Characters" },
   ];
   const visibleTabs = TABS.filter((t) => !t.creatorOnly || isCreator);
 
@@ -128,6 +149,7 @@ export function SettingsClient({ settings, manage, magicLink, variant = "page" }
             <AiKeySettings campaignId={id} current={settings.ai} />
           </div>
         )}
+        {tab === "characters" && <CharactersTab campaignId={id} isCreator={isCreator} />}
       </div>
     </div>
   );
@@ -684,6 +706,113 @@ function PollTab({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+type ImportState =
+  | { step: "idle" }
+  | { step: "reading" }
+  | { step: "error"; message: string }
+  | { step: "done"; message: string };
+
+/**
+ * Import and Manage characters, moved here from a menu on the Characters
+ * page's own header — that page is for reading a sheet, not managing the
+ * roster, and both actions belong with the rest of the campaign's admin work.
+ *
+ * Import is creator-only (it writes into this campaign); Manage characters
+ * is not, since it opens the signed-in member's own cross-campaign Foundry
+ * library, and any member can push and file their own character there.
+ */
+function CharactersTab({ campaignId, isCreator }: { campaignId: string; isCreator: boolean }) {
+  const router = useRouter();
+  const input = useRef<HTMLInputElement>(null);
+  const [state, setState] = useState<ImportState>({ step: "idle" });
+
+  async function onFile(file: File | undefined) {
+    if (!file) return;
+    setState({ step: "reading" });
+
+    let text: string;
+    try {
+      text = await file.text();
+    } catch {
+      setState({ step: "error", message: "That file couldn't be read. Try exporting it again." });
+      return;
+    }
+
+    const res = await importFoundryCharacter(campaignId, text);
+    // Let the same file be picked again — without this, re-uploading after a
+    // fix silently does nothing because the input's value hasn't changed.
+    if (input.current) input.current.value = "";
+
+    if (!res.ok) {
+      setState({ step: "error", message: res.error });
+      return;
+    }
+    setState({
+      step: "done",
+      message: res.replaced ? `Updated ${res.name}.` : `Imported ${res.name}.`,
+    });
+    router.push(characters.sheet(campaignId, res.sheetId));
+    router.refresh();
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {isCreator && (
+        <div className="flex flex-col gap-3">
+          <SectionLabel>Import from Foundry</SectionLabel>
+          <p className="-mt-1 font-body text-[12px] leading-[1.5] text-ink-soft">
+            In Foundry, right-click a character in the Actors sidebar, choose
+            Export Data, and upload the file here. Re-importing the same
+            character replaces its sheet rather than adding a second one.
+          </p>
+          <input
+            ref={input}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => void onFile(e.target.files?.[0])}
+          />
+          <button
+            type="button"
+            disabled={state.step === "reading"}
+            onClick={() => input.current?.click()}
+            className="inline-flex items-center gap-2 self-start rounded-lg bg-wine px-[22px] py-3 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110 disabled:opacity-60"
+          >
+            {state.step === "reading" ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Upload size={14} />
+            )}
+            {state.step === "reading" ? "Importing…" : "Import character"}
+          </button>
+          {state.step === "error" && (
+            <p className="font-body text-[12px] text-vote-no">{state.message}</p>
+          )}
+          {state.step === "done" && (
+            <p className="font-body text-[12px] text-muted">{state.message}</p>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3">
+        <SectionLabel>Your character library</SectionLabel>
+        <p className="-mt-1 font-body text-[12px] leading-[1.5] text-ink-soft">
+          Every character you have sent from Foundry, across every campaign
+          you belong to — file one here, or hand its artwork and player over
+          to someone else.
+        </p>
+        <Link
+          href={characters.library()}
+          className="inline-flex items-center gap-2 self-start rounded-lg border border-hairline px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft transition hover:border-gold hover:text-ink"
+        >
+          <Feather size={14} />
+          Manage characters
+        </Link>
+      </div>
     </div>
   );
 }

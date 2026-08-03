@@ -11,7 +11,6 @@ import { appHref } from "@/lib/journal/links";
 import { CharacterSheetView } from "@/components/characters/CharacterSheetView";
 import { CharacterSwitcher } from "@/components/characters/CharacterSwitcher";
 import { DeleteSheetButton } from "@/components/characters/DeleteSheetButton";
-import { CharactersMenu } from "@/components/characters/CharactersMenu";
 
 export default async function CharactersPage({
   params,
@@ -40,15 +39,10 @@ export default async function CharactersPage({
 
   return (
     <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
-      {/* Importing and filing are the DM's jobs — the roster arrives from one
-          Foundry world, and everyone else is here to read their party's sheets
-          rather than to manage them. Both sit behind one menu so the sheet
-          leads the page. */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h1 className="font-display text-3xl text-ink">Characters</h1>
-        <CharactersMenu campaignId={campaignId} owner={owner} />
-      </div>
-
+      {/* No page headline and no header menu — the sheet is the page, and
+          importing/filing (Settings → Characters) is admin work that doesn't
+          need a permanent foothold on the page everyone opens just to read
+          their character. */}
       {!current ? (
         <EmptyState owner={owner} />
       ) : (
@@ -95,7 +89,7 @@ function EmptyState({ owner }: { owner: boolean }) {
         <ol className="flex max-w-[440px] flex-col gap-1 text-left font-body text-[13px] text-muted">
           <li>1. In Foundry, open the Actors sidebar.</li>
           <li>2. Right-click your character and choose Export Data.</li>
-          <li>3. Upload the downloaded .json here with Import character.</li>
+          <li>3. Upload the downloaded .json in Settings → Characters.</li>
         </ol>
       ) : (
         <p className="max-w-[440px] font-body text-[13px] text-muted">

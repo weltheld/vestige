@@ -219,33 +219,34 @@
   border-radius: 0 !important;
 }
 
-/* A 2px dither over the ground, the checkerboard an 8-bit palette used to fake
-   a third shade. Two offset gradients rather than an image, so it costs
-   nothing and scales with zoom. */
+/* The tile grid a level editor or a console dev kit draws under a sprite
+   sheet — thin cyan rules every 24px, both axes, over the indigo ground.
+   The design draft's own background for this direction; a first pass at it
+   here used a 4px diagonal dither at ~4% opacity instead, which was true to
+   the draft's INTENT (a third shade an 8-bit palette can't mix directly) but
+   at that tile size and strength it rendered as an almost flat fill — visibly
+   present in the CSS, invisible on screen. Two gradients rather than an
+   image, so it costs nothing and stays crisp at any zoom. */
 :root[data-theme="retro"] body {
   background-image:
-    linear-gradient(45deg, rgba(106, 208, 240, 0.045) 25%, transparent 25% 75%, rgba(106, 208, 240, 0.045) 75%),
-    linear-gradient(45deg, rgba(106, 208, 240, 0.045) 25%, transparent 25% 75%, rgba(106, 208, 240, 0.045) 75%);
-  background-position: 0 0, 2px 2px;
-  background-size: 4px 4px;
+    linear-gradient(rgba(106, 208, 240, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(106, 208, 240, 0.09) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
-/* The theme's own mono carries the header, navigation and every OTHER
-   module's own heading fine — but a page you actually read, a session recap
-   or a codex entry, is a different job, and mono at running-text weight and
-   size is heavier and harder to hold a line on than at display size (the
-   theme study named that as this direction's real cost even back when the
-   heading face was a true bitmap font). `.journal-scope` (added around the
-   Journal/Codex route tree, the one place long-form prose lives) resets both
-   font roles for everything inside it to a plain sans; `.module-title` claws
-   the two page roots ("Journal", "Codex" — the module chrome, not its
-   content) back to the mono, matching every other module's own title. */
+/* The theme's own mono carries the header and navigation fine — but a page
+   you actually read, a session recap or a codex entry, is a different job,
+   and mono at running-text weight and size is heavier and harder to hold a
+   line on than at display size (the theme study named that as this
+   direction's real cost even back when the heading face was a true bitmap
+   font). `.journal-scope`, added around the Journal/Codex route tree (the
+   one place long-form prose lives), resets both font roles for everything
+   inside it to a plain sans. Journal and Codex no longer carry a page-root
+   heading of their own for this to claw back to the mono — the module tab in
+   the header already names the page — so this is the one rule left, not two. */
 :root[data-theme="retro"] .journal-scope {
   --font-display: var(--font-retro-content);
   --font-body: var(--font-retro-content);
-}
-:root[data-theme="retro"] .journal-scope .module-title {
-  font-family: var(--font-pixel-body), var(--font-display), monospace;
 }
 
 /* The design draft's whole "pixel" read on a headline was never a bitmap
