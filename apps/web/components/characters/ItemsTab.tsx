@@ -135,10 +135,7 @@ export function ItemsTab({
                 />
               )}
               {open.properties && open.properties.length > 0 && (
-                <PanelField
-                  label="Properties"
-                  value={<span className="capitalize">{open.properties.join(", ")}</span>}
-                />
+                <PanelField label="Properties" value={open.properties.join(", ")} />
               )}
               <PanelField label="Quantity" value={String(open.quantity)} />
               {open.weight > 0 && <PanelField label="Weight" value={`${round(open.weight)} lb each`} />}

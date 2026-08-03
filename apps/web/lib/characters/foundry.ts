@@ -93,6 +93,50 @@ const SPELL_SCHOOL: Record<string, string> = {
   trs: "Transmutation",
 };
 
+/**
+ * Foundry's item property codes → readable labels.
+ *
+ * `system.properties` stores dnd5e's internal keys ("fin", "thr", "ver"),
+ * which is Foundry's own shorthand for its config object, not an
+ * abbreviation a player has ever chosen to use. The UI should never show a
+ * raw Foundry key, same as skills and spell schools above.
+ *
+ * Covers weapon, armour and general item properties across the versions this
+ * parser targets. An unrecognised code (a newer property this list hasn't
+ * caught up with) falls back to being title-cased rather than dropped, so a
+ * property is never silently hidden — it just reads as its own text instead
+ * of the full published wording until this map is extended.
+ */
+const ITEM_PROPERTY_LABEL: Record<string, string> = {
+  ada: "Adamantine",
+  amm: "Ammunition",
+  fin: "Finesse",
+  fir: "Firearm",
+  foc: "Focus",
+  hvy: "Heavy",
+  lgt: "Light",
+  lod: "Loading",
+  mgc: "Magical",
+  rch: "Reach",
+  rel: "Reload",
+  ret: "Returning",
+  sil: "Silvered",
+  spc: "Special",
+  thr: "Thrown",
+  two: "Two-Handed",
+  ver: "Versatile",
+};
+
+/** A property code as the published rulebook spells it, for anything this
+ *  list hasn't named explicitly yet. "twoHanded" -> "Two Handed". */
+function titleCaseProperty(code: string): string {
+  return code
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
 const ITEM_TYPES = new Set<SheetItemType>([
   "weapon",
   "equipment",
@@ -722,7 +766,9 @@ function parseItems(items: Record<string, unknown>[]): SheetItem[] {
         : null;
       const weight = typeof s.weight === "object" ? num(obj(s.weight).value) : num(s.weight);
       const properties = Array.isArray(s.properties)
-        ? s.properties.filter((p): p is string => typeof p === "string")
+        ? s.properties
+            .filter((p): p is string => typeof p === "string")
+            .map((code) => ITEM_PROPERTY_LABEL[code] ?? titleCaseProperty(code))
         : [];
 
       return {

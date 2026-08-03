@@ -111,7 +111,9 @@ const ACTOR = {
         weight: 1,
         equipped: true,
         rarity: "common",
-        properties: ["finesse", "thrown"],
+        // Foundry's own codes, not words a player would recognise — the
+        // parser must expand them.
+        properties: ["fin", "thr"],
         damage: { parts: [["1d4 + @mod", "piercing"]] },
         description: { value: "<p>A simple <strong>dagger</strong>.</p>" },
       },
@@ -210,7 +212,22 @@ const dagger = s.items[0];
 assert.equal(dagger.quantity, 2);
 assert.equal(dagger.equipped, true);
 assert.deepEqual(dagger.damage, { formula: "1d4 + @mod", type: "piercing" });
-assert.deepEqual(dagger.properties, ["finesse", "thrown"]);
+assert.deepEqual(dagger.properties, ["Finesse", "Thrown"]);
+
+// An unrecognised property code is title-cased rather than dropped.
+{
+  const modded = parseFoundryActor({
+    type: "character", name: "M",
+    system: { id: "dnd5e", abilities: {} },
+    items: [
+      {
+        _id: "w9", type: "weapon", name: "Ray Gun",
+        system: { properties: ["burstFire", "customProp"] },
+      },
+    ],
+  });
+  assert.deepEqual(modded.sheet.items[0].properties, ["Burst Fire", "Custom Prop"]);
+}
 assert.equal(dagger.description, "A simple dagger.");
 
 const recovery = s.features[0];

@@ -201,6 +201,7 @@ export type SheetItem = {
   /** Sanitized HTML — an allowlist of inline formatting tags only. */
   description: string;
   damage?: { formula: string; type: string };
+  /** Written out — "Finesse", "Two-Handed" — never Foundry's own codes. */
   properties?: string[];
 };
 
