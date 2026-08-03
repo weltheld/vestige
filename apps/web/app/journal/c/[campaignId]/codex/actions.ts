@@ -156,14 +156,19 @@ export type WikiEnrichResult =
 /** Look up a Wildemount/Exandria entry on the Critical Role wiki and return a
  *  description candidate for the form (never auto-saved). Works for any kind —
  *  the wiki covers people, places, events, items, and creatures. Free public
- *  API, so any signed-in member may use it. */
+ *  API, so any signed-in member may use it.
+ *
+ *  The lookup's own reason is passed straight through. It used to be flattened
+ *  to "Nothing found", which claimed the article didn't exist even when the
+ *  wiki had simply refused or timed out — the same message for a missing page
+ *  and for a lookup that never really ran. */
 export async function enrichFromWiki(name: string): Promise<WikiEnrichResult> {
   await uid(); // require a signed-in member
-  const match = await lookupCriticalRole(name);
-  if (!match) {
-    return { ok: false, error: `Nothing found on the Critical Role wiki for “${name.trim()}”.` };
+  const result = await lookupCriticalRole(name);
+  if (!result.ok) {
+    return { ok: false, error: `Couldn’t fill this in — ${result.reason}.` };
   }
-  return { ok: true, match };
+  return { ok: true, match: result.match };
 }
 
 /** Delete an NPC (mentions cascade). Existing [Name](codex:id) links in
