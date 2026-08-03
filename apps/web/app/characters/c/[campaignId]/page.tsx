@@ -39,7 +39,7 @@ export default async function CharactersPage({
     : await getDefaultCharacterSheet(supabase, campaignId);
 
   return (
-    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
+    <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
       {/* Importing and filing are the DM's jobs — the roster arrives from one
           Foundry world, and everyone else is here to read their party's sheets
           rather than to manage them. Both sit behind one menu so the sheet
