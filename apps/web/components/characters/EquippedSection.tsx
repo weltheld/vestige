@@ -5,7 +5,7 @@ import type { CharacterSheetData, SheetItem, SheetSpell } from "@vestige/db";
 import { Panel } from "./SheetPanel";
 import { Thumb } from "./Thumb";
 import { DetailPanel, PanelDescription, PanelField } from "./DetailPanel";
-import { RARITY_COLOR } from "./ItemsTab";
+import { RARITY_COLOR, ITEM_TYPE_LABEL } from "./ItemsTab";
 import { ProficiencyDot } from "./ProficiencyDot";
 
 type Open = { kind: "item"; item: SheetItem } | { kind: "spell"; spell: SheetSpell } | null;
@@ -67,7 +67,7 @@ export function EquippedSection({ sheet }: { sheet: CharacterSheetData }) {
 }
 
 function subtitleFor(open: NonNullable<Open>): string {
-  if (open.kind === "item") return open.item.type;
+  if (open.kind === "item") return ITEM_TYPE_LABEL[open.item.type];
   return `${LEVEL_LABEL[open.spell.level] ?? `Level ${open.spell.level}`}${
     open.spell.school ? ` · ${open.spell.school}` : ""
   }`;
@@ -87,30 +87,43 @@ function EquippedList({
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    // self-start: this list sits in a grid cell beside the prepared-spells
+    // column, which grid stretches to match row height when one column is
+    // taller — without this, that extra height cascaded into the flex-wrap
+    // row below via its own default stretch, and every chip inflated to fill
+    // it instead of sizing to its own two lines of text.
+    <div className="flex flex-wrap items-start gap-1.5 self-start">
       {items.map((item) => (
         <button
           key={item.id}
           type="button"
           onClick={() => onSelect(item)}
-          className="inline-flex items-center gap-1.5 border border-hairline bg-surface py-1 pl-1 pr-2 text-left transition hover:border-gold"
+          className="flex items-start gap-1.5 border border-hairline bg-surface py-1 pl-1 pr-2 text-left transition hover:border-gold"
         >
           <Thumb art={art} path={item.imgPath} size={18} />
-          <span
-            className="font-body text-[13px] text-ink"
-            style={
-              item.rarity && RARITY_COLOR[item.rarity.toLowerCase()]
-                ? { color: RARITY_COLOR[item.rarity.toLowerCase()] }
-                : undefined
-            }
-          >
-            {item.name}
-          </span>
-          {item.damage && (
-            <span className="font-display text-[10px] uppercase tracking-[0.08em] text-muted">
-              {item.damage.formula}
+          <span className="flex flex-col">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="font-body text-[13px] text-ink"
+                style={
+                  item.rarity && RARITY_COLOR[item.rarity.toLowerCase()]
+                    ? { color: RARITY_COLOR[item.rarity.toLowerCase()] }
+                    : undefined
+                }
+              >
+                {item.name}
+              </span>
+              {item.damage && (
+                <span className="font-display text-[10px] uppercase tracking-[0.08em] text-muted">
+                  {item.damage.formula}
+                </span>
+              )}
             </span>
-          )}
+            {/* Same "note under the value" language as the vitals boxes
+                above (e.g. "Charisma" under "Save DC") — what kind of thing
+                this is, in the same small muted line. */}
+            <span className="font-body text-[10px] text-muted">{ITEM_TYPE_LABEL[item.type]}</span>
+          </span>
         </button>
       ))}
     </div>
@@ -132,9 +145,9 @@ function PreparedColumn({
   onSelect: (spell: SheetSpell) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-2.5 self-start">
       {spells.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-start gap-1.5">
           {spells.map((spell) => (
             <button
               key={spell.id}

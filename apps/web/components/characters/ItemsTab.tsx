@@ -8,14 +8,21 @@ import { Thumb } from "./Thumb";
 
 /** Group order and headings. Foundry's `type` is the grouping key, so this
  *  stays in step with whatever the export actually contained. */
-const GROUPS: Array<{ type: SheetItemType; label: string }> = [
-  { type: "weapon", label: "Weapons" },
-  { type: "equipment", label: "Armour & equipment" },
-  { type: "consumable", label: "Consumables" },
-  { type: "tool", label: "Tools" },
-  { type: "container", label: "Containers" },
-  { type: "loot", label: "Loot" },
+const GROUPS: Array<{ type: SheetItemType; label: string; singular: string }> = [
+  { type: "weapon", label: "Weapons", singular: "Weapon" },
+  { type: "equipment", label: "Armour & equipment", singular: "Armour & equipment" },
+  { type: "consumable", label: "Consumables", singular: "Consumable" },
+  { type: "tool", label: "Tools", singular: "Tool" },
+  { type: "container", label: "Containers", singular: "Container" },
+  { type: "loot", label: "Loot", singular: "Loot" },
 ];
+
+/** "Weapon", not "Weapons" — for a label under one item rather than a
+ *  section heading over several. Derived from GROUPS so the two vocabularies
+ *  can't drift apart. */
+export const ITEM_TYPE_LABEL: Record<SheetItemType, string> = Object.fromEntries(
+  GROUPS.map((g) => [g.type, g.singular]),
+) as Record<SheetItemType, string>;
 
 /**
  * Rarity is the one place the sheet uses colour to mean something, and it uses
