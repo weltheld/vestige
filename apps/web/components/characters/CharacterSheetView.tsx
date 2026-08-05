@@ -120,16 +120,30 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
 
   return (
     <header className="flex items-end gap-4 border-b-2 border-ink pb-3">
-      <span className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-hairline bg-cod-soft">
-        {portrait ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={portrait} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="font-display text-[34px] text-wine">
-            {identity.name.charAt(0).toUpperCase()}
-          </span>
-        )}
-      </span>
+      {/* A medallion frame, not just a border: a gold ring set outside the
+          portrait itself (a gap of its own, so the two read as two rings
+          rather than one thick one) with a small diamond at each compass
+          point where a locket's hinges or rivets would sit. --gold is the
+          app's one recurring accent already (icon borders, the Save DC
+          note, …), so this reaches for the same colour every theme already
+          uses rather than introducing a new one. */}
+      <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
+        <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-gold" />
+        <span className="pointer-events-none absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-gold" />
+        <span className="pointer-events-none absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 translate-y-1/2 rotate-45 bg-gold" />
+        <span className="pointer-events-none absolute left-0 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-gold" />
+        <span className="pointer-events-none absolute right-0 top-1/2 h-2 w-2 -translate-y-1/2 translate-x-1/2 rotate-45 bg-gold" />
+        <span className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-[3px] border-hairline bg-cod-soft">
+          {portrait ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={portrait} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="font-display text-[34px] text-wine">
+              {identity.name.charAt(0).toUpperCase()}
+            </span>
+          )}
+        </span>
+      </div>
 
       <dl className="flex min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5 pb-1">
         {/* Same size as Class & level, Race, etc. below — it used to be set
