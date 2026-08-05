@@ -241,7 +241,10 @@
    at that tile size and strength it rendered as an almost flat fill — visibly
    present in the CSS, invisible on screen. Two gradients rather than an
    image, so it costs nothing and stays crisp at any zoom. */
-:root[data-theme="retro"] body {
+/* Same fix as Paperback's texture, same reason: `body` is covered edge to
+   edge by an opaque `.bg-parchment` shell on nearly every page, so a rule on
+   `body` itself only ever painted where nothing was on top of it. */
+:root[data-theme="retro"] .bg-parchment {
   background-image:
     linear-gradient(rgba(106, 208, 240, 0.14) 1px, transparent 1px),
     linear-gradient(90deg, rgba(106, 208, 240, 0.14) 1px, transparent 1px);

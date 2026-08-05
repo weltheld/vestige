@@ -42,10 +42,32 @@
 :root[data-theme="midnight"] [class*="bg-scene-"],
 :root[data-theme="nebula"] [class*="bg-scene-"],
 :root[data-theme="ember"] [class*="bg-scene-"],
-:root[data-theme="slate"] [class*="bg-scene-"],
-:root[data-theme="paperback"] [class*="bg-scene-"],
+:root[data-theme="slate"] [class*="bg-scene-"] {
+  background-color: var(--parchment);
+}
+
+/* Paperback and Retro don't just swap the tint for a plain colour — each
+   commits to a background texture on top of it (see tokens.css's own
+   `.bg-parchment` rules for each). A scene tint on the Calendar page is
+   exactly the kind of opaque surface that hid the texture from every page
+   except Home before that fix, so the texture has to be repeated here too,
+   not just the colour underneath it — matching values kept in step by hand,
+   since this file is explicitly Calendar-only and tokens.css shouldn't need
+   to know Calendar's scene-tint class names. */
+:root[data-theme="paperback"] [class*="bg-scene-"] {
+  background-color: var(--parchment);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(27, 27, 27, 0.075) 0 1px,
+    transparent 1px 5px
+  );
+}
 :root[data-theme="retro"] [class*="bg-scene-"] {
   background-color: var(--parchment);
+  background-image:
+    linear-gradient(rgba(106, 208, 240, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(106, 208, 240, 0.14) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* Letter-pressed small caps style used for labels like "THE PARTY ·" */
