@@ -55,7 +55,13 @@ export default async function CharactersPage({
           {/* No "played by" byline: everyone who can reach this page is either
               the player themselves or the DM who did the filing, so it only
               ever told someone something they already knew. */}
+          {/* Keyed on the sheet id: without it, switching characters keeps
+              this component mounted, and its local portrait-upload override
+              state (see CharacterSheetView) would keep showing the last
+              character's freshly-uploaded portrait on every character
+              after it, since nothing would tell it to forget that state. */}
           <CharacterSheetView
+            key={current.id}
             sheet={current.data}
             importedAt={current.updated_at}
             campaignId={campaignId}
