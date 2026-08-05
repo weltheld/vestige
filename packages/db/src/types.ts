@@ -310,6 +310,17 @@ export type CharacterSheetData = {
    * icon shared by forty items is stored once.
    */
   art?: Record<string, string>;
+  /**
+   * A portrait the player uploaded by hand, for when Foundry's export has
+   * nothing usable (a token image behind a wall, a local file path that
+   * never survived export). Deliberately its own field rather than
+   * `identity.portraitUrl`: every re-import replaces `identity` wholesale
+   * from the fresh export, the same way `art` would be wiped if it lived
+   * there too — this has to be carried forward across a re-import the same
+   * way `art` is, and take priority over both `art` and `identity.portraitUrl`
+   * when the sheet renders one.
+   */
+  manualPortraitUrl?: string;
 };
 
 export type NpcRow = {

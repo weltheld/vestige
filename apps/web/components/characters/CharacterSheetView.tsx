@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Pencil, X } from "lucide-react";
 import type { CharacterSheetData } from "@vestige/db";
 import { OverviewTab } from "./OverviewTab";
 import { ItemsTab } from "./ItemsTab";
@@ -8,6 +9,8 @@ import { FeaturesTab } from "./FeaturesTab";
 import { SpellsTab } from "./SpellsTab";
 import { Thumb } from "./Thumb";
 import { EquippedSection } from "./EquippedSection";
+import { ImageCropper } from "../council/ImageCropper";
+import { setCharacterPortrait, clearCharacterPortrait } from "@/app/characters/c/[campaignId]/actions";
 
 type TabKey = "overview" | "items" | "features" | "spells";
 
@@ -20,9 +23,13 @@ type TabKey = "overview" | "items" | "features" | "spells";
 export function CharacterSheetView({
   sheet,
   importedAt,
+  campaignId,
+  sheetId,
 }: {
   sheet: CharacterSheetData;
   importedAt: string;
+  campaignId: string;
+  sheetId: string;
 }) {
   const tabs: Array<{ key: TabKey; label: string; count?: number }> = [
     { key: "overview", label: "Overview" },
@@ -37,7 +44,7 @@ export function CharacterSheetView({
 
   return (
     <div className="flex flex-col gap-4">
-      <SheetHeader sheet={sheet} />
+      <SheetHeader sheet={sheet} campaignId={campaignId} sheetId={sheetId} />
       <EquippedSection sheet={sheet} />
 
       <div
@@ -91,13 +98,86 @@ export function CharacterSheetView({
  * competed with the ink-on-parchment the rest of the sheet commits to, and
  * the portrait reads clearly enough on the plain page background on its own.
  */
-function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
+function SheetHeader({
+  sheet,
+  campaignId,
+  sheetId,
+}: {
+  sheet: CharacterSheetData;
+  campaignId: string;
+  sheetId: string;
+}) {
   const { identity } = sheet;
-  // A copied portrait beats the one Foundry pointed at: the export's path
-  // means nothing outside that install, and only an http URL ever survived.
+
+  // Local override so a fresh upload or a clear shows immediately, without
+  // waiting on the page's next server round-trip. `undefined` = no
+  // override, defer to the sheet as loaded; `null` = explicitly cleared.
+  const [manualOverride, setManualOverride] = useState<string | null | undefined>(undefined);
+  const manualPortrait = manualOverride !== undefined ? manualOverride : sheet.manualPortraitUrl;
+
+  // A hand-uploaded portrait wins over anything Foundry provided — it's the
+  // fallback for exactly the case where Foundry's own image was unusable, so
+  // it has to outrank both the copied art and the raw export URL, not just
+  // fill in when they're absent. A copied portrait then beats the one
+  // Foundry pointed at: the export's path means nothing outside that
+  // install, and only an http URL ever survived.
   const portrait =
+    manualPortrait ??
     (identity.portraitPath ? sheet.art?.[identity.portraitPath] : undefined) ??
     identity.portraitUrl;
+
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [portraitError, setPortraitError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  function onPickPortrait(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setPortraitError("Please choose an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPortraitError("Image must be 5 MB or smaller.");
+      return;
+    }
+    setPortraitError(null);
+    setCropFile(file);
+  }
+
+  async function uploadPortrait(blob: Blob) {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", blob, "portrait.jpg");
+      const result = await setCharacterPortrait(campaignId, sheetId, fd);
+      if (!result.ok) {
+        setPortraitError(result.error);
+        return;
+      }
+      setManualOverride(result.url);
+      setCropFile(null);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function onClearPortrait() {
+    setUploading(true);
+    setPortraitError(null);
+    try {
+      const result = await clearCharacterPortrait(campaignId, sheetId);
+      if (!result.ok) {
+        setPortraitError(result.error);
+        return;
+      }
+      setManualOverride(null);
+    } finally {
+      setUploading(false);
+    }
+  }
   // "Fighter 5 / Wizard 2" — the multiclass format, built from every class
   // Foundry exported rather than just the first.
   const classLine = identity.classes.map((c) => `${c.name} ${c.level}`).join(" / ");
@@ -128,6 +208,18 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
           note, …), so this reaches for the same colour every theme already
           uses rather than introducing a new one. */}
       <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
+        {cropFile && (
+          <ImageCropper
+            file={cropFile}
+            round
+            aspect={1}
+            viewWidth={256}
+            outputWidth={512}
+            title="Position the portrait"
+            onCancel={() => setCropFile(null)}
+            onConfirm={uploadPortrait}
+          />
+        )}
         <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-gold" />
         <span className="pointer-events-none absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-gold" />
         <span className="pointer-events-none absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 translate-y-1/2 rotate-45 bg-gold" />
@@ -143,6 +235,43 @@ function SheetHeader({ sheet }: { sheet: CharacterSheetData }) {
             </span>
           )}
         </span>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onPickPortrait}
+        />
+        {/* Foundry's own export often has no usable portrait (a token image
+            behind a running instance, a local file path) — this is the way
+            around that, not just a cosmetic touch-up. Sits on the medallion
+            ring itself, not the portrait circle, so it never covers the
+            face it's letting you replace. */}
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          disabled={uploading}
+          title="Upload a portrait"
+          className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-[1.5px] border-hairline bg-surface text-ink-soft shadow-sm transition hover:border-gold hover:text-ink disabled:opacity-50"
+        >
+          <Pencil size={13} />
+        </button>
+        {manualPortrait && (
+          <button
+            type="button"
+            onClick={onClearPortrait}
+            disabled={uploading}
+            title="Remove the uploaded portrait"
+            className="absolute right-0 top-0 flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] border-hairline bg-surface text-ink-soft shadow-sm transition hover:border-wine hover:text-wine disabled:opacity-50"
+          >
+            <X size={12} />
+          </button>
+        )}
+        {portraitError && (
+          <p className="absolute left-0 top-full z-10 mt-1 w-40 text-center font-body text-[11px] text-wine">
+            {portraitError}
+          </p>
+        )}
       </div>
 
       <dl className="flex min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5 pb-1">

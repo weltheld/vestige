@@ -87,9 +87,15 @@ async function getLibrary(supabase: SB, userId: string): Promise<LibraryEntry[]>
       updatedAt: row.updated_at,
       campaignId: row.campaign_id,
       playerId: row.player_id,
-      // The stored art map is keyed by the Foundry path, so the portrait is
-      // only here once the artwork pass has run for it.
-      portrait: (portraitPath && sheet.art?.[portraitPath]) || null,
+      // A hand-uploaded portrait wins over Foundry's own art, the same
+      // priority the sheet header itself uses. The stored art map is keyed
+      // by the Foundry path, so that fallback is only here once the artwork
+      // pass has run for it.
+      portrait:
+        sheet.manualPortraitUrl ||
+        (portraitPath && sheet.art?.[portraitPath]) ||
+        sheet.identity?.portraitUrl ||
+        null,
     };
   });
 }

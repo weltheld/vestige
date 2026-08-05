@@ -57,9 +57,10 @@ export async function POST(req: Request) {
 
   const admin = getServiceRoleSupabase();
 
-  // Existing artwork is preserved across a re-push. The module uploads images
-  // in a second step, and re-importing a sheet shouldn't blank the pictures
-  // for every icon that hasn't changed.
+  // Existing artwork — and a hand-uploaded portrait, if there is one — is
+  // preserved across a re-push. The module uploads images in a second step,
+  // and re-importing a sheet shouldn't blank the pictures for every icon
+  // that hasn't changed, or replace a portrait the player set themselves.
   const { data: existing } = await admin
     .from("character_sheets")
     .select("id, data, campaign_id")
@@ -67,8 +68,12 @@ export async function POST(req: Request) {
     .eq("foundry_actor_id", parsed.actorId)
     .maybeSingle();
 
-  const previousArt = (existing?.data as CharacterSheetData | undefined)?.art ?? {};
-  const sheet: CharacterSheetData = { ...parsed.sheet, art: { ...previousArt } };
+  const previousData = existing?.data as CharacterSheetData | undefined;
+  const sheet: CharacterSheetData = {
+    ...parsed.sheet,
+    art: { ...(previousData?.art ?? {}) },
+    manualPortraitUrl: previousData?.manualPortraitUrl,
+  };
 
   // campaign_id and player_id are absent from this write on purpose. The
   // filing is Vestige's, and a push that undid it would make syncing after

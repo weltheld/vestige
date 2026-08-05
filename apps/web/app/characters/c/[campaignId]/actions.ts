@@ -64,16 +64,25 @@ export async function importFoundryCharacter(
     };
   }
 
-  // Was this actor already here? Only to report "updated" vs "imported" —
-  // the write is the same either way.
+  // Was this actor already here? Also carries forward its artwork and any
+  // hand-uploaded portrait — a re-import shouldn't blank the pictures for
+  // every icon that hasn't changed, or replace a portrait the player set
+  // themselves, the same as a re-push from the module.
   // Keyed on the uploader and the actor, the same as a Foundry push: one
   // person's copy of one character is one row, wherever they have filed it.
   const { data: existing } = await supabase
     .from("character_sheets")
-    .select("id")
+    .select("id, data")
     .eq("owner_id", user.id)
     .eq("foundry_actor_id", parsed.actorId)
     .maybeSingle();
+
+  const previousData = existing?.data as CharacterSheetData | undefined;
+  const sheet: CharacterSheetData = {
+    ...parsed.sheet,
+    art: { ...(previousData?.art ?? {}) },
+    manualPortraitUrl: previousData?.manualPortraitUrl,
+  };
 
   const { data, error } = await supabase
     .from("character_sheets")
@@ -83,7 +92,7 @@ export async function importFoundryCharacter(
         campaign_id: campaignId,
         foundry_actor_id: parsed.actorId,
         name: parsed.sheet.identity.name,
-        data: parsed.sheet,
+        data: sheet,
         raw_data: raw,
         imported_by: user.id,
         updated_at: new Date().toISOString(),
@@ -149,6 +158,110 @@ export async function setCharacterArt(
 
   revalidatePath(characters.campaign(campaignId));
   return { ok: true, count: Object.keys(merged).length };
+}
+
+/** Same ceiling the avatar/banner uploads use — a sanity cap, not a
+ *  judgement about any real portrait. */
+const MAX_PORTRAIT_BYTES = 5 * 1024 * 1024;
+
+export type PortraitResult = { ok: true; url: string } | { ok: false; error: string };
+
+/**
+ * Set a hand-uploaded portrait, for when Foundry's export has no usable
+ * image at all.
+ *
+ * Stored under `${campaignId}/...` in the `character-art` bucket — the same
+ * bucket the artwork step copies Foundry's own icons into — so the existing
+ * "any campaign member may write" storage policy covers this write too,
+ * with no new policy needed. Written onto `data.manualPortraitUrl`, which a
+ * re-import carries forward rather than overwrites (see
+ * `importFoundryCharacter` and the Foundry ingest route).
+ */
+export async function setCharacterPortrait(
+  campaignId: string,
+  sheetId: string,
+  formData: FormData,
+): Promise<PortraitResult> {
+  const supabase = await getServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, error: "No image was sent." };
+  if (file.size > MAX_PORTRAIT_BYTES) {
+    return { ok: false, error: "That image is too large (over 5 MB)." };
+  }
+
+  const { data: sheet } = await supabase
+    .from("character_sheets")
+    .select("id, data")
+    .eq("id", sheetId)
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+  if (!sheet) return { ok: false, error: "Sheet not found." };
+
+  const path = `${campaignId}/manual-portrait-${sheetId}-${Date.now()}.jpg`;
+  const bytes = await file.arrayBuffer();
+  const { error: uploadError } = await supabase.storage
+    .from("character-art")
+    .upload(path, bytes, { contentType: file.type || "image/jpeg", cacheControl: "3600" });
+  if (uploadError) return { ok: false, error: uploadError.message };
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("character-art").getPublicUrl(path);
+
+  const data = sheet.data as CharacterSheetData;
+  const { error } = await supabase
+    .from("character_sheets")
+    .update({
+      data: { ...data, manualPortraitUrl: publicUrl },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", sheetId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(characters.campaign(campaignId));
+  return { ok: true, url: publicUrl };
+}
+
+export type ClearPortraitResult = { ok: true } | { ok: false; error: string };
+
+/** Drop the hand-uploaded portrait, reverting to whatever Foundry's own
+ *  export provides (or the initial letter, if it provides nothing). The
+ *  uploaded file itself is left in storage, same as a re-uploaded avatar or
+ *  banner — an orphaned blob, not a broken link. */
+export async function clearCharacterPortrait(
+  campaignId: string,
+  sheetId: string,
+): Promise<ClearPortraitResult> {
+  const supabase = await getServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: sheet } = await supabase
+    .from("character_sheets")
+    .select("id, data")
+    .eq("id", sheetId)
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+  if (!sheet) return { ok: false, error: "Sheet not found." };
+
+  const data = sheet.data as CharacterSheetData;
+  const { manualPortraitUrl: _drop, ...rest } = data;
+
+  const { error } = await supabase
+    .from("character_sheets")
+    .update({ data: rest, updated_at: new Date().toISOString() })
+    .eq("id", sheetId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(characters.campaign(campaignId));
+  return { ok: true };
 }
 
 export type AssignResult = { ok: true } | { ok: false; error: string };
