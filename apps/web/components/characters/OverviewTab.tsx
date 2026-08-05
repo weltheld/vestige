@@ -179,24 +179,18 @@ function SavingThrows({ saves }: { saves: CharacterSheetData["stats"]["savingThr
  * alphabet is the only order that stays put as a character levels.
  *
  * Split into two tables side by side on a wide screen rather than run as one
- * column of eighteen — same rows, half the height. Each keeps its own header
- * at that width, because a column of numbers you have to scroll away from to
- * identify is a column of numbers you can't read.
+ * column of eighteen — same rows, half the height.
  *
- * Below lg the two columns stack into one, so a second copy of the same
- * header row would land mid-list rather than at the top of anything — every
- * table but the first hides its header until the layout actually splits them
- * back into columns.
+ * No header row: a player already knows a skill from its ability from its
+ * modifier without being told which column is which, so the row that used to
+ * spell that out was just ink the panel title ("Skills") didn't need.
  *
  * table-fixed with an explicit colgroup, not the browser's own auto-sizing:
  * with table-layout: auto, each <table> sizes its columns from ITS OWN
- * content and header, independently of its sibling. Hiding the second
- * table's header (immediately above) removed that table's only width hint
- * for the checkbox and skill-name columns, so it recomputed a narrower name
- * column than the first table — the checkbox indented, and names that fit
- * fine up top started truncating below. Fixed widths on every table via the
- * same colgroup make the two columns identical regardless of which table's
- * header happens to be visible.
+ * content, independently of its sibling — so without a shared width source,
+ * the two tables' name columns could disagree by a few pixels depending on
+ * which names happened to be longest in each half. Fixed widths via the same
+ * colgroup on every table keep the two columns identical regardless.
  */
 function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
   const rows = Object.entries(skills).sort((a, b) => a[0].localeCompare(b[0]));
@@ -219,27 +213,16 @@ function Skills({ skills }: { skills: CharacterSheetData["stats"]["skills"] }) {
               <col className="w-9 sm:w-24" />
               <col className="w-10" />
             </colgroup>
-            <thead className={index === 0 ? undefined : "hidden lg:table-header-group"}>
-              <tr className="border-b-[1.5px] border-ink">
-                <th scope="col" className="pb-0.5" />
-                <th
-                  scope="col"
-                  className="pb-0.5 text-left font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
-                >
-                  Skill
-                </th>
-                <th
-                  scope="col"
-                  className="pb-0.5 text-left font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
-                >
-                  Ability
-                </th>
-                <th
-                  scope="col"
-                  className="pb-0.5 text-right font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted"
-                >
-                  Mod
-                </th>
+            {/* Column names for screen readers only — a sighted player reads
+                "Acrobatics · Dexterity · +4" without needing "Skill / Ability
+                / Mod" spelled out above it, but the column identity still
+                has to reach anyone using a screen reader. */}
+            <thead className="sr-only">
+              <tr>
+                <th scope="col">Proficient</th>
+                <th scope="col">Skill</th>
+                <th scope="col">Ability</th>
+                <th scope="col">Modifier</th>
               </tr>
             </thead>
             <tbody>
