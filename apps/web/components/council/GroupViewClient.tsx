@@ -127,15 +127,23 @@ export function GroupViewClient(props: Props) {
         value: "no" as VoteValue,
       })),
     ]);
-    void supabase.from("votes").upsert(
-      toBlock.map((date) => ({
-        campaign_id: props.group.id,
-        user_id: props.currentUser.id,
-        date,
-        value: "no" as const,
-      })),
-      { onConflict: "campaign_id,user_id,date" },
-    );
+    // `void` alone doesn't catch a rejection — same unhandled-rejection crash
+    // as handleCycle below if this request drops mid-flight.
+    (async () => {
+      try {
+        await supabase.from("votes").upsert(
+          toBlock.map((date) => ({
+            campaign_id: props.group.id,
+            user_id: props.currentUser.id,
+            date,
+            value: "no" as const,
+          })),
+          { onConflict: "campaign_id,user_id,date" },
+        );
+      } catch {
+        // Swallowed — see handleCycle below.
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.crossSessions]);
 
@@ -190,23 +198,32 @@ export function GroupViewClient(props: Props) {
           : [...without, { groupId: group.id, userId: props.currentUser.id, date, value: next }];
       });
 
-      if (next === null) {
-        await supabase
-          .from("votes")
-          .delete()
-          .eq("campaign_id", group.id)
-          .eq("user_id", props.currentUser.id)
-          .eq("date", date);
-      } else {
-        await supabase.from("votes").upsert(
-          {
-            campaign_id: group.id,
-            user_id: props.currentUser.id,
-            date,
-            value: next,
-          },
-          { onConflict: "campaign_id,user_id,date" },
-        );
+      // A flaky connection (e.g. a mobile network hand-off) can make this
+      // request itself throw rather than resolve with an error — left
+      // uncaught, that's an unhandled rejection that used to crash the page.
+      // The optimistic update above already applied; just leave it in place
+      // and let the next successful vote/refresh reconcile it.
+      try {
+        if (next === null) {
+          await supabase
+            .from("votes")
+            .delete()
+            .eq("campaign_id", group.id)
+            .eq("user_id", props.currentUser.id)
+            .eq("date", date);
+        } else {
+          await supabase.from("votes").upsert(
+            {
+              campaign_id: group.id,
+              user_id: props.currentUser.id,
+              date,
+              value: next,
+            },
+            { onConflict: "campaign_id,user_id,date" },
+          );
+        }
+      } catch {
+        // Swallowed — see comment above.
       }
     },
     [supabase, group.id, props.currentUser.id],
@@ -233,15 +250,19 @@ export function GroupViewClient(props: Props) {
       });
 
       if (isoDates.length === 0) return;
-      await supabase.from("votes").upsert(
-        isoDates.map((date) => ({
-          campaign_id: group.id,
-          user_id: props.currentUser.id,
-          date,
-          value,
-        })),
-        { onConflict: "campaign_id,user_id,date" },
-      );
+      try {
+        await supabase.from("votes").upsert(
+          isoDates.map((date) => ({
+            campaign_id: group.id,
+            user_id: props.currentUser.id,
+            date,
+            value,
+          })),
+          { onConflict: "campaign_id,user_id,date" },
+        );
+      } catch {
+        // A dropped request shouldn't crash the page — see handleCycle.
+      }
     },
     [supabase, group.id, props.currentUser.id],
   );
@@ -256,12 +277,16 @@ export function GroupViewClient(props: Props) {
             !(v.userId === props.currentUser.id && dateSet.has(v.date)),
         ),
       );
-      await supabase
-        .from("votes")
-        .delete()
-        .eq("campaign_id", group.id)
-        .eq("user_id", props.currentUser.id)
-        .in("date", isoDates);
+      try {
+        await supabase
+          .from("votes")
+          .delete()
+          .eq("campaign_id", group.id)
+          .eq("user_id", props.currentUser.id)
+          .in("date", isoDates);
+      } catch {
+        // A dropped request shouldn't crash the page — see handleCycle.
+      }
     },
     [supabase, group.id, props.currentUser.id],
   );
@@ -298,9 +323,21 @@ export function GroupViewClient(props: Props) {
         else next.delete(iso);
         return next;
       });
-      const result = await setSessionAction(group.id, iso, willBeSession);
-      if (!result.ok) {
-        // Revert on failure.
+      try {
+        const result = await setSessionAction(group.id, iso, willBeSession);
+        if (!result.ok) {
+          // Revert on failure.
+          setSessions((prev) => {
+            const next = new Set(prev);
+            if (willBeSession) next.delete(iso);
+            else next.add(iso);
+            return next;
+          });
+        }
+      } catch {
+        // The action call itself can throw on a dropped connection (a mobile
+        // network hand-off, say) rather than resolving — same unhandled-
+        // rejection crash as handleCycle. Revert optimistically either way.
         setSessions((prev) => {
           const next = new Set(prev);
           if (willBeSession) next.delete(iso);
