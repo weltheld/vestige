@@ -6,7 +6,6 @@ import { Panel } from "./SheetPanel";
 import { Thumb } from "./Thumb";
 import { DetailPanel, PanelDescription, PanelField } from "./DetailPanel";
 import { RARITY_COLOR, ITEM_TYPE_LABEL } from "./ItemsTab";
-import { ProficiencyDot } from "./ProficiencyDot";
 
 type Open = { kind: "item"; item: SheetItem } | { kind: "spell"; spell: SheetSpell } | null;
 
@@ -88,10 +87,7 @@ function EquippedList({
 
   return (
     // Borderless rows, not chips: a hairline divider between items instead of
-    // a box around each one. Rarity moves off the item name (where a light
-    // theme's fixed rarity hex could fight the text for contrast) onto a
-    // thin left rail — still a rarity signal, just not one riding on the
-    // thing you're actually trying to read.
+    // a box around each one.
     <div className="flex flex-col self-start">
       {items.map((item) => {
         const rarityColor = item.rarity ? RARITY_COLOR[item.rarity.toLowerCase()] : undefined;
@@ -100,11 +96,15 @@ function EquippedList({
             key={item.id}
             type="button"
             onClick={() => onSelect(item)}
-            style={{ borderLeftColor: rarityColor ?? "var(--hairline)" }}
-            className="flex items-center gap-2 border-b border-l-2 border-hairline py-1.5 pl-2 pr-1 text-left transition last:border-b-0 hover:bg-cod-soft"
+            className="flex items-center gap-2 border-b border-hairline py-1.5 pl-2 pr-1 text-left transition last:border-b-0 hover:bg-cod-soft"
           >
             <Thumb art={art} path={item.imgPath} size={18} />
-            <span className="min-w-0 flex-1 truncate font-body text-[13px] text-ink">{item.name}</span>
+            <span
+              className="min-w-0 flex-1 truncate font-body text-[13px]"
+              style={{ color: rarityColor ?? "var(--ink)" }}
+            >
+              {item.name}
+            </span>
             {item.damage && (
               <span className="shrink-0 font-display text-[10px] uppercase tracking-[0.08em] text-muted">
                 {item.damage.formula}
@@ -147,9 +147,9 @@ function PreparedColumn({
               key={spell.id}
               type="button"
               onClick={() => onSelect(spell)}
+              title={spell.preparationMode}
               className="flex items-center gap-2 border-b border-hairline py-1.5 pl-2 pr-1 text-left transition last:border-b-0 hover:bg-cod-soft"
             >
-              <ProficiencyDot level="proficient" title={spell.preparationMode} />
               <Thumb art={art} path={spell.imgPath} size={18} />
               <span className="min-w-0 flex-1 truncate font-body text-[13px] text-ink">{spell.name}</span>
             </button>
