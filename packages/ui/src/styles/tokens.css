@@ -137,23 +137,23 @@
    tokens the same way Retro does for corner radius. Each selector is
    deliberately narrow — the reasoning is with each rule. */
 
-/* 1. The stock. A halftone dot screen over the page ground — the texture the
-      whole look sits on. Two rounds of "still can't see it," and both times
-      the fix was raising the number without actually measuring the result:
-      the deployed 7px/16% version, checked by rendering it to a canvas and
-      reading the real pixels rather than trusting the CSS math, measured a
-      genuinely-invisible 1.37:1 contrast — indistinguishable from the
-      draft's original 4px/7.5%. The same measurement at 50% opacity comes
-      out to 2.9:1, which is what "a grid, not a tint" needs: a texture meant
-      to be seen has no reason to stay near-invisible the way a hairline
-      divider does. */
+/* 1. The stock. Two rounds of "still can't see it" landed this at a
+      genuinely-measured 2.9:1 contrast (rendered to a canvas and the pixels
+      read directly, not trusted from the CSS numbers) — legible as a
+      texture at last, but a dot screen at that strength sits directly under
+      body copy with nothing between them on a page like Home, where there's
+      no card to carry it. A line screen reads calmer at the same strength:
+      a diagonal hairline is a rule getting company, where a dot is a fleck
+      of contrast text has to read past. Same duotone-print vocabulary —
+      two-colour work lays a plate as a line screen as often as a dot one —
+      so the theme doesn't lose anything by the swap, applied everywhere
+      the dot screen was, not scoped to any one page. */
 :root[data-theme="paperback"] body {
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    rgba(27, 27, 27, 0.5) 1.4px,
-    transparent 2px
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(27, 27, 27, 0.075) 0 1px,
+    transparent 1px 5px
   );
-  background-size: 7px 7px;
 }
 
 /* 2. Stamped section headers printed in the bright teal rather than near-black
