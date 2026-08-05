@@ -19,7 +19,11 @@ export const ROLE_KINDS = new Set<NpcKindDb>(["person", "creature"]);
 export function NpcRoleLabel({ role, kind }: { role: NpcRoleDb; kind: NpcKindDb }) {
   if (!ROLE_KINDS.has(kind)) return null;
   return (
-    <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+    // --wine, not --muted: "NPC" / "Player character" is the fact worth
+    // noticing on a card at a glance (the doc comment above says so), and a
+    // neutral grey read as the same weight as any other metadata on the
+    // card. --wine is the app's one red across every theme.
+    <span className="font-display text-[10px] font-semibold uppercase tracking-[0.1em] text-wine">
       {ROLE_LABEL[role]}
     </span>
   );

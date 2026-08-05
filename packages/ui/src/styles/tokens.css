@@ -146,9 +146,16 @@
       a diagonal hairline is a rule getting company, where a dot is a fleck
       of contrast text has to read past. Same duotone-print vocabulary —
       two-colour work lays a plate as a line screen as often as a dot one —
-      so the theme doesn't lose anything by the swap, applied everywhere
-      the dot screen was, not scoped to any one page. */
-:root[data-theme="paperback"] body {
+      so the theme doesn't lose anything by the swap.
+
+      Targeted at `.bg-parchment`, not `body`: every page shell (the module
+      layouts, the marketing sections, `<body>` itself) is an opaque
+      bg-parchment DIV painted on top of body, which is why the texture only
+      ever showed up on Home — Home is the one page whose own shell doesn't
+      cover the full viewport with a solid fill sitting between body and the
+      content. Every element actually carrying the page's parchment fill
+      gets the texture now, not just the one underneath all of them. */
+:root[data-theme="paperback"] .bg-parchment {
   background-image: repeating-linear-gradient(
     45deg,
     rgba(27, 27, 27, 0.075) 0 1px,

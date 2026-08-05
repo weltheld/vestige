@@ -10,8 +10,14 @@ import type { AutoLinker } from "@/lib/journal/auto-link";
 /** Renders the tokens from tokenizeInline(). Parsing lives in that module so
  *  it can be tested without a JSX runtime; this file is only presentation. */
 
+// The old hover (colour only, on a 1px rule) compiled and fired correctly
+// but was too small a change on too thin a line to register as "something
+// happened." decoration-2 on hover adds a second, unmissable axis — the
+// rule visibly thickens at the same moment it darkens — while staying the
+// same quiet colour-only language rather than the bolder glow/background
+// effects that were drafted and turned down.
 const LINK_CLASS =
-  "text-wine underline decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] underline-offset-2 transition hover:decoration-wine";
+  "text-wine underline decoration-[color-mix(in_srgb,var(--wine)_40%,transparent)] underline-offset-2 transition hover:decoration-2 hover:decoration-wine";
 
 /**
  * Render one run of inline markdown. `campaignId` enables codex/session

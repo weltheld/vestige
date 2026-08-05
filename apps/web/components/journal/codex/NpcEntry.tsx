@@ -95,9 +95,18 @@ export function NpcEntry({
       </div>
 
       {npc.image_url && (
-        <figure className="overflow-hidden rounded-lg border border-hairline bg-cod-soft">
+        // object-contain, not object-cover: the old crop forced every image
+        // to the width of the card at a fixed max-height, cutting off
+        // whatever didn't fit that box. max-height stays only as a ceiling
+        // for a pathologically tall image — anything within it now renders
+        // at its own real proportions instead of being cropped to fit ours.
+        <figure className="flex max-h-[480px] items-center justify-center overflow-hidden rounded-lg border border-hairline bg-cod-soft">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={npc.image_url} alt={npc.name} className="max-h-80 w-full object-cover" />
+          <img
+            src={npc.image_url}
+            alt={npc.name}
+            className="max-h-[480px] w-full object-contain"
+          />
         </figure>
       )}
 
@@ -106,6 +115,13 @@ export function NpcEntry({
           summary={npc.summary}
           campaignId={campaignId}
           className="whitespace-pre-line font-body text-[15px] leading-[1.8] text-ink"
+          // mentionTargets already excludes this entry (getMentionTargets'
+          // excludeNpcId) and already fed the @-menu while editing — reusing
+          // it here means a plain-text mention of another entry's name
+          // crosslinks it too, without waiting for someone to have typed @
+          // for it. Sessions are filtered out: they aren't codex cards, so
+          // auto-linking them here isn't what was asked for.
+          codexEntries={mentionTargets.filter((t) => t.type !== "session")}
         />
       ) : (
         <p className="font-body text-[14px] italic text-muted">
