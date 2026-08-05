@@ -4,7 +4,6 @@ import { useState } from "react";
 import type { CharacterSheetData, SheetSpell } from "@vestige/db";
 import { DetailPanel, PanelDescription, PanelField } from "./DetailPanel";
 import { Empty, GroupHeading } from "./ItemsTab";
-import { ProficiencyDot } from "./ProficiencyDot";
 import { Thumb } from "./Thumb";
 
 const LEVEL_LABEL = [
@@ -24,9 +23,9 @@ const LEVEL_LABEL = [
  * The spellbook — every known spell, grouped by level.
  *
  * All spells show, not just prepared ones: a spell you know but haven't
- * prepared today is still something you look up. Prepared ones carry the same
- * gold dot the sheet uses for skill proficiency, so "this is active right now"
- * reads identically wherever it appears.
+ * prepared today is still something you look up. Same row shape as the
+ * Features tab (no proficiency mark) — prepared status is still there on
+ * hover, in the row's own title, rather than as a separate visible mark.
  */
 export function SpellsTab({
   spells,
@@ -62,12 +61,9 @@ export function SpellsTab({
                       type="button"
                       onClick={() => setOpenId(spell.id)}
                       aria-expanded={openId === spell.id}
+                      title={spell.prepared ? spell.preparationMode : "Not prepared"}
                       className="flex w-full items-center gap-2.5 py-2 text-left transition hover:opacity-80"
                     >
-                      <ProficiencyDot
-                        level={spell.prepared ? "proficient" : "none"}
-                        title={spell.prepared ? spell.preparationMode : "Not prepared"}
-                      />
                       <Thumb art={art} path={spell.imgPath} />
                       <span className="min-w-0 flex-1">
                         <span className="truncate font-body text-[14px] text-ink">
