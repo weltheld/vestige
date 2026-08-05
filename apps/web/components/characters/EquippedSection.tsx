@@ -87,45 +87,38 @@ function EquippedList({
   }
 
   return (
-    // self-start: this list sits in a grid cell beside the prepared-spells
-    // column, which grid stretches to match row height when one column is
-    // taller — without this, that extra height cascaded into the flex-wrap
-    // row below via its own default stretch, and every chip inflated to fill
-    // it instead of sizing to its own two lines of text.
-    <div className="flex flex-wrap items-start gap-1.5 self-start">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => onSelect(item)}
-          className="flex items-start gap-1.5 border border-hairline bg-surface py-1 pl-1 pr-2 text-left transition hover:border-gold"
-        >
-          <Thumb art={art} path={item.imgPath} size={18} />
-          <span className="flex flex-col">
-            <span className="flex items-center gap-1.5">
-              <span
-                className="font-body text-[13px] text-ink"
-                style={
-                  item.rarity && RARITY_COLOR[item.rarity.toLowerCase()]
-                    ? { color: RARITY_COLOR[item.rarity.toLowerCase()] }
-                    : undefined
-                }
-              >
-                {item.name}
+    // Borderless rows, not chips: a hairline divider between items instead of
+    // a box around each one. Rarity moves off the item name (where a light
+    // theme's fixed rarity hex could fight the text for contrast) onto a
+    // thin left rail — still a rarity signal, just not one riding on the
+    // thing you're actually trying to read.
+    <div className="flex flex-col self-start">
+      {items.map((item) => {
+        const rarityColor = item.rarity ? RARITY_COLOR[item.rarity.toLowerCase()] : undefined;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onSelect(item)}
+            style={{ borderLeftColor: rarityColor ?? "var(--hairline)" }}
+            className="flex items-center gap-2 border-b border-l-2 border-hairline py-1.5 pl-2 pr-1 text-left transition last:border-b-0 hover:bg-cod-soft"
+          >
+            <Thumb art={art} path={item.imgPath} size={18} />
+            <span className="min-w-0 flex-1 truncate font-body text-[13px] text-ink">{item.name}</span>
+            {item.damage && (
+              <span className="shrink-0 font-display text-[10px] uppercase tracking-[0.08em] text-muted">
+                {item.damage.formula}
               </span>
-              {item.damage && (
-                <span className="font-display text-[10px] uppercase tracking-[0.08em] text-muted">
-                  {item.damage.formula}
-                </span>
-              )}
+            )}
+            {/* Promoted from `muted` to `ink-soft` — muted is tuned against a
+                dark surface and drops below readable contrast on the light
+                themes. */}
+            <span className="shrink-0 font-display text-[10px] uppercase tracking-[0.04em] text-ink-soft">
+              {ITEM_TYPE_LABEL[item.type]}
             </span>
-            {/* Same "note under the value" language as the vitals boxes
-                above (e.g. "Charisma" under "Save DC") — what kind of thing
-                this is, in the same small muted line. */}
-            <span className="font-body text-[10px] text-muted">{ITEM_TYPE_LABEL[item.type]}</span>
-          </span>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -147,17 +140,18 @@ function PreparedColumn({
   return (
     <div className="flex flex-col gap-2.5 self-start">
       {spells.length > 0 && (
-        <div className="flex flex-wrap items-start gap-1.5">
+        // Same borderless-row language as the equipped items list beside it.
+        <div className="flex flex-col">
           {spells.map((spell) => (
             <button
               key={spell.id}
               type="button"
               onClick={() => onSelect(spell)}
-              className="inline-flex items-center gap-1.5 border border-hairline bg-surface py-1 pl-1 pr-2 text-left transition hover:border-gold"
+              className="flex items-center gap-2 border-b border-hairline py-1.5 pl-2 pr-1 text-left transition last:border-b-0 hover:bg-cod-soft"
             >
               <ProficiencyDot level="proficient" title={spell.preparationMode} />
               <Thumb art={art} path={spell.imgPath} size={18} />
-              <span className="font-body text-[13px] text-ink">{spell.name}</span>
+              <span className="min-w-0 flex-1 truncate font-body text-[13px] text-ink">{spell.name}</span>
             </button>
           ))}
         </div>
@@ -169,10 +163,15 @@ function PreparedColumn({
 
 /** Filled-pip trackers, one row per slot level: how many pips are filled is
  *  how many slots are left, so "can I still cast this" reads at a glance
- *  without doing the subtraction from value/max. */
+ *  without doing the subtraction from value/max.
+ *
+ *  Un-stretched: the previous version's pip field flexed to fill whatever
+ *  width the grid cell gave it, so four small circles could end up spread
+ *  across most of a wide sheet. Pips here size to their own content and the
+ *  fraction sits right after them instead of pinned to the row's far edge. */
 function SpellSlots({ slots }: { slots: NonNullable<CharacterSheetData["stats"]["spellSlots"]> }) {
   return (
-    <ul className="flex flex-col gap-1.5">
+    <ul className="flex flex-col gap-1">
       {slots.levels.map((slot) => (
         <SlotRow key={slot.level} label={ordinal(slot.level)} value={slot.value} max={slot.max} />
       ))}
@@ -203,25 +202,25 @@ function SlotRow({
   max: number;
 }) {
   return (
-    <li className="flex items-center gap-2">
+    <li className="flex items-center gap-1.5">
       <span
-        className={`w-10 shrink-0 font-display text-[13px] leading-none ${labelClassName ?? "text-ink-soft"}`}
+        className={`w-9 shrink-0 text-right font-display text-[11px] leading-none ${labelClassName ?? "text-muted"}`}
       >
         {label}
       </span>
-      <span className="flex flex-1 flex-wrap gap-1">
+      <span className="flex shrink-0 gap-[3px]">
         {Array.from({ length: max }).map((_, i) => (
           <span
             key={i}
-            className={`h-[11px] w-[11px] shrink-0 rounded-full border-[1.5px] border-wine ${
+            className={`h-[7px] w-[7px] shrink-0 rounded-full border border-wine ${
               i < value ? "bg-wine" : "bg-transparent"
             }`}
           />
         ))}
       </span>
-      <span className="shrink-0 font-display text-[13px] leading-none tabular-nums text-ink-soft">
+      <span className="shrink-0 font-body text-[10.5px] leading-none tabular-nums text-muted">
         {value}/{max}
-        {suffix && <span className="text-muted"> · {suffix}</span>}
+        {suffix && <span> · {suffix}</span>}
       </span>
     </li>
   );
