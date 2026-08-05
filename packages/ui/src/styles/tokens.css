@@ -163,16 +163,17 @@
   );
 }
 
-/* 2. Stamped section headers printed in the bright teal rather than near-black
-      ink, with the label knocked back to ink so it still reads — dark type on
-      full-strength teal clears AA at 5.8:1, where white on it would sit at
-      2.9:1 and fail. Scoped to headings on purpose: the other `bg-ink` users
-      are modal scrims, the image cropper and the session hero's overlay, and
-      those must stay ink. */
+/* 2. Section headers as a rule, not a stamp: a full-strength teal fill
+      behind a 9-11px label read as too much ink for a shape that small — the
+      label sits on the plain surface instead, in the page's own ink, with
+      the second plate reduced to a keyline underneath it. Scoped to headings
+      on purpose: the other `bg-ink` users are modal scrims, the image
+      cropper and the session hero's overlay, and those must stay ink. */
 :root[data-theme="paperback"] h2.bg-ink,
 :root[data-theme="paperback"] h3.bg-ink {
-  background-color: var(--gold-soft);
+  background-color: transparent;
   color: var(--ink);
+  border-bottom: 2px solid var(--gold);
 }
 
 /* 3. Hard keylines take the second plate. All ten `border-ink` usages are
