@@ -18,12 +18,21 @@ import { characters } from "@/lib/journal/links";
  * hand. `raw_data` keeps the export so a better parser can re-derive `data`
  * later without anyone re-pushing.
  *
- * Pushed sheets land in the owner's library, not in a campaign: the token
- * says whose they are, and which campaign they belong to is chosen in
- * Vestige afterwards. The upsert is therefore keyed on
- * (owner_id, foundry_actor_id), and it never writes campaign_id or
+ * Pushed sheets land in the owner's library by default, and which campaign
+ * they belong to is chosen in Vestige afterwards. The upsert is keyed on
+ * (owner_id, foundry_actor_id), and normally never writes campaign_id or
  * player_id — pushing after every session updates the character in place and
- * leaves the filing alone, which is the whole point of doing it this way.
+ * leaves the filing alone, which is the point of doing it this way.
+ *
+ * The module's Campaign Manager is the exception: a sync from there sends
+ * `flags.vestige.campaignId` in the export, naming the paired campaign to
+ * file straight into. Honoured only after confirming the token's owner is
+ * actually a member of that campaign — a stale pairing (removed from the
+ * campaign since) is silently ignored rather than trusted, and the response
+ * says so via `campaignId: null` so the module can warn instead of assuming
+ * it worked. Moving a sheet to a different campaign this way clears any
+ * existing player allocation, same as unfiling it manually does — the old
+ * campaign's roster has no bearing on the new one.
  *
  * Reachable at  <platform>/characters/api/foundry/ingest.
  */
@@ -75,9 +84,32 @@ export async function POST(req: Request) {
     manualPortraitUrl: previousData?.manualPortraitUrl,
   };
 
-  // campaign_id and player_id are absent from this write on purpose. The
+  // A sync from the Campaign Manager names its target campaign here. Trusted
+  // only once membership is confirmed — anyone could otherwise name a
+  // campaign id they have no business filing into.
+  const requestedCampaignId =
+    typeof (raw as { flags?: { vestige?: { campaignId?: unknown } } })?.flags?.vestige
+      ?.campaignId === "string"
+      ? (raw as { flags: { vestige: { campaignId: string } } }).flags.vestige.campaignId
+      : null;
+
+  let targetCampaignId: string | null = null;
+  if (requestedCampaignId) {
+    const { data: membership } = await admin
+      .from("campaign_members")
+      .select("campaign_id")
+      .eq("campaign_id", requestedCampaignId)
+      .eq("user_id", ownerId)
+      .maybeSingle();
+    if (membership) targetCampaignId = requestedCampaignId;
+  }
+
+  // campaign_id and player_id are left untouched on an ordinary push — the
   // filing is Vestige's, and a push that undid it would make syncing after
-  // each session a chore rather than the point.
+  // each session a chore rather than the point. A validated campaign target
+  // is the one case that writes both: it moves the sheet, and clears any
+  // player allocation from wherever it used to be, since that campaign's
+  // roster has nothing to do with the new one.
   const { data, error } = await admin
     .from("character_sheets")
     .upsert(
@@ -89,10 +121,11 @@ export async function POST(req: Request) {
         raw_data: raw,
         imported_by: ownerId,
         updated_at: new Date().toISOString(),
+        ...(targetCampaignId ? { campaign_id: targetCampaignId, player_id: null } : {}),
       },
       { onConflict: "owner_id,foundry_actor_id" },
     )
-    .select("id, name")
+    .select("id, name, campaign_id")
     .single();
 
   if (error || !data) {
@@ -106,6 +139,9 @@ export async function POST(req: Request) {
 
   revalidatePath(characters.library());
   if (existing?.campaign_id) revalidatePath(characters.campaign(existing.campaign_id));
+  if (data.campaign_id && data.campaign_id !== existing?.campaign_id) {
+    revalidatePath(characters.campaign(data.campaign_id));
+  }
 
   // `missingArt` is the point of the response: the module reads it and
   // uploads exactly those files, skipping every icon this campaign already
@@ -127,7 +163,12 @@ export async function POST(req: Request) {
       replaced: !!existing,
       // So the module can say "sitting in your library" versus "updated in
       // <campaign>" rather than leaving the user to go and look.
-      filed: !!existing?.campaign_id,
+      filed: !!data.campaign_id,
+      // Echoes back what actually got applied, not just what was asked for —
+      // null here despite a campaignId in the request means the pairing is
+      // stale (no longer a member of that campaign) and the module should
+      // say so rather than reporting a sync that didn't really happen.
+      campaignId: data.campaign_id,
       missingArt,
       wantedArt,
     },
