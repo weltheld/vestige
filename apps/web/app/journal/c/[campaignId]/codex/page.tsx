@@ -90,7 +90,7 @@ export default async function CodexPage({
                           )}
                           <span className="truncate font-display text-lg text-ink">{npc.name}</span>
                         </span>
-                        <NpcRoleLabel role={npc.role} kind={npc.kind} />
+                        <NpcRoleLabel role={npc.role} kind={npc.kind} compact />
                       </div>
                       {npc.summary ? (
                         <SummaryWithFootnotes
