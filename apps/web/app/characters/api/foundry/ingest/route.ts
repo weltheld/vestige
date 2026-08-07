@@ -30,9 +30,11 @@ import { characters } from "@/lib/journal/links";
  * actually a member of that campaign — a stale pairing (removed from the
  * campaign since) is silently ignored rather than trusted, and the response
  * says so via `campaignId: null` so the module can warn instead of assuming
- * it worked. Moving a sheet to a different campaign this way clears any
- * existing player allocation, same as unfiling it manually does — the old
- * campaign's roster has no bearing on the new one.
+ * it worked. Only an actual MOVE to a different campaign clears the player
+ * allocation, same as unfiling a sheet manually does — the old campaign's
+ * roster has no bearing on the new one. Syncing again to the SAME campaign
+ * (the normal case — every session after the first) leaves it alone, so the
+ * DM does not have to reassign who plays a character after every sync.
  *
  * Reachable at  <platform>/characters/api/foundry/ingest.
  */
@@ -107,9 +109,12 @@ export async function POST(req: Request) {
   // campaign_id and player_id are left untouched on an ordinary push — the
   // filing is Vestige's, and a push that undid it would make syncing after
   // each session a chore rather than the point. A validated campaign target
-  // is the one case that writes both: it moves the sheet, and clears any
-  // player allocation from wherever it used to be, since that campaign's
-  // roster has nothing to do with the new one.
+  // writes campaign_id, but player_id is only cleared when that target is
+  // DIFFERENT from where the sheet already was — moving it. Syncing again to
+  // the same campaign (every session after the first) must not touch it, or
+  // the DM would have to reassign the player after every single sync, which
+  // is exactly the busywork this feature exists to remove.
+  const isMove = !!targetCampaignId && targetCampaignId !== existing?.campaign_id;
   const { data, error } = await admin
     .from("character_sheets")
     .upsert(
@@ -121,7 +126,8 @@ export async function POST(req: Request) {
         raw_data: raw,
         imported_by: ownerId,
         updated_at: new Date().toISOString(),
-        ...(targetCampaignId ? { campaign_id: targetCampaignId, player_id: null } : {}),
+        ...(targetCampaignId ? { campaign_id: targetCampaignId } : {}),
+        ...(isMove ? { player_id: null } : {}),
       },
       { onConflict: "owner_id,foundry_actor_id" },
     )
