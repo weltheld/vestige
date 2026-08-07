@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Feather, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Feather, X } from "lucide-react";
 import type { HeaderCampaign } from "@vestige/ui";
 import type { LibraryEntry } from "@/lib/characters/data";
 import type { CampaignPlayer } from "@/lib/journal/data";
 import type { FoundryConnection } from "@/lib/characters/foundry-link";
+import { appHref } from "@/lib/journal/links";
 import { FoundryConnectionCard } from "./FoundryConnectionCard";
 import { LibraryList } from "./LibraryList";
 
@@ -81,6 +83,20 @@ export function LibraryPanel({
 
   return (
     <main className="mx-auto flex w-full max-w-[900px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
+      {/* The only way out of this page: the characters/ layout strips the
+          usual site header for the whole subtree so the modal variant of
+          this same panel can overlay a sheet cleanly, but that leaves a
+          direct visit or reload of the standalone page — which is what
+          Next.js falls back to whenever this isn't reached via an in-app
+          <Link> — with no chrome at all. The modal variant already has its
+          own close button; this is the one variant that needed one. */}
+      <Link
+        href={appHref()}
+        className="inline-flex w-fit items-center gap-1.5 font-body text-[13px] text-ink-soft transition hover:text-gold"
+      >
+        <ArrowLeft size={14} />
+        Back to Vestige
+      </Link>
       <Heading />
       {body}
     </main>
