@@ -92,16 +92,23 @@ async function getJson<T>(url: string, what: string): Promise<Fetched<T & ApiErr
 type SearchResp = { query?: { search?: Array<{ title: string }> } };
 type ParseResp = { parse?: { title?: string; text?: { "*"?: string } } };
 
-/** Pick the best page title for a name: exact (case-insensitive), then
- *  name-contains, then the search engine's top hit. */
+/** Pick the best page title for a name: exact (case-insensitive), else the
+ *  search engine's own top-ranked hit.
+ *
+ *  Used to also fall back to the first title whose text merely *contained*
+ *  the query. That heuristic ranked by substring position, not relevance —
+ *  for "Nott the Brave" it preferred "The Mighty Nein Origins: Nott the
+ *  Brave" (a lore/video article whose title happens to contain the search
+ *  string) over "Veth Brenatto" (Nott's actual character page, which the
+ *  search results didn't even list under that name). Dropped: the search
+ *  API's own ranking is a better bet than a naive substring match, and
+ *  `lookupCriticalRole` now tries the name directly first anyway, which
+ *  resolves exactly this kind of alias via the wiki's redirect table before
+ *  search is ever consulted. */
 function pickTitle(titles: string[], query: string): string | null {
   if (titles.length === 0) return null;
   const q = query.trim().toLowerCase();
-  return (
-    titles.find((t) => t.trim().toLowerCase() === q) ??
-    titles.find((t) => t.toLowerCase().includes(q)) ??
-    titles[0]
-  );
+  return titles.find((t) => t.trim().toLowerCase() === q) ?? titles[0] ?? null;
 }
 
 /** Fetch and clean one article's lead section by exact page title. */
@@ -142,26 +149,26 @@ export async function lookupCriticalRole(rawName: string): Promise<WikiLookup> {
   const name = rawName.trim();
   if (!name) return { ok: false, reason: "no name was given" };
 
+  // Tried first, not as a fallback: MediaWiki's own redirect table resolves
+  // aliases, epithets and "the X" nicknames ("Nott the Brave" -> "Veth
+  // Brenatto") that the search step below has no notion of — `list=search`
+  // ranks by text match, not by "is this what that name redirects to", and
+  // can miss the real article entirely while still surfacing unrelated
+  // pages whose titles happen to contain the search string. Search is only
+  // reached once a direct/redirect lookup has had its chance.
+  const direct = await leadOf(name);
+  if (direct.ok) return direct;
+
   const search = await getJson<SearchResp>(
     `${API}?action=query&list=search&srsearch=${encodeURIComponent(name)}&srlimit=5&format=json&origin=*`,
     "search",
   );
-
-  // A failed search doesn't end the attempt: plenty of entries are named
-  // exactly as their article is titled, so the title is tried directly. That
-  // covers both a refused search step and a search index that simply misses.
-  if (!search.ok) {
-    const direct = await leadOf(name);
-    return direct.ok ? direct : { ok: false, reason: search.reason };
-  }
+  if (!search.ok) return { ok: false, reason: search.reason };
 
   const titles = (search.data.query?.search ?? []).map((s) => s.title);
   const title = pickTitle(titles, name);
   if (!title) {
-    const direct = await leadOf(name);
-    return direct.ok
-      ? direct
-      : { ok: false, reason: `no article matches “${name}”` };
+    return { ok: false, reason: `no article matches “${name}”` };
   }
 
   return leadOf(title);
