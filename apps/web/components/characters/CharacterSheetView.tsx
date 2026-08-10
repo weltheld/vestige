@@ -197,9 +197,32 @@ function SheetHeader({
     { label: "Race", value: identity.race, iconPath: identity.raceIconPath },
     { label: "Background", value: identity.background, iconPath: identity.backgroundIconPath },
   ].filter((f) => !!f.value?.trim());
+  // Below lg, the same fields regroup into two fixed rows (class + subclass,
+  // then race + background) instead of wrapping wherever they happen to
+  // fit — on a narrow screen that ad-hoc wrap could land a field on the
+  // name's own line and truncate a long name harder than it needed to.
+  const classFields = fields.filter((f) => f.label === "Class & level" || f.label === "Subclass");
+  const originFields = fields.filter((f) => f.label === "Race" || f.label === "Background");
+
+  function renderField(field: (typeof fields)[number]) {
+    return (
+      <div key={field.label} className="min-w-0">
+        {/* Thumb renders nothing when the artwork step hasn't copied this
+            icon yet, so a field with no matched art still lines up exactly
+            like it did before this existed. */}
+        <dd className="flex items-center gap-1.5 truncate font-body text-[14px] leading-tight text-ink">
+          <Thumb art={sheet.art} path={field.iconPath} size={18} />
+          <span className="truncate">{field.value}</span>
+        </dd>
+        <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+          {field.label}
+        </dt>
+      </div>
+    );
+  }
 
   return (
-    <header className="flex items-end gap-4 border-b-2 border-ink pb-3">
+    <header className="flex items-start gap-4 border-b-2 border-ink pb-3 lg:items-end">
       {/* A medallion frame, not just a border: a gold ring set outside the
           portrait itself (a gap of its own, so the two read as two rings
           rather than one thick one) with a small diamond at each compass
@@ -274,7 +297,9 @@ function SheetHeader({
         )}
       </div>
 
-      <dl className="flex min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5 pb-1">
+      {/* Desktop (lg+): the name and every field wrap freely in one row,
+          same as before — there's room for it. */}
+      <dl className="hidden min-w-0 flex-1 flex-wrap items-end gap-x-6 gap-y-1.5 pb-1 lg:flex">
         {/* Same size as Class & level, Race, etc. below — it used to be set
             at 28px, nearly double the fields it introduces, which made the
             whole header read as two unrelated tiers rather than one row of
@@ -287,20 +312,28 @@ function SheetHeader({
             Character name
           </dt>
         </div>
-        {fields.map((field) => (
-          <div key={field.label} className="min-w-0">
-            {/* Thumb renders nothing when the artwork step hasn't copied
-                this icon yet, so a field with no matched art still lines
-                up exactly like it did before this existed. */}
-            <dd className="flex items-center gap-1.5 truncate font-body text-[14px] leading-tight text-ink">
-              <Thumb art={sheet.art} path={field.iconPath} size={18} />
-              <span className="truncate">{field.value}</span>
-            </dd>
-            <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
-              {field.label}
-            </dt>
-          </div>
-        ))}
+        {fields.map(renderField)}
+      </dl>
+
+      {/* Mobile: three fixed rows instead of an ad-hoc wrap — a field
+          landing on the name's own line was truncating a long name harder
+          than it needed to. Class & level pairs with Subclass, Race pairs
+          with Background, each its own row below the name. */}
+      <dl className="flex min-w-0 flex-1 flex-col gap-1.5 pb-1 lg:hidden">
+        <div className="min-w-0">
+          <dd className="truncate font-display text-[14px] leading-tight text-ink">
+            {identity.name}
+          </dd>
+          <dt className="font-display text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">
+            Character name
+          </dt>
+        </div>
+        {classFields.length > 0 && (
+          <div className="flex min-w-0 gap-x-5">{classFields.map(renderField)}</div>
+        )}
+        {originFields.length > 0 && (
+          <div className="flex min-w-0 gap-x-5">{originFields.map(renderField)}</div>
+        )}
       </dl>
     </header>
   );
