@@ -75,7 +75,7 @@ export function SignUpForm({ next }: { next: string }) {
           label="CHARACTER NAME"
           value={characterName}
           onChange={setCharacterName}
-          help="How others see you in sessions."
+          help="How others see you in sessions. Changeable any time, per campaign."
         />
         <Field label="EMAIL ADDRESS" value={email} onChange={setEmail} type="email" />
       </div>
