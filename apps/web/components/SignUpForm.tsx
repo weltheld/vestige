@@ -8,6 +8,7 @@ import { getBrowserSupabase } from "@vestige/db/client";
 export function SignUpForm({ next }: { next: string }) {
   const [firstName, setFirstName] = useState("");
   const [characterName, setCharacterName] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,11 @@ export function SignUpForm({ next }: { next: string }) {
         data: {
           first_name: firstName.trim() || null,
           character_name: characterName.trim() || null,
+          // Redeemed the moment the account's session actually exists —
+          // see /auth/callback/route.ts. Can't be redeemed here: signing
+          // up with a magic link means there's no session yet to attach
+          // a campaign membership to.
+          join_code: joinCode.trim().toUpperCase() || null,
         },
       },
     });
@@ -78,6 +84,12 @@ export function SignUpForm({ next }: { next: string }) {
           help="How others see you in sessions. Changeable any time, per campaign."
         />
         <Field label="EMAIL ADDRESS" value={email} onChange={setEmail} type="email" />
+        <Field
+          label="JOIN CODE (OPTIONAL)"
+          value={joinCode}
+          onChange={(v) => setJoinCode(v.toUpperCase())}
+          help="Got a code from a DM? Enter it here to join their campaign as soon as your account is ready."
+        />
       </div>
 
       {error && <p className="font-body text-sm text-vote-no">{error}</p>}

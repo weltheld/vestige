@@ -103,6 +103,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       className={`${display.variable} ${body.variable} ${geometric.variable} ${pixelBody.variable} ${retroContent.variable}`}
+      // The no-flash script below sets data-theme on this element from
+      // localStorage before React hydrates — the server has no way to know
+      // that value ahead of time, so this attribute will always disagree
+      // with the client on first paint. That's the point of the script, not
+      // a bug; suppressing the warning here is the standard fix for exactly
+      // this pattern (same as next-themes uses).
+      suppressHydrationWarning
     >
       <body className="min-h-screen bg-parchment text-ink antialiased">
         {/* Apply the user's saved theme before paint to avoid a flash — or
