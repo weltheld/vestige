@@ -44,6 +44,30 @@ export async function uploadAvatarAction(
   return { ok: true, url: publicUrl };
 }
 
+export type SetAvatarResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Set just the avatar, without the rest of updateProfileAction's validation
+ * (which requires a character/display name — irrelevant here). Used to
+ * apply a portrait picked during sign-up, once a session actually exists to
+ * apply it to — see the sign-up form's own comment on why it can't happen
+ * any earlier than that.
+ */
+export async function setOwnAvatarAction(url: string): Promise<SetAvatarResult> {
+  const supabase = await getServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "You must be signed in." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: url, updated_at: new Date().toISOString() })
+    .eq("id", user.id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
 export type UpdateProfileInput = {
   character_name: string;
   display_name: string;

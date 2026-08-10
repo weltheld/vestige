@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ImagePlus, Mail } from "lucide-react";
 import Link from "next/link";
 import { getBrowserSupabase } from "@vestige/db/client";
+import { ImageCropper } from "@/components/council/ImageCropper";
+
+/** Where a portrait picked at sign-up waits until a session exists to apply
+ *  it to — see PendingAvatarUploader, which reads and clears this on first
+ *  landing in /app after the account is actually created. A data URL, not a
+ *  Blob: sessionStorage only holds strings, and it's a small avatar-sized
+ *  image, not a multi-MB upload. */
+const PENDING_AVATAR_KEY = "vestige-pending-avatar";
 
 export function SignUpForm({ next }: { next: string }) {
   const [firstName, setFirstName] = useState("");
@@ -12,6 +20,41 @@ export function SignUpForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be 5 MB or smaller.");
+      return;
+    }
+    setError(null);
+    setCropFile(file);
+  }
+
+  function onCropConfirm(blob: Blob) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      try {
+        sessionStorage.setItem(PENDING_AVATAR_KEY, dataUrl);
+      } catch {
+        // Private mode or a full quota — the portrait just won't carry
+        // through to sign-in. Not worth failing sign-up over.
+      }
+      setAvatarPreview(dataUrl);
+    };
+    reader.readAsDataURL(blob);
+    setCropFile(null);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,14 +107,44 @@ export function SignUpForm({ next }: { next: string }) {
         campaign in a minute.
       </p>
 
-      {/* Avatar uploader (portrait upload happens after sign-in) */}
+      {/* Avatar uploader. There's no account (and so no storage path to
+          upload to) until the magic link is redeemed, so this crops and
+          holds the image locally — see PendingAvatarUploader, which applies
+          it the moment a session actually exists. */}
+      {cropFile && (
+        <ImageCropper
+          file={cropFile}
+          round
+          aspect={1}
+          viewWidth={256}
+          outputWidth={512}
+          title="Position your portrait"
+          onCancel={() => setCropFile(null)}
+          onConfirm={onCropConfirm}
+        />
+      )}
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onPickPhoto}
+      />
       <button
         type="button"
-        title="You can add a portrait once you're signed in"
-        className="flex h-20 w-20 cursor-default flex-col items-center justify-center gap-1 rounded-full border-[1.5px] border-gold bg-cod-soft text-muted"
+        onClick={() => fileInput.current?.click()}
+        title="Add a portrait"
+        className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border-[1.5px] border-gold bg-cod-soft text-muted transition hover:brightness-95"
       >
-        <ImagePlus size={22} />
-        <span className="font-body text-[11px] italic">Add portrait</span>
+        {avatarPreview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarPreview} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <>
+            <ImagePlus size={22} />
+            <span className="font-body text-[11px] italic">Add portrait</span>
+          </>
+        )}
       </button>
 
       {/* Fields */}

@@ -10,6 +10,7 @@ import { RecentActivity } from "@/components/RecentActivity";
 import { UpcomingRail } from "@/components/UpcomingRail";
 import { PendingInvites, type PendingInvite } from "@/components/PendingInvites";
 import { JoinCampaignForm } from "@/components/JoinCampaignForm";
+import { PendingAvatarUploader } from "@/components/PendingAvatarUploader";
 
 export default async function AppHome() {
   const supabase = await getServerSupabase();
@@ -60,6 +61,7 @@ export default async function AppHome() {
 
   return (
     <div className="flex min-h-screen flex-col pb-[calc(58px+env(safe-area-inset-bottom))] lg:pb-0">
+      <PendingAvatarUploader />
       <VestigeHeader
         user={{ label, avatarUrl: profile?.avatar_url ?? null }}
         calendarHref={defaultCampaign?.slug ? `/calendar/g/${defaultCampaign.slug}` : undefined}
