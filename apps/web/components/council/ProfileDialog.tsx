@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Pencil, LogOut, Settings2, SlidersHorizontal, Check, X } from "lucide-react";
+import { ChevronDown, Pencil, LogOut, Settings2, SlidersHorizontal, Check, X, HelpCircle } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { ProfileEditor } from "./ProfileEditor";
 import { signOutAction } from "@/app/calendar/auth/actions";
@@ -132,6 +132,17 @@ export function ProfileDialog({
               <ThemePicker />
             </div>
             <div className="my-1 h-px bg-hairline" />
+            {/* Same placement as VestigeHeader's own menu — kept in sync
+                with it, same as the rest of this dropdown. */}
+            <DropdownMenu.Item asChild>
+              <Link
+                href="/getting-started"
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"
+              >
+                <HelpCircle size={13} className="text-ink-soft" />
+                Getting started
+              </Link>
+            </DropdownMenu.Item>
             <DropdownMenu.Item
               onSelect={() => setOpen(true)}
               className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-parchment"

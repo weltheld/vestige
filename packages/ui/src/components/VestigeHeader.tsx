@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ScrollText, Library, Users, LogOut, Pencil, ChevronDown, Check, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, ScrollText, Library, Users, LogOut, Pencil, ChevronDown, Check, SlidersHorizontal, HelpCircle } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { getBrowserSupabase } from "@vestige/db/client";
 import { PlatformCrest } from "./PlatformCrest";
@@ -259,6 +259,18 @@ function ProfileMenu({
             <ThemePicker />
           </div>
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
+          {/* The logged-out header links here too, but a signed-in player
+              has no equivalent way back to it — this is the one menu every
+              signed-in user already has open at some point. */}
+          <DropdownMenu.Item asChild>
+            <Link
+              href="/getting-started"
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 font-body text-xs text-ink-soft outline-none transition data-[highlighted]:bg-cod-soft"
+            >
+              <HelpCircle size={13} className="text-muted" />
+              Getting started
+            </Link>
+          </DropdownMenu.Item>
           <DropdownMenu.Item
             // Opens the shared overlay in place (blurred backdrop + close-X),
             // instead of a cross-zone navigation to Calendar's /profile page.

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, ScrollText } from "lucide-react";
+import { CalendarDays, ScrollText, Library, Plug } from "lucide-react";
 import { PlatformCrest } from "./PlatformCrest";
 
 /**
@@ -17,7 +17,7 @@ export function PublicHeader({
    *  bounced the visitor here, so they land back where they meant to go. */
   next,
 }: {
-  current?: "calendar" | "journal" | null;
+  current?: "calendar" | "journal" | "codex" | "characters" | null;
   next?: string;
 }) {
   const withNext = (href: string) => (next ? `${href}?next=${encodeURIComponent(next)}` : href);
@@ -45,6 +45,22 @@ export function PublicHeader({
               icon={<ScrollText size={14} />}
               label="Journal"
               active={current === "journal"}
+            />
+            <ModuleTab
+              href="/features/codex"
+              icon={<Library size={14} />}
+              label="Codex"
+              active={current === "codex"}
+            />
+            {/* No Foundry VTT logo — reproducing their mark without the
+                official brand kit isn't worth the risk, so the Plug icon
+                already used for a Foundry connection elsewhere in the app
+                stands in for it here too. */}
+            <ModuleTab
+              href="/features/characters"
+              icon={<Plug size={14} />}
+              label="Characters"
+              active={current === "characters"}
             />
           </div>
         </nav>
