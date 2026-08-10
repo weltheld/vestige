@@ -171,7 +171,7 @@ export function SignUpForm({ next }: { next: string }) {
       <div className="flex items-center gap-3 rounded-[10px] bg-cod-soft px-3.5 py-3">
         <Mail size={14} className="shrink-0 text-gold" />
         <p className="font-body text-xs text-ink-soft">
-          No password — we&rsquo;ll send a sign-in link to your inbox.
+          No password — we&rsquo;ll send a log-in link to your inbox.
         </p>
       </div>
 
@@ -185,7 +185,12 @@ export function SignUpForm({ next }: { next: string }) {
 
       <p className="text-center font-body text-xs text-ink-soft">
         Already have an account?{" "}
-        <Link href="/signin" className="text-wine underline-offset-4 hover:underline">
+        {/* ml-1, not just the space above: this font's own space glyph is
+            only ~2px wide at this size, too narrow to read as a gap. */}
+        <Link
+          href="/signin"
+          className="ml-1 text-wine underline-offset-4 hover:underline"
+        >
           Log in
         </Link>
       </p>

@@ -77,7 +77,12 @@ export function SignInForm({ next }: { next: string }) {
 
       <p className="text-center font-body text-xs text-ink-soft">
         New here?{" "}
-        <Link href="/signup" className="text-wine underline-offset-4 hover:underline">
+        {/* ml-1, not just the space above: this font's own space glyph is
+            only ~2px wide at this size, too narrow to read as a gap. */}
+        <Link
+          href="/signup"
+          className="ml-1 text-wine underline-offset-4 hover:underline"
+        >
           Create an account
         </Link>
       </p>
