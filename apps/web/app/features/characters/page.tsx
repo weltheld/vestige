@@ -56,14 +56,14 @@ export default function CharactersFeature() {
             body="Push again after every session and the sheet updates in place — HP, gear, spells, everything current, without anyone re-typing a thing."
           />
           <Feature
+            Icon={ShieldCheck}
+            title="Works when Foundry doesn't"
+            body="Stats, items, features, spells — everything's still there to check even when the Foundry server isn't running, nothing to log into."
+          />
+          <Feature
             Icon={ImageUp}
             title="A portrait when Foundry has none"
             body="A token image or a local file path doesn't always survive export. Upload a portrait by hand and it stays, even through the next sync."
-          />
-          <Feature
-            Icon={ShieldCheck}
-            title="No VTT needed to read it"
-            body="A player without Foundry installed, or a DM checking a sheet between sessions, gets the same clean view — nothing to run, nothing to install."
           />
         </div>
       </section>

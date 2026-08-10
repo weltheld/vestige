@@ -42,7 +42,7 @@ export function SignInForm({ next }: { next: string }) {
         </h1>
       </div>
       <p className="-mt-2 font-body text-[13px] italic text-muted">
-        Sign in with a magic link — no password to remember.
+        Log in with a magic link — no password to remember.
       </p>
 
       <label className="flex flex-col gap-1.5">
@@ -63,7 +63,7 @@ export function SignInForm({ next }: { next: string }) {
       <div className="flex items-center gap-3 rounded-[10px] bg-cod-soft px-3.5 py-3">
         <Mail size={14} className="shrink-0 text-gold" />
         <p className="font-body text-xs text-ink-soft">
-          No password — we&rsquo;ll send a sign-in link to your inbox.
+          No password — we&rsquo;ll send a log-in link to your inbox.
         </p>
       </div>
 

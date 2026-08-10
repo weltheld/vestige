@@ -161,7 +161,7 @@ export function InvitePageClient({
           </WaxButton>
         </div>
         <p className="text-xs text-ink-soft">
-          Anyone with this link can sign in by email and join.
+          Anyone with this link can log in by email and join.
         </p>
       </section>
 

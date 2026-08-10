@@ -20,11 +20,11 @@ export default async function SentPage({
           <p className="max-w-[360px] font-body text-[15px] leading-[1.6] text-ink-soft">
             {email ? (
               <>
-                We sent a sign-in link to <span className="text-ink">{email}</span>. Open
+                We sent a log-in link to <span className="text-ink">{email}</span>. Open
                 it to enter Vestige.
               </>
             ) : (
-              <>We sent you a sign-in link. Open it to enter Vestige.</>
+              <>We sent you a log-in link. Open it to enter Vestige.</>
             )}
           </p>
           <p className="font-body text-[11px] text-muted">

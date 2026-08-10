@@ -29,8 +29,8 @@ export function LoginForm({
     initialError
       ? initialErrorMessage ||
           (initialError === "missing_code"
-            ? "That sign-in link is incomplete. Try sending a fresh one."
-            : "That sign-in link could not be redeemed. Try again.")
+            ? "That log-in link is incomplete. Try sending a fresh one."
+            : "That log-in link could not be redeemed. Try again.")
       : null,
   );
 
@@ -99,7 +99,7 @@ export function LoginForm({
               {sending ? "Summoning..." : "Send me a magic link"}
             </WaxButton>
             <p className="text-xs text-ink-soft text-center leading-relaxed">
-              No passwords. We&apos;ll send a one-time sign-in link &mdash; it
+              No passwords. We&apos;ll send a one-time log-in link &mdash; it
               expires in 15 minutes.
             </p>
           </form>
@@ -117,7 +117,7 @@ function SentState({ email, onResend }: { email: string; onResend: () => void })
           Check your inbox
         </p>
         <p className="mt-2 text-sm text-ink leading-snug">
-          A sign-in link has been sent to{" "}
+          A log-in link has been sent to{" "}
           <span className="font-display text-ink">{email}</span>.
         </p>
         <p className="mt-2 text-xs text-ink-soft leading-snug">

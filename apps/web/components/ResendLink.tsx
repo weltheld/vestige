@@ -18,7 +18,7 @@ export function ResendLink({ email, next }: { email: string; next: string }) {
   if (!email) {
     return (
       <a href="/signin" className="font-body text-xs text-ink-soft underline-offset-4 hover:underline">
-        Back to sign in
+        Back to log in
       </a>
     );
   }

@@ -557,7 +557,7 @@ function PlayersTab({
             <SectionLabel>Invite via magic link</SectionLabel>
             <CopyRow value={magicLink} mono />
             <p className="font-body text-[11px] text-muted">
-              Anyone with this link can sign in by email and join.
+              Anyone with this link can log in by email and join.
             </p>
           </section>
 

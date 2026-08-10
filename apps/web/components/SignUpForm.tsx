@@ -113,7 +113,7 @@ export function SignUpForm({ next }: { next: string }) {
       <p className="text-center font-body text-xs text-ink-soft">
         Already have an account?{" "}
         <Link href="/signin" className="text-wine underline-offset-4 hover:underline">
-          Sign in
+          Log in
         </Link>
       </p>
     </form>

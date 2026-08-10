@@ -77,7 +77,7 @@ export function PublicHeader({
           href={withNext("/signin")}
           className="font-display text-xs font-semibold tracking-[0.06em] text-wine transition hover:opacity-80"
         >
-          Sign in
+          Log in
         </Link>
       </div>
     </header>
