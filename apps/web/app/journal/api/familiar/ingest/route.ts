@@ -100,15 +100,33 @@ export async function POST(req: Request) {
       player_characters: str(body.playerCharacters),
       npcs: linked.npcs,
       notes: linked.notes,
-      // Validated rather than trusted: this arrives on an authenticated but
-      // external request, and an unparseable blob should leave the column
-      // NULL (no card) instead of half-populating one.
-      speaking_stats: parseSpeakingStats(body.speakingStats),
     })
     .select("id")
     .single();
   if (error || !session) {
-    return NextResponse.json({ error: "Could not create the session." }, { status: 500 });
+    // The actual Postgres message, not a generic sentence. "Could not create
+    // the session" sent us looking at the recap when the cause was a column.
+    return NextResponse.json(
+      { error: `Could not create the session: ${error?.message ?? "unknown error"}` },
+      { status: 500 },
+    );
+  }
+
+  // Talk time is written separately, and its failure is ignored on purpose.
+  // Folding it into the insert above meant that on a deployment where the
+  // speaking_stats migration hadn't been applied, the WHOLE ingest failed —
+  // a whole session's recap lost to an optional card. Same lesson as the
+  // journal 404: never let an additive column share a statement with the
+  // thing that must not fail.
+  const speakingStats = parseSpeakingStats(body.speakingStats);
+  if (speakingStats) {
+    const { error: statsError } = await admin
+      .from("journal_sessions")
+      .update({ speaking_stats: speakingStats })
+      .eq("id", session.id);
+    if (statsError) {
+      console.warn("[familiar/ingest] speaking stats not stored:", statsError.message);
+    }
   }
 
   // Mention rows for the entities we actually linked in the text — matches
