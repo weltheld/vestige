@@ -1,0 +1,579 @@
+/* ============================================================================
+   VESTIGE DESIGN TOKENS — v1.0
+   Portable, framework-agnostic. No build step, no next/font, no Tailwind.
+   Drop this in and import it once; everything else reads the variables.
+
+   Extracted from the Vestige Campaign platform (Calendar, Journal, Codex,
+   Character Sheet) so sibling projects — Foundry VTT modules, the module
+   showcase site — inherit the same visual language instead of re-deriving it.
+
+   ── HOW THEMING WORKS ──────────────────────────────────────────────────────
+   Seven named themes, switched explicitly by the app (not by OS preference):
+
+       document.documentElement.setAttribute("data-theme", "midnight")
+
+   `:root` alone IS the Parchment theme — it needs no data-theme value, so an
+   un-stamped document renders correctly rather than falling through to
+   nothing. Every other theme redefines ONLY the palette tokens; nothing below
+   the palette block ever needs restating per theme.
+
+   Set the theme before first paint to avoid a flash — see the no-flash
+   snippet at the bottom of this file.
+
+   ── FONTS ──────────────────────────────────────────────────────────────────
+   The platform self-hosts these via next/font. Outside Next, either add the
+   Google Fonts link below to your <head>, or self-host and keep the same
+   family names. Every stack ends in a real system fallback, so the system
+   degrades rather than breaking if a face fails to load:
+
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Jost:wght@400..700&family=IBM+Plex+Sans:ital,wght@0,400..700;1,400&display=swap">
+   ========================================================================= */
+
+/* ==========================================================================
+   1. PALETTE — Parchment (the default theme)
+
+   Fourteen tokens carry the whole product. They're named by ROLE, not by
+   colour, which is the only reason seven wildly different themes can share
+   one component layer: `--wine` is "the primary action colour", and it is
+   genuinely wine-red here, hot pink in Paperback, and magenta in Retro.
+   Never hardcode a hex in a component — reach for the role.
+   ========================================================================== */
+:root {
+  /* Tells the browser which scheme native widgets (select popups, scrollbars,
+     date pickers) should render in. Without it, a dark theme's <option> list
+     can come back as light text on the browser's own white popup. */
+  color-scheme: light;
+
+  /* ── Grounds & surfaces ── */
+  --parchment: #f4ecd8;   /* the page itself */
+  --surface: #faf6ee;     /* cards, panels, anything lifted off the page */
+  --cod-soft: #f9f1dc;    /* a softer inset fill — list rows, quiet wells */
+
+  /* ── Type ── */
+  --ink: #2b2118;         /* primary text */
+  --ink-soft: #5a4a38;    /* secondary text, body copy */
+  --muted: #9e8e78;       /* labels, captions, metadata */
+
+  /* ── Lines ── */
+  --hairline: #d8c8ac;    /* every border and divider */
+
+  /* ── Accents ── */
+  --wine: #6e1423;        /* primary action, "act now" */
+  --gold: #b08d57;        /* the recurring accent — focus rings, marks */
+  --gold-soft: #d9b45a;   /* the lighter gold, for fills behind the accent */
+  --dm-gold: #7a5a12;     /* GM/owner-only affordances */
+
+  /* ── Semantic status (deliberately separate from the accents) ── */
+  --vote-yes: #3e5c44;
+  --vote-maybe: #b08d57;
+  --vote-no: #9a4a3a;
+
+  /* ── Typefaces ──
+     Two roles carry everything: a characterful display serif used with
+     restraint, and a humanist sans for running text. Two themes repoint both
+     at a single face on purpose (see Paperback and Retro below). */
+  --font-display: Cinzel, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-body: "Alegreya Sans", ui-sans-serif, "Segoe UI", system-ui, sans-serif;
+  --font-geometric: Jost, Futura, "Century Gothic", ui-sans-serif, sans-serif;
+  --font-retro-content: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+}
+
+/* ==========================================================================
+   2. THE OTHER SIX THEMES
+
+   Each block redefines the palette and nothing else. If you add a token to
+   `:root` above, decide whether it needs a per-theme value here — a token
+   defined ONLY inside a theme block is invisible in Parchment, which is the
+   classic way this kind of system breaks.
+   ========================================================================== */
+
+/* Midnight — warm dark. The parchment palette after sundown: same browns and
+   golds, inverted, so it reads as the same product at night rather than a
+   different one. */
+:root[data-theme="midnight"] {
+  color-scheme: dark;
+  --parchment: #13110c;
+  --surface: #1f1a13;
+  --cod-soft: #241e16;
+  --ink: #eee5d5;
+  --ink-soft: #b6a891;
+  --muted: #8a7c68;
+  --hairline: #3a3125;
+  --wine: #d06176;
+  --gold: #d9b45a;
+  --gold-soft: #e6c877;
+  --dm-gold: #d9b45a;
+  --vote-yes: #6fbf88;
+  --vote-maybe: #e0b94a;
+  --vote-no: #e07c66;
+}
+
+/* Nebula — cool dark. Deep navy ground, cyan accent, hot-pink primary. The
+   only theme where the accent is cooler than the primary. */
+:root[data-theme="nebula"] {
+  color-scheme: dark;
+  --parchment: #0b0f1e;
+  --surface: #151b33;
+  --cod-soft: #1a2140;
+  --ink: #e7ecff;
+  --ink-soft: #99a6ce;
+  --muted: #6e7ba6;
+  --hairline: #2a3356;
+  --wine: #ff5c8a;
+  --gold: #56d6ea;
+  --gold-soft: #8be6f2;
+  --dm-gold: #56d6ea;
+  --vote-yes: #4fe0a0;
+  --vote-maybe: #e6c34f;
+  --vote-no: #ff6b6b;
+}
+
+/* Ember — firelit dark. Coals and lamplight; the warmest of the dark set. */
+:root[data-theme="ember"] {
+  color-scheme: dark;
+  --parchment: #17110e;
+  --surface: #241a15;
+  --cod-soft: #2a1e17;
+  --ink: #f3e4d1;
+  --ink-soft: #c2ab90;
+  --muted: #8f7a63;
+  --hairline: #402f25;
+  --wine: #e2603a;
+  --gold: #e8a94b;
+  --gold-soft: #f1c877;
+  --dm-gold: #e8a94b;
+  --vote-yes: #8fb56a;
+  --vote-maybe: #e8a94b;
+  --vote-no: #d8503a;
+}
+
+/* Slate — neutral dark. The quietest theme, for people who want none of the
+   fantasy warmth. Cool grey ground, muted brass accent. */
+:root[data-theme="slate"] {
+  color-scheme: dark;
+  --parchment: #13161a;
+  --surface: #1d2127;
+  --cod-soft: #232830;
+  --ink: #e8edf1;
+  --ink-soft: #a3afb9;
+  --muted: #79858f;
+  --hairline: #333b43;
+  --wine: #c86b79;
+  --gold: #c9b36e;
+  --gold-soft: #dbc98c;
+  --dm-gold: #c9b36e;
+  --vote-yes: #6fbf88;
+  --vote-maybe: #d8be63;
+  --vote-no: #d9705f;
+}
+
+/* Paperback — a two-ink risograph zine: fluorescent pink and teal on grey
+   newsprint. The only light theme besides Parchment, and deliberately nothing
+   like it.
+
+   Both inks appear twice at two strengths, because the two jobs have
+   different limits. As TEXT (--wine, --gold, --muted, the vote tints) they're
+   set darker than true fluoro so they clear WCAG AA. As INK ON PAPER
+   (--hairline, --cod-soft, --gold-soft) they stay the real colour, since
+   none of those carries text. Getting that split wrong is what made the first
+   cut of this theme look almost grey. */
+:root[data-theme="paperback"] {
+  color-scheme: light;
+  --parchment: #f2efe4;
+  --surface: #ffffff;
+  --cod-soft: #eaf4f2;
+  --ink: #1b1b1b;
+  --ink-soft: #4a4741;
+  /* Teal-shifted greys, not neutral ones: under two-ink printing even the
+     quiet type carries a trace of the second plate. */
+  --muted: #5a7170;
+  --hairline: #a9d3ce;
+  --wine: #d81e5b;
+  --gold: #006f70;
+  --gold-soft: #00a8a8;
+  --dm-gold: #006f70;
+  /* Green, not the theme's teal. A "yes" reading in the same ink as the
+     accent made tallies ambiguous — yes has meant green everywhere else in
+     the product, and that beats palette purity. */
+  --vote-yes: #237a44;
+  --vote-maybe: #8f6410;
+  --vote-no: #c42350;
+  /* One face for everything, the way a zine is typeset. The display serif
+     would read as a different theme wearing this palette. */
+  --font-display: var(--font-geometric);
+  --font-body: var(--font-geometric);
+}
+
+/* Retro — an 8-bit console RPG: deep indigo ground, cyan chrome, and a
+   magenta that only ever means "act now". The loudest theme by design, and
+   the one that needs most from outside the palette (see §7). */
+:root[data-theme="retro"] {
+  color-scheme: dark;
+  --parchment: #1a1c3a;
+  --surface: #262a58;
+  --cod-soft: #20244a;
+  --ink: #f4f4f4;
+  --ink-soft: #b8bee8;
+  --muted: #959dd6;
+  --hairline: #46508f;
+  --wine: #d8385a;
+  --gold: #6ad0f0;
+  --gold-soft: #9ee6f7;
+  --dm-gold: #6ad0f0;
+  --vote-yes: #58d68d;
+  --vote-maybe: #f7c744;
+  --vote-no: #f2647f;
+  /* One face for both roles. The "retro" read comes from the keylines, the
+     hard shadows and the squared corners (§7) — not from a bitmap font. */
+  --font-display: var(--font-retro-content);
+  --font-body: var(--font-retro-content);
+}
+
+/* ==========================================================================
+   3. TYPE SCALE
+
+   Role-named, not t-shirt-sized, because this product's typography is driven
+   by role: a 9px uppercase gold-tracked label and a 9px caption are different
+   things that happen to share a size, and naming them by size loses that.
+
+   The platform arrived at these values organically as arbitrary Tailwind
+   values (text-[13px], text-[26px], …). Codifying them is the point of this
+   file — new projects should reach for the token, not re-guess the number.
+   ========================================================================== */
+:root {
+  /* Labels — always uppercase, always tracked out, usually --muted */
+  --text-label-xs: 9px;    /* panel header stamps, table column heads */
+  --text-label-sm: 10px;   /* card eyebrows, slot labels */
+  --text-label: 11px;      /* section eyebrows, nav items */
+
+  /* Running text */
+  --text-body-xs: 12px;    /* captions, footnotes, metadata rows */
+  --text-body-sm: 13px;    /* dense UI copy, card bodies */
+  --text-body: 14px;       /* default body */
+  --text-body-lg: 15px;    /* long-form prose, marketing paragraphs */
+
+  /* Headings */
+  --text-title-sm: 17px;
+  --text-title: 20px;
+  --text-title-lg: 22px;
+  --text-heading: 26px;
+
+  /* Display — marketing and hero use only */
+  --text-display-sm: 30px;
+  --text-display: 36px;
+  --text-hero: 48px;
+  --text-hero-lg: 60px;
+
+  /* ── Tracking ──
+     The system's signature: uppercase display type is always tracked out,
+     and the smaller it gets the wider it tracks. */
+  --tracking-hero: 0.02em;   /* large display — barely any */
+  --tracking-tight: 0.04em;
+  --tracking-button: 0.08em; /* button labels */
+  --tracking-label: 0.1em;
+  --tracking-wide: 0.14em;
+  --tracking-stamp: 0.18em;  /* panel header stamps */
+  --tracking-eyebrow: 0.22em; /* the widest — section eyebrows */
+
+  /* ── Line height ── */
+  --leading-none: 1;
+  --leading-tight: 1.2;
+  --leading-snug: 1.45;
+  --leading-body: 1.6;
+  --leading-relaxed: 1.7;   /* the default for prose in this system */
+
+  /* ── Weight ── */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+}
+
+/* ==========================================================================
+   4. SPACE, RADIUS, ELEVATION, MOTION
+   ========================================================================== */
+:root {
+  /* ── Space — a 4px base, which is what the platform's Tailwind usage
+     already resolves to. ── */
+  --space-1: 0.25rem;  /*  4px */
+  --space-2: 0.5rem;   /*  8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+  --space-24: 6rem;    /* 96px — section rhythm on marketing pages */
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-card: 14px;   /* the canonical card */
+  --radius-xl: 16px;
+  --radius-full: 999px;
+
+  /* ── Elevation ──
+     Shadows are tinted with the ink colour rather than pure black, so a
+     lifted card reads as paper on paper instead of a floating rectangle.
+     Kept as literal rgba because a shadow needs alpha, and the ink token is
+     opaque — revisit if you move the palette to channel triplets. */
+  --shadow-parchment: 0 8px 32px -8px rgba(43, 33, 24, 0.18),
+                      0 2px 4px rgba(43, 33, 24, 0.06);
+  --shadow-crest: 0 4px 12px rgba(43, 33, 24, 0.25);
+  --shadow-wine: 0 5px 14px rgba(107, 34, 48, 0.25);
+  --shadow-panel: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
+
+  /* ── Motion ── */
+  --duration-fast: 120ms;
+  --duration: 180ms;
+  --duration-slow: 280ms;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* ── Layout ── */
+  --width-prose: 65ch;     /* running text — keeps lines readable */
+  --width-content: 1080px;
+  --width-page: 1440px;    /* the platform's own max page width */
+  --header-height: 4rem;   /* 64px — matches the app header */
+}
+
+/* ==========================================================================
+   5. BASE ELEMENT STYLES
+   ========================================================================== */
+html,
+body {
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Native select popups can't be fully styled, but browsers that honour
+   option colours get the theme's surface/ink instead of their own defaults. */
+select option {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* Focus ring tuned to gold. Never remove this without replacing it —
+   keyboard users lose the app otherwise. */
+*:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   6. PRIMITIVES
+
+   Deliberately few. These are the patterns that recur so often across the
+   platform that restating them per component was the actual duplication —
+   everything else should compose from the tokens above rather than growing
+   this section.
+   ========================================================================== */
+
+/* ── The eyebrow/label. The single most repeated pattern in the product. ── */
+.v-label {
+  font-family: var(--font-display);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--muted);
+}
+
+/* ── Primary action — a solid wine stamp. ── */
+.v-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.75rem; /* 44px — a comfortable tap target */
+  padding-inline: var(--space-6);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--wine);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: var(--text-body-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-button);
+  cursor: pointer;
+  transition: filter var(--duration) var(--ease),
+              transform var(--duration-fast) var(--ease);
+}
+.v-btn:hover { filter: brightness(1.08); }
+.v-btn:active { transform: translateY(1px); }
+.v-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Secondary action — the same shape, outlined. ── */
+.v-btn-quiet {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+}
+.v-btn-quiet:hover { background: var(--parchment); filter: none; }
+
+/* ── Card — the default lifted container. ── */
+.v-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-parchment);
+}
+
+/* ── Panel — a boxed section with a stamped header bar. The character
+   sheet's signature, and the reason `bg-ink` headings get theme overrides
+   in §7 rather than being restyled per theme. ── */
+.v-panel {
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+}
+.v-panel > h2,
+.v-panel > h3 {
+  margin: 0;
+  background: var(--ink);
+  color: var(--surface);
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-label-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-stamp);
+}
+
+/* ── Hairline divider ── */
+.v-hairline {
+  height: 1px;
+  background: var(--hairline);
+  border: none;
+}
+
+/* ── Prose ── */
+.v-prose {
+  max-width: var(--width-prose);
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--ink-soft);
+}
+
+/* ── Indeterminate progress — a gold sliver sweeping a track. For work with
+   no real byte progress to report (server actions, uploads). ── */
+.v-progress {
+  position: relative;
+  overflow: hidden;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--hairline);
+}
+.v-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: var(--radius-full);
+  background: var(--dm-gold);
+  animation: v-progress-sweep 1.1s ease-in-out infinite;
+}
+@keyframes v-progress-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   7. THEME OVERRIDES THAT REACH PAST THE PALETTE
+
+   Two themes need structure, not just colour, to read as themselves. These
+   are the ONLY rules in the system that a theme uses to override components,
+   and each is deliberately narrow. Resist adding more: a theme that needs
+   five structural exceptions is really asking for a token the palette
+   doesn't have yet.
+   ========================================================================== */
+
+/* Retro: sprites have no rounded corners. Corner radius isn't fully
+   tokenized in real apps (it's utility classes on hundreds of elements), so
+   a theme can't opt out the honest way — this is the one blunt instrument.
+   Squared avatars are a bonus: a pixel portrait is a square. */
+:root[data-theme="retro"] *,
+:root[data-theme="retro"] *::before,
+:root[data-theme="retro"] *::after {
+  border-radius: 0 !important;
+}
+
+/* Retro: the tile grid a level editor draws under a sprite sheet — thin cyan
+   rules every 24px over the indigo ground. */
+:root[data-theme="retro"] .v-ground-texture {
+  background-image:
+    linear-gradient(rgba(106, 208, 240, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(106, 208, 240, 0.14) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Paperback: the newsprint stock — a diagonal line screen. A dot screen at
+   the same strength read as flecks of contrast under body copy; a line
+   screen reads as a rule getting company. Same duotone vocabulary either
+   way, so nothing is lost by the swap. */
+:root[data-theme="paperback"] .v-ground-texture {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(27, 27, 27, 0.075) 0 1px,
+    transparent 1px 5px
+  );
+}
+
+/* Paperback: section headers as a rule, not a stamp. A full-strength teal
+   fill behind a 9px label is too much ink for a shape that small. */
+:root[data-theme="paperback"] .v-panel > h2,
+:root[data-theme="paperback"] .v-panel > h3 {
+  background-color: transparent;
+  color: var(--ink);
+  border-bottom: 2px solid var(--gold);
+}
+
+/* Paperback: hard keylines take the second plate. A black-bordered box on
+   cream is the single most un-riso thing a two-ink theme can do. */
+:root[data-theme="paperback"] .v-panel {
+  border-color: var(--gold);
+}
+
+/* Paperback: links in teal, underlined in pink — the two plates crossing in
+   one detail. Cheap, and it's the thing that sells two-colour printing. */
+:root[data-theme="paperback"] a {
+  text-decoration-color: var(--wine);
+  text-underline-offset: 2px;
+}
+
+/* ==========================================================================
+   8. NO-FLASH THEME SCRIPT
+
+   Put this in <head>, BEFORE any stylesheet, so the theme is on the element
+   before first paint. Reading localStorage in a component effect instead
+   means a visible flash of the default theme on every load.
+
+   <script>
+     try {
+       var t = localStorage.getItem("vestige-theme");
+       document.documentElement.setAttribute("data-theme", t || "parchment");
+     } catch (e) {}
+   </script>
+
+   Note: setting data-theme from a script means the server-rendered HTML and
+   the client disagree on that attribute by design. In React/Next, add
+   `suppressHydrationWarning` to the <html> element — the mismatch is the
+   point of the script, not a bug to fix.
+   ========================================================================= */
