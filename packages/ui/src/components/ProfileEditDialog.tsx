@@ -148,7 +148,7 @@ export function ProfileEditDialog({ open, onClose }: { open: boolean; onClose: (
 
         <header className="flex flex-col items-center gap-1 text-center">
           <p className="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-            Vestige
+            Vestige Campaign
           </p>
           <h1 className="font-display text-2xl text-ink">Your profile</h1>
           {email && (

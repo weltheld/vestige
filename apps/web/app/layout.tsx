@@ -75,9 +75,9 @@ const retroContent = IBM_Plex_Sans({
   display: "swap",
 });
 
-const TITLE = "Vestige — Plan and remember your D&D campaign";
+const TITLE = "Vestige Campaign — Find the date, record the session, remember the campaign";
 const DESCRIPTION =
-  "Plan sessions in the Calendar. Remember them in the Journal. One quiet place for everything your party shares between sessions.";
+  "Find the day your whole party can play, record the session automatically, and keep track of everything your campaign shares — plus player sheets you can open even when the Foundry VTT server isn't running.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_WEB_URL ?? "https://vestige-web-pi.vercel.app"),
@@ -88,7 +88,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
-    siteName: "Vestige",
+    siteName: "Vestige Campaign",
     type: "website",
   },
   twitter: {

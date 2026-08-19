@@ -72,10 +72,11 @@ export function LoginForm({
       <div className="w-full max-w-[460px] rounded-xl border border-hairline bg-surface p-8 shadow-parchment sm:p-10">
         <header className="flex flex-col items-center text-center gap-3">
           <Crest size={72} />
-          <h1 className="font-display text-3xl text-ink">Vestige</h1>
+          <h1 className="font-display text-3xl text-ink">Vestige Campaign</h1>
           <p className="font-body text-ink-soft italic max-w-[36ch]">
-            One home for your tabletop campaigns &mdash; schedule your sessions
-            and chronicle every adventure your party lives through.
+            Find the date, record the session, and keep track of your
+            campaign &mdash; with player sheets you can open even when the
+            Foundry VTT server isn&rsquo;t running.
           </p>
         </header>
 

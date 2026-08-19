@@ -21,10 +21,10 @@ export default async function SentPage({
             {email ? (
               <>
                 We sent a log-in link to <span className="text-ink">{email}</span>. Open
-                it to enter Vestige.
+                it to enter Vestige Campaign.
               </>
             ) : (
-              <>We sent you a log-in link. Open it to enter Vestige.</>
+              <>We sent you a log-in link. Open it to enter Vestige Campaign.</>
             )}
           </p>
           <p className="font-body text-[11px] text-muted">

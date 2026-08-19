@@ -104,7 +104,7 @@ export function SettingsClient({ settings, manage, magicLink, variant = "page" }
 
       <header className="flex flex-col items-center gap-1 text-center">
         <p className="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-          Vestige
+          Vestige Campaign
         </p>
         <h1 className="font-display text-2xl text-ink">{settings.name || "Campaign"}</h1>
         <p className="font-body text-xs text-muted">Settings</p>

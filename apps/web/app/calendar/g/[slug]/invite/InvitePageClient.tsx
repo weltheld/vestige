@@ -135,7 +135,7 @@ export function InvitePageClient({
     <>
       <header className="flex flex-col items-center text-center gap-3">
         <Crest size={56} />
-        <p className="small-caps">Vestige</p>
+        <p className="small-caps">Vestige Campaign</p>
         <h1 className="font-display text-3xl text-ink">Manage campaign</h1>
         <p className="font-body text-ink-soft">{name}</p>
       </header>

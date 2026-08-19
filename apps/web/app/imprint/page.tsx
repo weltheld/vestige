@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalLayout, LegalSection } from "@/components/LegalLayout";
 
 export const metadata: Metadata = {
-  title: "Impressum — Vestige",
+  title: "Impressum — Vestige Campaign",
 };
 
 export default function ImprintPage() {

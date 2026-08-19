@@ -5,7 +5,7 @@ import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Character sheet — Vestige",
+  title: "Character sheet — Vestige Campaign",
   description:
     "Push a character straight out of Foundry VTT into a clean, readable sheet every player at the table can open — no VTT license required to view it.",
 };
@@ -43,7 +43,7 @@ export default function CharactersFeature() {
             href="/signup"
             className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
           >
-            Join Vestige
+            Join Vestige Campaign
           </Link>
         </div>
       </section>
@@ -102,7 +102,7 @@ function ClosingCta() {
         href="/signup"
         className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
       >
-        Join Vestige
+        Join Vestige Campaign
       </Link>
     </section>
   );

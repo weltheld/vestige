@@ -40,7 +40,7 @@ export function PlatformHeader({
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
         <Link
           href="/app"
-          aria-label="Vestige — home"
+          aria-label="Vestige Campaign — home"
           className="flex min-w-0 items-center gap-2.5"
         >
           <Crest size={38} />
@@ -48,7 +48,7 @@ export function PlatformHeader({
               as @vestige/ui's VestigeHeader — keep in sync), so the wordmark
               shows at every size again. */}
           <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
-            Vestige
+            Vestige Campaign
           </span>
         </Link>
 

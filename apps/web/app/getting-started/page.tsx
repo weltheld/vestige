@@ -18,9 +18,9 @@ import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Getting started — Vestige",
+  title: "Getting started — Vestige Campaign",
   description:
-    "From creating your Vestige account to your first auto-written session recap: set up the Familiar desktop app, connect it to your Journal, and record your next D&D session.",
+    "From creating your Vestige Campaign account to your first auto-written session recap: set up the Familiar desktop app, connect it to your Journal, and record your next D&D session.",
 };
 
 const FAMILIAR_URL = "https://dnd-recap-bot.vercel.app";
@@ -40,7 +40,7 @@ export default function GettingStartedPage() {
         </h1>
         <p className="max-w-[640px] font-body text-lg leading-[1.7] text-ink-soft">
           This guide walks you through everything once: create your campaign on
-          Vestige, set up the <strong className="text-ink">Familiar</strong> desktop
+          Vestige Campaign, set up the <strong className="text-ink">Familiar</strong> desktop
           app, connect the two — and after your next session, a structured recap
           appears in your Journal on its own.
         </p>
@@ -57,11 +57,11 @@ export default function GettingStartedPage() {
 
       {/* Phases */}
       <div className="mx-auto w-full max-w-[760px] px-5 pb-24 sm:px-8">
-        <Phase n="I" title="Set up Vestige" Icon={UserRound}>
+        <Phase n="I" title="Set up Vestige Campaign" Icon={UserRound}>
           <Step n={1} title="Create your account">
             <p>
               Go to <Href href="/signup">vestige-web-pi.vercel.app/signup</Href> and enter your
-              email. There is no password — Vestige sends you a <em>magic link</em>. Open the mail
+              email. There is no password — Vestige Campaign sends you a <em>magic link</em>. Open the mail
               (check spam the first time) and click the link; you&rsquo;re signed in.
             </p>
           </Step>
@@ -216,9 +216,9 @@ export default function GettingStartedPage() {
               Yasha, not of <em>user_4711</em>.
             </p>
           </Step>
-          <Step n={11} title="Copy the connection from Vestige">
+          <Step n={11} title="Copy the connection from Vestige Campaign">
             <p>
-              In Vestige, open your campaign&rsquo;s <strong>Settings → Familiar</strong> tab. It
+              In Vestige Campaign, open your campaign&rsquo;s <strong>Settings → Familiar</strong> tab. It
               shows two values: the <strong>Endpoint URL</strong> and this campaign&rsquo;s{" "}
               <strong>Ingest token</strong>{" "}
               <KeyRound size={12} className="inline text-gold" aria-hidden />. Copy both.
@@ -228,7 +228,7 @@ export default function GettingStartedPage() {
             <p>
               In Familiar, open <strong>Settings → Vestige</strong>, select the campaign, paste the{" "}
               <strong>Endpoint URL</strong> and <strong>Ingest token</strong>, and click{" "}
-              <strong>Connect</strong>. Familiar pings your Journal once — back in Vestige, the
+              <strong>Connect</strong>. Familiar pings your Journal once — back in Vestige Campaign, the
               Familiar card now shows <em>Verified</em>. Every finished recap will be delivered
               automatically from now on.
             </p>
@@ -256,7 +256,7 @@ export default function GettingStartedPage() {
           </Step>
           <Step n={15} title="Open your Journal">
             <p>
-              The recap arrives in your Vestige <strong>Journal</strong> as a new session — summary
+              The recap arrives in your Vestige Campaign <strong>Journal</strong> as a new session — summary
               and notes filled in, notable people, places, and events seeded into the{" "}
               <strong>Codex</strong>{" "}
               <Library size={12} className="inline text-gold" aria-hidden />. Read it, edit
@@ -277,14 +277,14 @@ export default function GettingStartedPage() {
           <p className="max-w-[520px] font-body text-[15px] leading-[1.7] text-ink-soft">
             Set up once, then every session simply appears in your chronicle. If something
             doesn&rsquo;t work, the Familiar dashboard shows the status of every stage — Discord,
-            transcription, recap, and the Vestige connection.
+            transcription, recap, and the Vestige Campaign connection.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/signup"
               className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
             >
-              Join Vestige
+              Join Vestige Campaign
             </Link>
             <a
               href={FAMILIAR_URL}

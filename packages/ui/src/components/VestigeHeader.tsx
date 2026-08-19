@@ -82,14 +82,14 @@ export function VestigeHeader({
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
         <Link
           href="/app"
-          aria-label="Vestige — home"
+          aria-label="Vestige Campaign — home"
           className="flex min-w-0 items-center gap-2.5"
         >
           <PlatformCrest size={38} />
           {/* The module tabs moved to the sticky bottom nav on mobile, so
               the header row has room for the wordmark again on every size. */}
           <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
-            Vestige
+            Vestige Campaign
           </span>
         </Link>
 

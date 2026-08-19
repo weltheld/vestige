@@ -95,7 +95,7 @@ export function LibraryPanel({
         className="inline-flex w-fit items-center gap-1.5 font-body text-[13px] text-ink-soft transition hover:text-gold"
       >
         <ArrowLeft size={14} />
-        Back to Vestige
+        Back to Vestige Campaign
       </Link>
       <Heading />
       {body}

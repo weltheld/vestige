@@ -18,7 +18,7 @@ export function Crest({ size = 48, className }: CrestProps) {
       width={size}
       height={size}
       role="img"
-      aria-label="Vestige"
+      aria-label="Vestige Campaign"
       // shrink-0: without it, a tight flex row (header/loading skeleton on a
       // narrow viewport) shrinks this SVG along with its siblings by default
       // — since it's a replaced element with explicit width/height, it

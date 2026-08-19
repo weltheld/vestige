@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Calendar, BookOpen, Library, Sparkles } from "lucide-react";
+import { Calendar, BookOpen, Library, Users } from "lucide-react";
 import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -8,7 +8,7 @@ export default async function Landing({
 }: {
   // Set by middleware when an unauthenticated visitor is bounced here from
   // a protected route (e.g. /app) — carried through to Sign in / Join
-  // Vestige below so they land back where they meant to go.
+  // Vestige Campaign below so they land back where they meant to go.
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
@@ -35,20 +35,23 @@ function Hero({ next }: { next?: string }) {
         One place for your party
       </p>
       <h1 className="font-display text-6xl font-semibold tracking-[0.02em] text-ink sm:text-7xl">
-        Vestige
+        Vestige Campaign
       </h1>
       <p className="max-w-[600px] font-body text-lg leading-[1.7] text-ink-soft sm:text-xl">
-        Plan sessions in the Calendar. Remember them in the Journal. One quiet
-        place for everything your party shares between sessions.
+        Find the day your whole party can play, record what happens when you
+        do, and keep track of everything your campaign shares between
+        sessions — with player sheets anyone can open, even when the Foundry
+        VTT server isn&rsquo;t running.
       </p>
 
-      {/* Just Join Vestige here — the header's own Sign in link already
-          covers returning users, so the hero doesn't need to repeat it. */}
+      {/* Just Join Vestige Campaign here — the header's own Sign in link
+          already covers returning users, so the hero doesn't need to
+          repeat it. */}
       <Link
         href={withNext("/signup")}
         className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
       >
-        Join Vestige
+        Join Vestige Campaign
       </Link>
 
     </section>
@@ -75,15 +78,15 @@ function Pillars() {
       body: "NPCs, places, and lore build themselves into a searchable Codex as you write your sessions.",
     },
     {
-      Icon: Sparkles,
-      title: "An optional scribe",
-      body: "Familiar, our Discord bot, can record and transcribe your session automatically — straight into the Journal.",
+      Icon: Users,
+      title: "Character sheets, always on",
+      body: "Push a character out of Foundry VTT and it stays readable in Vestige Campaign — even when the Foundry server isn't running.",
     },
   ];
   return (
     <section className="flex flex-col items-center gap-12 border-y border-hairline bg-surface px-6 py-24 sm:px-12">
       <p className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
-        What Vestige offers
+        What Vestige Campaign offers
       </p>
       <div className="grid w-full max-w-[1000px] grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-hairline">
         {pillars.map(({ Icon, title, body }) => (

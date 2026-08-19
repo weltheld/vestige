@@ -84,7 +84,7 @@ export function FoundryConnectionCard({ connection }: { connection: FoundryConne
         <p className="font-body text-[13px] text-ink">{status}</p>
 
         <label className="flex flex-col gap-1">
-          <span className="font-body text-[11px] text-muted">Vestige URL</span>
+          <span className="font-body text-[11px] text-muted">Vestige Campaign URL</span>
           <div className="flex items-center gap-2">
             <input
               readOnly

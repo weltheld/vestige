@@ -24,10 +24,10 @@ export function PublicHeader({
   return (
     <header className="border-b border-hairline bg-parchment">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-8">
-        <Link href="/" aria-label="Vestige — home" className="flex min-w-0 items-center gap-2.5">
+        <Link href="/" aria-label="Vestige Campaign — home" className="flex min-w-0 items-center gap-2.5">
           <PlatformCrest size={38} />
           <span className="truncate font-display text-base font-bold text-ink sm:text-xl">
-            Vestige
+            Vestige Campaign
           </span>
         </Link>
 

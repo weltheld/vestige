@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalLayout, LegalSection } from "@/components/LegalLayout";
 
 export const metadata: Metadata = {
-  title: "Datenschutzerklärung — Vestige",
+  title: "Datenschutzerklärung — Vestige Campaign",
 };
 
 export default function DatenschutzPage() {
@@ -10,7 +10,7 @@ export default function DatenschutzPage() {
     <LegalLayout title="Datenschutzerklärung" updated="Juni 2026">
       <p>
         Diese Erklärung informiert über die Verarbeitung personenbezogener Daten
-        bei der Nutzung von Vestige. Vestige nutzt <strong>kein Tracking</strong>,
+        bei der Nutzung von Vestige Campaign. Vestige Campaign nutzt <strong>kein Tracking</strong>,
         keine Analyse-Werkzeuge und keine Werbung.
       </p>
 

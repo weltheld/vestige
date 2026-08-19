@@ -5,7 +5,7 @@ import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Codex — Vestige",
+  title: "Codex — Vestige Campaign",
   description:
     "Every NPC, place, and item your party has met — one card each, kept up to date, crosslinked wherever it's mentioned.",
 };
@@ -33,7 +33,7 @@ export default function CodexFeature() {
             href="/signup"
             className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
           >
-            Join Vestige
+            Join Vestige Campaign
           </Link>
         </div>
       </section>
@@ -92,7 +92,7 @@ function ClosingCta() {
         href="/signup"
         className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
       >
-        Join Vestige
+        Join Vestige Campaign
       </Link>
     </section>
   );

@@ -6,7 +6,7 @@ import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Journal — Vestige",
+  title: "Journal — Vestige Campaign",
   description:
     "Remember every session. Structured recaps, characters, and NPCs your whole party can annotate — one living book per campaign.",
 };
@@ -34,7 +34,7 @@ export default function JournalFeature() {
             href="/signup"
             className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
           >
-            Join Vestige
+            Join Vestige Campaign
           </Link>
         </div>
 
@@ -104,7 +104,7 @@ function ClosingCta() {
         href="/signup"
         className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
       >
-        Join Vestige
+        Join Vestige Campaign
       </Link>
     </section>
   );

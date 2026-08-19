@@ -6,7 +6,7 @@ import { PublicHeader } from "@vestige/ui";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Calendar — Vestige",
+  title: "Calendar — Vestige Campaign",
   description:
     "Find the day your whole party can play. Whole-day availability voting that surfaces the best session date automatically.",
 };
@@ -25,8 +25,8 @@ export default function CalendarFeature() {
         </h1>
         <p className="max-w-[620px] font-body text-lg leading-[1.7] text-ink-soft sm:text-xl">
           No more scrolling a group chat to pin down a date. Everyone marks the
-          days they&rsquo;re free, and Vestige surfaces the session date that
-          works for the most of the party.
+          days they&rsquo;re free, and Vestige Campaign surfaces the session
+          date that works for the most of the party.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -34,7 +34,7 @@ export default function CalendarFeature() {
             href="/signup"
             className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
           >
-            Join Vestige
+            Join Vestige Campaign
           </Link>
         </div>
 
@@ -60,7 +60,7 @@ export default function CalendarFeature() {
           <Feature
             Icon={Sparkles}
             title="Best day, automatically"
-            body="Vestige weighs everyone's votes and floats the date the most of your party can make to the top."
+            body="Vestige Campaign weighs everyone's votes and floats the date the most of your party can make to the top."
           />
           <Feature
             Icon={Swords}
@@ -104,7 +104,7 @@ function ClosingCta() {
         href="/signup"
         className="flex h-11 items-center justify-center rounded-lg bg-wine px-7 font-display text-xs font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
       >
-        Join Vestige
+        Join Vestige Campaign
       </Link>
     </section>
   );
