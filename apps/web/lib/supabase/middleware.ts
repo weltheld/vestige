@@ -14,6 +14,15 @@ const PROTECTED_PATHS = [
   "/calendar/home",
 ];
 
+// The one case that actually wants Calendar's own bare login form: a genuine
+// invite link, which auto-enrols on sign-in so there's no extra click. Every
+// other /calendar/* path (a bare campaign visit, /profile, /new, /home) was
+// falling into this same bucket by accident — a logged-out visitor following
+// a plain campaign link landed on a chrome-less card with no header, no
+// footer, no way back to the rest of the site, which read as the site
+// simply not having loaded rather than as a sign-in prompt.
+const INVITE_LINK = /^\/calendar\/g\/[^/]+\/invite(\/|$)/;
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -52,10 +61,11 @@ export async function updateSession(request: NextRequest) {
   if (!user && needsAuth) {
     const redirectUrl = request.nextUrl.clone();
     // Calendar invite links keep their own login (auto-enrols, no extra
-    // click). Everything else — chiefly a bare /app visit — goes to the
-    // landing page first rather than straight to a bare sign-in form; its
-    // own Sign in / Join Vestige links carry `next` the rest of the way.
-    redirectUrl.pathname = pathname.startsWith("/calendar") ? "/calendar/login" : "/";
+    // click). Everything else — a bare /app visit, a bookmarked campaign
+    // link, /profile, /new, /home — goes to the landing page first rather
+    // than straight to a bare sign-in form; its own Log in / Join Vestige
+    // Campaign links carry `next` the rest of the way.
+    redirectUrl.pathname = INVITE_LINK.test(pathname) ? "/calendar/login" : "/";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }
