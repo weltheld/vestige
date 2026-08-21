@@ -11,7 +11,9 @@ import {
 } from "@/lib/calendar/calendar";
 import type { CalendarDay } from "@/lib/calendar/calendar";
 import type { Vote, VoteValue, Weekday } from "@/lib/calendar/types";
+import { cn } from "@/lib/calendar/utils";
 import { DayCell } from "./DayCell";
+import { DayDetailSheet } from "./DayDetailSheet";
 
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
@@ -41,8 +43,8 @@ type Props = {
   alignByDate?: Map<string, { value: VoteValue; campaignName: string }[]>;
   /** Whether the align overlay is active. */
   showAlign?: boolean;
-  /** Whether to show yes/maybe/no tallies and the per-member tooltip
-   *  breakdown on each day (default true). */
+  /** Whether to show yes/maybe/no tallies on each tile (the full breakdown
+   *  lives in the long-press detail sheet regardless of this). */
   showVotes?: boolean;
 };
 
@@ -149,6 +151,21 @@ export function CalendarPanel({
     go(dx < 0 ? 1 : -1);
   }
 
+  // Owner-only: while on, tapping a day marks/unmarks a session instead of
+  // voting — replaces the small per-tile corner button that used to share
+  // the tile with the (much bigger) vote button, which is what made it easy
+  // to mis-tap on a touch screen.
+  const [setDatesMode, setSetDatesMode] = useState(false);
+  const canSetDates = isCreator && !!onToggleSession;
+
+  // The one open detail sheet for the whole grid, keyed by iso rather than
+  // living inside each DayCell — a per-tile popover was the other mobile
+  // bug: hover-driven, so touch could open one but never fire the event
+  // that closes it, and nothing stopped five different days from ending up
+  // stuck open at once.
+  const [openDetailIso, setOpenDetailIso] = useState<string | null>(null);
+  const openDay = days.find((d) => d.iso === openDetailIso) ?? null;
+
   return (
     <section className="flex h-full flex-col gap-3 p-4 sm:p-5">
       {/* Desktop header: month nav (poll settings now lives in the sidebar). */}
@@ -194,6 +211,43 @@ export function CalendarPanel({
         </div>
       </div>
 
+      {canSetDates && (
+        <button
+          type="button"
+          onClick={() => setSetDatesMode((v) => !v)}
+          className={cn(
+            "flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition",
+            setDatesMode
+              ? "border-dm-gold bg-[color-mix(in_srgb,var(--dm-gold)_12%,var(--cod-soft))]"
+              : "border-hairline bg-cod-soft hover:border-dm-gold/60",
+          )}
+          aria-pressed={setDatesMode}
+        >
+          <span className="flex flex-col">
+            <span className="font-display text-[12px] font-semibold text-ink">
+              Set play dates
+            </span>
+            <span className="font-body text-[10.5px] text-muted">
+              {setDatesMode ? "On — tap a day to mark it" : "Owner only — off by default"}
+            </span>
+          </span>
+          <span
+            aria-hidden
+            className={cn(
+              "relative inline-flex h-[19px] w-[34px] shrink-0 rounded-full transition-colors",
+              setDatesMode ? "bg-dm-gold" : "bg-hairline",
+            )}
+          >
+            <span
+              className={cn(
+                "absolute top-[2px] h-[15px] w-[15px] rounded-full bg-surface shadow transition-[left]",
+                setDatesMode ? "left-[17px]" : "left-[2px]",
+              )}
+            />
+          </span>
+        </button>
+      )}
+
       {belowHeader}
 
       <div className="grid grid-cols-7 gap-1 text-center small-caps">
@@ -224,15 +278,15 @@ export function CalendarPanel({
             votes={monthVotes[d.iso] ?? []}
             myUserId={myUserId}
             dmUserIds={dmUserIds}
-            nameByUserId={nameByUserId}
             isBestDay={bestDayIso === d.iso}
             isViableWeekday={viableSet.has(d.weekday as Weekday)}
             isSession={sessionDates?.has(d.iso) ?? false}
-            isCreator={isCreator}
+            setDatesMode={setDatesMode}
             onToggleSession={onToggleSession}
             conflictCampaigns={conflictByDate?.get(d.iso)}
             alignVotes={showAlign ? alignByDate?.get(d.iso) : undefined}
             showVotes={showVotes}
+            onLongPress={setOpenDetailIso}
             onCycle={(iso) => {
               const current = (monthVotes[iso] ?? []).find(
                 (v) => v.userId === myUserId,
@@ -242,6 +296,19 @@ export function CalendarPanel({
           />
         ))}
       </div>
+
+      {openDay && (
+        <DayDetailSheet
+          day={openDay}
+          votes={monthVotes[openDay.iso] ?? []}
+          nameByUserId={nameByUserId}
+          isSession={sessionDates?.has(openDay.iso) ?? false}
+          conflictCampaigns={conflictByDate?.get(openDay.iso)}
+          alignVotes={showAlign ? alignByDate?.get(openDay.iso) : undefined}
+          showVotes={showVotes}
+          onClose={() => setOpenDetailIso(null)}
+        />
+      )}
     </section>
   );
 }
