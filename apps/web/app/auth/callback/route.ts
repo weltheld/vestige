@@ -52,16 +52,28 @@ export async function GET(request: NextRequest) {
   // exchange actually succeeds. A sign-IN (existing account, no fresh
   // metadata) never carries one, so this only ever fires once, right after
   // the account it was meant for actually starts existing.
-  const joinCode = data.user?.user_metadata?.join_code;
-  if (typeof joinCode === "string" && joinCode.trim() && data.user) {
-    const admin = getServiceRoleSupabase();
-    await redeemJoinCodeForUser(admin, data.user.id, joinCode);
-    // Metadata otherwise carries forward on every future OTP request for
-    // this email, which would re-run the redemption (harmlessly, but
-    // pointlessly) on every sign-in from here on.
-    await admin.auth.admin.updateUserById(data.user.id, {
-      user_metadata: { ...data.user.user_metadata, join_code: null },
-    });
+  //
+  // Wrapped: the session above is already live at this point (the cookie is
+  // written), so any failure in this best-effort side quest — a dropped
+  // request to the admin API, anything — must never turn an otherwise
+  // successful login into a 500. Without this, that's exactly what
+  // happened: the redirect below never ran, Next showed its generic
+  // server-exception page, and a plain refresh landed on an already-signed-
+  // in session because the sign-in itself had actually gone through fine.
+  try {
+    const joinCode = data.user?.user_metadata?.join_code;
+    if (typeof joinCode === "string" && joinCode.trim() && data.user) {
+      const admin = getServiceRoleSupabase();
+      await redeemJoinCodeForUser(admin, data.user.id, joinCode);
+      // Metadata otherwise carries forward on every future OTP request for
+      // this email, which would re-run the redemption (harmlessly, but
+      // pointlessly) on every sign-in from here on.
+      await admin.auth.admin.updateUserById(data.user.id, {
+        user_metadata: { ...data.user.user_metadata, join_code: null },
+      });
+    }
+  } catch (err) {
+    console.error("auth/callback: join-code redemption failed", err);
   }
 
   return NextResponse.redirect(`${origin}${next}`);
