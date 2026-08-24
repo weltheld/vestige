@@ -198,6 +198,9 @@ export type SheetItem = {
   weight: number;
   rarity?: string;
   equipped: boolean;
+  /** Currently attuned — independent of `equipped`: a ring can be attuned
+   *  and not worn, or worn and not (yet) attuned. */
+  attuned: boolean;
   /** Sanitized HTML — an allowlist of inline formatting tags only. */
   description: string;
   damage?: { formula: string; type: string };

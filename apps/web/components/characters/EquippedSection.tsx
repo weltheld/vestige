@@ -24,7 +24,8 @@ type Open = { kind: "item"; item: SheetItem } | { kind: "spell"; spell: SheetSpe
 export function EquippedSection({ sheet }: { sheet: CharacterSheetData }) {
   const [open, setOpen] = useState<Open>(null);
 
-  const equipped = sheet.items.filter((i) => i.equipped);
+  const equipped = sheet.items.filter((i) => i.equipped || i.attuned);
+  const attunedCount = sheet.items.filter((i) => i.attuned).length;
   const prepared = sheet.spells.filter((s) => s.prepared);
   const slots = sheet.stats.spellSlots;
   const hasSlots = !!slots && (slots.levels.length > 0 || !!slots.pact);
@@ -35,6 +36,11 @@ export function EquippedSection({ sheet }: { sheet: CharacterSheetData }) {
   return (
     <>
       <Panel title={hasPrepared ? "Equipped & prepared" : "Equipped"}>
+        {attunedCount > 3 && (
+          <p className="mb-2 font-body text-[12px] text-wine">
+            Attuned to {attunedCount} items — a character can only be attuned to 3 at once.
+          </p>
+        )}
         <div className={hasPrepared ? "grid gap-x-8 gap-y-3 lg:grid-cols-2" : undefined}>
           <EquippedList
             items={equipped}
@@ -108,6 +114,16 @@ function EquippedList({
             {item.damage && (
               <span className="shrink-0 font-display text-[10px] uppercase tracking-[0.08em] text-muted">
                 {item.damage.formula}
+              </span>
+            )}
+            {item.equipped && (
+              <span className="shrink-0 rounded-full border border-gold px-1.5 font-display text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
+                Equipped
+              </span>
+            )}
+            {item.attuned && (
+              <span className="shrink-0 rounded-full border border-wine px-1.5 font-display text-[9px] font-semibold uppercase tracking-[0.08em] text-wine">
+                Attuned
               </span>
             )}
             {/* Promoted from `muted` to `ink-soft` — muted is tuned against a
@@ -287,6 +303,7 @@ function ItemDetail({
           />
         )}
         <PanelField label="Equipped" value={item.equipped ? "Yes" : "No"} />
+        <PanelField label="Attuned" value={item.attuned ? "Yes" : "No"} />
       </div>
       <PanelDescription text={item.description} />
     </div>

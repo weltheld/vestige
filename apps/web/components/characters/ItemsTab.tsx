@@ -109,6 +109,11 @@ export function ItemsTab({
                               Equipped
                             </span>
                           )}
+                          {item.attuned && (
+                            <span className="shrink-0 rounded-full border border-wine px-1.5 font-display text-[9px] font-semibold uppercase tracking-[0.08em] text-wine">
+                              Attuned
+                            </span>
+                          )}
                         </span>
                       </span>
                       {item.weight > 0 && (
@@ -160,6 +165,7 @@ export function ItemsTab({
                 />
               )}
               <PanelField label="Equipped" value={open.equipped ? "Yes" : "No"} />
+              <PanelField label="Attuned" value={open.attuned ? "Yes" : "No"} />
             </div>
             <PanelDescription text={open.description} />
           </div>

@@ -197,6 +197,15 @@ function bool(value: unknown): boolean {
   return value === true || value === 1;
 }
 
+/** Foundry's attunement field has changed shape across dnd5e versions: a
+ *  legacy numeric enum on `attunement` itself (0 none, 1 required, 2
+ *  attuned), or a newer split into a boolean `attuned` plus a separate
+ *  `attunement` string ("" | "required"). Checking all three covers an
+ *  export from either era rather than betting on one. */
+function attuned(s: Record<string, unknown>): boolean {
+  return bool(s.attuned) || s.attunement === 2 || s.attunement === "attuned";
+}
+
 /** Description HTML → sanitized-by-construction text. Stored as the plain
  *  rendering; the node tree is rebuilt for display from the same parser. */
 function description(value: unknown): string {
@@ -826,6 +835,7 @@ function parseItems(items: Record<string, unknown>[]): SheetItem[] {
         weight,
         rarity: str(s.rarity) || undefined,
         equipped: bool(s.equipped),
+        attuned: attuned(s),
         description: description(at(s, "description.value")),
         damage: firstPart
           ? { formula: str(firstPart[0]), type: str(firstPart[1]) }
