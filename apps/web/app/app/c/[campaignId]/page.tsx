@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
 import { getMyCampaigns } from "@/lib/campaigns";
 import { touchLastCampaign } from "@/lib/last-campaign";
+import { getAuthUser } from "@/lib/supabase/authUser";
 
 /**
  * Both modules are mounted under this same origin via Next.js Multi-Zones
@@ -17,10 +18,7 @@ export default async function CampaignOverview({
   const { campaignId } = await params;
 
   const supabase = await getServerSupabase();
-  // getClaims() verifies locally (asymmetric signing key) instead of
-  // calling the Auth server.
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims ? { id: data.claims.sub, email: data.claims.email } : null;
+  const user = await getAuthUser(supabase);
   if (!user) redirect(`/signin?next=/app/c/${campaignId}`);
 
   // Only resolve campaigns the user actually belongs to (RLS would block

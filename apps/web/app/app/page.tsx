@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { VenetianMask } from "lucide-react";
 import { getServerSupabase, getServiceRoleSupabase } from "@vestige/db/server";
+import { getAuthUser } from "@/lib/supabase/authUser";
 import { VestigeHeader, PlatformFooter } from "@vestige/ui";
 import { getMyCampaigns } from "@/lib/campaigns";
 import { getRecentActivity } from "@/lib/activity";
@@ -14,10 +15,7 @@ import { PendingAvatarUploader } from "@/components/PendingAvatarUploader";
 
 export default async function AppHome() {
   const supabase = await getServerSupabase();
-  // getClaims() verifies locally (asymmetric signing key) instead of
-  // calling the Auth server.
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims ? { id: data.claims.sub, email: data.claims.email } : null;
+  const user = await getAuthUser(supabase);
 
   // Middleware already guards /app, but guard here too for safety.
   if (!user) redirect("/signin?next=/app");

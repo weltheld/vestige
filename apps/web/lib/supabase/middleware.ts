@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@vestige/db";
 import { publicSupabaseAnonKey, publicSupabaseUrl } from "@vestige/db";
+import { getAuthUser } from "./authUser";
 
 // Calendar's paths joined this list when it was folded into this app —
 // unauthenticated visitors there go to Calendar's own login (magic-link +
@@ -50,10 +51,10 @@ export async function updateSession(request: NextRequest) {
   // getClaims() verifies the JWT locally against the project's asymmetric
   // signing key (no network round trip) instead of asking the Auth server —
   // this runs on every request, so it's the highest-value spot to avoid it.
-  const {
-    data,
-  } = await supabase.auth.getClaims();
-  const user = data?.claims ?? null;
+  // getAuthUser() falls back to the slower getUser() only if that local
+  // verification itself throws (see its own comment) — a cold instance
+  // shouldn't turn into every route on the site 500ing at once.
+  const user = await getAuthUser(supabase);
 
   const { pathname } = request.nextUrl;
   const needsAuth = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
