@@ -75,14 +75,6 @@ export function SpellsTab({
                           </span>
                         )}
                       </span>
-                      {!spell.countsAgainstSpellLimit && (
-                        <span
-                          className="shrink-0 rounded-full border border-wine px-1.5 font-display text-[9px] font-semibold uppercase tracking-[0.08em] text-wine"
-                          title="Doesn't count against the character's known/prepared spell limit"
-                        >
-                          Bonus
-                        </span>
-                      )}
                       {/* The mode is a label, never flattened to prepared /
                           not prepared — "Pact Magic" and "At Will" are
                           different facts about how the spell works. */}
@@ -117,10 +109,6 @@ export function SpellsTab({
               <PanelField label="Components" value={open.components} />
               <PanelField label="Duration" value={open.duration} />
               <PanelField label="Preparation" value={open.preparationMode} />
-              <PanelField
-                label="Counts against spell limit"
-                value={open.countsAgainstSpellLimit ? "Yes" : "No"}
-              />
             </div>
             <PanelDescription text={open.description} />
           </div>

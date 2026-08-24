@@ -168,14 +168,6 @@ function PreparedColumn({
             >
               <Thumb art={art} path={spell.imgPath} size={18} />
               <span className="min-w-0 flex-1 truncate font-body text-[13px] text-ink">{spell.name}</span>
-              {!spell.countsAgainstSpellLimit && (
-                <span
-                  className="shrink-0 rounded-full border border-wine px-1.5 font-display text-[9px] font-semibold uppercase tracking-[0.08em] text-wine"
-                  title="Doesn't count against the character's known/prepared spell limit"
-                >
-                  Bonus
-                </span>
-              )}
             </button>
           ))}
         </div>

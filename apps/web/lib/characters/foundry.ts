@@ -925,7 +925,6 @@ function parseSpells(items: Record<string, unknown>[]): SheetSpell[] {
         // that doesn't apply to them.
         prepared: mode === "prepared" ? bool(prep.prepared) : true,
         preparationMode: PREPARATION_LABEL[mode] ?? "Prepared",
-        countsAgainstSpellLimit: mode === "prepared",
       };
     })
     .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));

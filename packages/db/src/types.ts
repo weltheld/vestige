@@ -235,12 +235,6 @@ export type SheetSpell = {
   /** Foundry's preparation.mode, humanised ("Prepared", "At Will", "Innate",
    *  "Always Prepared", "Pact") — never collapsed to just the boolean. */
   preparationMode: string;
-  /** False for anything not prepared through the class's normal
-   *  prepare-a-spell-each-day mechanism — a feat-granted spell (Magic
-   *  Initiate), an innate racial spell, a domain's always-prepared spell, or
-   *  a warlock's pact list. Those don't draw against the character's normal
-   *  known/prepared spell count, so they shouldn't be marked as if they did. */
-  countsAgainstSpellLimit: boolean;
 };
 
 /** The parsed sheet. Every derived number here is what Foundry computed;
