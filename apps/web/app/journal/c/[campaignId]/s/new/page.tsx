@@ -7,10 +7,13 @@ import { EditSessionClient } from "@/components/journal/session/EditSessionClien
 
 export default async function NewSessionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ campaignId: string }>;
+  searchParams: Promise<{ date?: string }>;
 }) {
   const { campaignId } = await params;
+  const { date } = await searchParams;
   const supabase = await getServerSupabase();
   const viewer = await getViewer(supabase);
   if (!viewer) redirect(appHref());
@@ -34,7 +37,7 @@ export default async function NewSessionPage({
       sessionId={null}
       players={players}
       npcs={npcs.map((n) => ({ id: n.id, name: n.name }))}
-      initial={{ title: "", date: null, summary: "", player_characters: "", npcs: "", notes: "" }}
+      initial={{ title: "", date: date ?? null, summary: "", player_characters: "", npcs: "", notes: "" }}
       images={[]}
       chroniclerName={viewer.label}
       modulesCalendar={calendar}

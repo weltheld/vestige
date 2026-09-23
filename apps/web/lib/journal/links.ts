@@ -17,7 +17,8 @@ export const calendarCampaignHref = (slug: string) => `/calendar/g/${slug}`;
 /** Journal routes. */
 export const journal = {
   campaign: (id: string) => `/journal/c/${id}`,
-  newSession: (id: string) => `/journal/c/${id}/s/new`,
+  newSession: (id: string, date?: string) =>
+    date ? `/journal/c/${id}/s/new?date=${date}` : `/journal/c/${id}/s/new`,
   session: (id: string, sessionId: string) => `/journal/c/${id}/s/${sessionId}`,
   editSession: (id: string, sessionId: string) => `/journal/c/${id}/s/${sessionId}/edit`,
   settings: (id: string) => `/journal/c/${id}/settings`,

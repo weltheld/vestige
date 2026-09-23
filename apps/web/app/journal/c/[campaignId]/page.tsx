@@ -3,11 +3,16 @@ import { BookOpen } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember } from "@/lib/journal/data";
 import { getSessions } from "@/lib/journal/sessions";
+import { getPastSessionsLedger } from "@/lib/journal/pastSessions";
 import { getFamiliarStatus } from "@/lib/journal/familiar";
 import { appHref, journal } from "@/lib/journal/links";
 import { SessionCard } from "@/components/journal/SessionCard";
 import { AddSessionCard } from "@/components/journal/AddSessionCard";
 import { FamiliarCard } from "@/components/journal/FamiliarCard";
+import {
+  PastSessionsLedgerSidebar,
+  PastSessionsLedgerMobile,
+} from "@/components/journal/PastSessionsLedger";
 
 export default async function SessionListPage({
   params,
@@ -22,8 +27,9 @@ export default async function SessionListPage({
   const campaign = await getCampaignIfMember(supabase, viewer.id, campaignId);
   if (!campaign) redirect(appHref());
 
-  const [sessions, familiarStatus] = await Promise.all([
+  const [sessions, pastSessionsLedger, familiarStatus] = await Promise.all([
     getSessions(supabase, campaignId),
+    getPastSessionsLedger(supabase, campaignId),
     getFamiliarStatus(campaignId),
   ]);
 
@@ -38,16 +44,22 @@ export default async function SessionListPage({
     <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 pb-16 pt-8 sm:px-8 lg:px-12">
       <div className="flex flex-col gap-3">
         <AddSessionCard href={journal.newSession(campaignId)} />
-        {sessions.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 rounded-xl bg-cod-soft px-6 py-20 text-center">
-            <BookOpen size={60} className="text-muted" strokeWidth={1.25} />
-            <p className="font-body text-[15px] text-ink-soft">No sessions yet</p>
-          </div>
-        ) : (
-          sessions.map((s) => (
-            <SessionCard key={s.id} session={s} href={journal.session(campaignId, s.id)} />
-          ))
-        )}
+        <PastSessionsLedgerMobile campaignId={campaignId} entries={pastSessionsLedger} />
+        <div className="grid gap-3 lg:grid-cols-[1fr_260px] lg:items-start lg:gap-6">
+          {sessions.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 rounded-xl bg-cod-soft px-6 py-20 text-center">
+              <BookOpen size={60} className="text-muted" strokeWidth={1.25} />
+              <p className="font-body text-[15px] text-ink-soft">No sessions yet</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {sessions.map((s) => (
+                <SessionCard key={s.id} session={s} href={journal.session(campaignId, s.id)} />
+              ))}
+            </div>
+          )}
+          <PastSessionsLedgerSidebar campaignId={campaignId} entries={pastSessionsLedger} />
+        </div>
       </div>
 
       <FamiliarCard status={familiarStatus} />
