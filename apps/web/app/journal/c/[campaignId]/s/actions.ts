@@ -362,17 +362,21 @@ export async function previewCodexExtraction(
 
   const { data: session } = await supabase
     .from("journal_sessions")
-    .select("id, campaign_id, title, summary, player_characters, npcs, notes")
+    .select("id, campaign_id, title, summary, npcs, notes")
     .eq("id", sessionId)
     .maybeSingle();
   if (!session || session.campaign_id !== campaignId) {
     return { ok: false, error: "Session not found." };
   }
 
+  // "Player characters" is deliberately left out here — it's often just who
+  // was at the table, not narrative content, and feeding a bare attendance
+  // list to the model reliably produced a codex entry for every PC listed
+  // whether or not the session actually said anything about them. Extraction
+  // reads the write-up itself: the summary, the NPCs met, and the notes.
   const sessionText = [
     `# ${session.title}`,
     session.summary,
-    session.player_characters ? `## Player characters\n${session.player_characters}` : null,
     session.npcs ? `## NPCs\n${session.npcs}` : null,
     session.notes ? `## Notes\n${session.notes}` : null,
   ]
@@ -383,7 +387,7 @@ export async function previewCodexExtraction(
   // (or went into a different session) — worth saying plainly, because
   // spending an AI call to be told "nothing found" sends people looking at
   // their prose instead of at where it actually went.
-  const bodyLength = [session.summary, session.player_characters, session.npcs, session.notes]
+  const bodyLength = [session.summary, session.npcs, session.notes]
     .map((f) => f?.trim() ?? "")
     .join("").length;
   if (bodyLength < 40) {
