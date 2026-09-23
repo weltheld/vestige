@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import type { AiProviderDb } from "@vestige/db";
 import type { AiKeySettings as AiKeyView, AiProviderKeySettings } from "@/lib/journal/campaign-settings";
 import {
@@ -107,6 +107,11 @@ function ProviderRow({
 }) {
   const [key, setKey] = useState("");
   const [picked, setPicked] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+  }, []);
   const hasKey = settings.linkedKeyId !== null;
   // Other saved keys for this provider the campaign isn't already using —
   // the "use an existing key" picker only needs to offer those.
@@ -218,7 +223,12 @@ function ProviderRow({
           disabled={busy || !key.trim()}
           onClick={() =>
             void run(() => saveCampaignAiKey(campaignId, provider.value, key)).then((ok) => {
-              if (ok) setKey("");
+              if (ok) {
+                setKey("");
+                setJustSaved(true);
+                if (savedTimer.current) clearTimeout(savedTimer.current);
+                savedTimer.current = setTimeout(() => setJustSaved(false), 3000);
+              }
             })
           }
           className="inline-flex items-center gap-1.5 rounded-lg bg-wine px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110 disabled:opacity-50"
@@ -227,6 +237,11 @@ function ProviderRow({
           Save
         </button>
       </div>
+      {justSaved && (
+        <p className="flex items-center gap-1.5 font-body text-[11px] font-semibold text-vote-yes">
+          <Check size={12} /> {hasKey ? "Key updated" : "Key saved"}
+        </p>
+      )}
       <p className="font-body text-[11px] italic text-muted">{provider.hint}</p>
     </div>
   );
