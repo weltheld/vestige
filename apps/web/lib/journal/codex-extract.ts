@@ -250,7 +250,9 @@ async function complete(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        // llama-3.3-70b-versatile was decommissioned by Groq on 2026-08-16;
+        // openai/gpt-oss-120b is Groq's recommended same-tier replacement.
+        model: "openai/gpt-oss-120b",
         max_tokens: 8192,
         response_format: { type: "json_object" },
         messages: [{ role: "user", content: prompt }],

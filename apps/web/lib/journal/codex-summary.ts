@@ -89,7 +89,9 @@ async function draftWithAnthropic(
 // a no-cost fallback when no ANTHROPIC_API_KEY is configured, so campaigns
 // that don't want to pay for Claude still get summaries. Plain fetch: this
 // is the only call we make to Groq, not worth adding another SDK for.
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+// llama-3.3-70b-versatile was decommissioned by Groq on 2026-08-16;
+// openai/gpt-oss-120b is Groq's recommended same-tier replacement.
+const GROQ_MODEL = "openai/gpt-oss-120b";
 
 async function draftWithGroq(
   entity: { name: string; kind: NpcKindDb; summary: string | null },
