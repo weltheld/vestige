@@ -132,7 +132,7 @@ export function LibraryList({
               disabled={pending}
               onChange={(e) => onFile(entry.id, e.target.value)}
               aria-label={`Campaign for ${entry.name}`}
-              className="rounded-md border border-hairline bg-surface px-2 py-1.5 font-body text-[13px] text-ink disabled:opacity-60"
+              className="w-44 shrink-0 truncate rounded-md border border-hairline bg-surface px-2 py-1.5 font-body text-[13px] text-ink disabled:opacity-60"
             >
               <option value="">Not in a campaign</option>
               {campaigns.map((c) => (
@@ -149,7 +149,7 @@ export function LibraryList({
               disabled={pending || !campaignId}
               onChange={(e) => onAssign(entry.id, campaignId, e.target.value)}
               aria-label={`Who plays ${entry.name}`}
-              className="rounded-md border border-hairline bg-surface px-2 py-1.5 font-body text-[13px] text-ink disabled:opacity-40"
+              className="w-40 shrink-0 truncate rounded-md border border-hairline bg-surface px-2 py-1.5 font-body text-[13px] text-ink disabled:opacity-40"
             >
               <option value="">{campaignId ? "Unallocated" : "No player"}</option>
               {roster.map((p) => (
