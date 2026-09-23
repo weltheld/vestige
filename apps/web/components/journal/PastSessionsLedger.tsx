@@ -155,15 +155,11 @@ function Row({
       >
         {entry.title ?? "No entry yet"}
       </span>
-      <span
-        className={`shrink-0 font-display text-[9px] uppercase tracking-[0.04em] ${
-          entry.journalSessionId
-            ? "text-muted"
-            : "rounded-full border border-wine px-1.5 py-[1px] text-wine"
-        }`}
-      >
-        {entry.journalSessionId ? "Open" : "Add"}
-      </span>
+      {!entry.journalSessionId && (
+        <span className="shrink-0 rounded-full border border-wine px-1.5 py-[1px] font-display text-[9px] uppercase tracking-[0.04em] text-wine">
+          Add
+        </span>
+      )}
     </Link>
   );
 }
