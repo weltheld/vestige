@@ -148,7 +148,7 @@ function EmptyState({ hasConnection }: { hasConnection: boolean }) {
       <p className="max-w-[440px] font-body text-[15px] text-ink-soft">Nothing sent yet.</p>
       {hasConnection && (
         <ol className="flex max-w-[460px] flex-col gap-1 text-left font-body text-[13px] text-muted">
-          <li>1. Install the vestige-foundry module in your Foundry world.</li>
+          <li>1. Install the Vestige Companion module in your Foundry world.</li>
           <li>2. Paste the URL and token above into its settings.</li>
           <li>3. Use Send to Vestige on a character sheet.</li>
         </ol>

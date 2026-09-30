@@ -7,7 +7,7 @@ import { authorize, corsPreflight, json } from "@/lib/characters/foundry-api";
 import { characters } from "@/lib/journal/links";
 
 /**
- * Character sheet ingestion for the vestige-foundry module.
+ * Character sheet ingestion for the Vestige Companion module.
  *
  * Auth: `Authorization: Bearer <ingest_token>`.
  *

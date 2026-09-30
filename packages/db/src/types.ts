@@ -387,7 +387,7 @@ export type FamiliarConnectionRow = {
   verified_at: string | null;
 };
 
-/** The vestige-foundry module's per-campaign push token. Same shape as
+/** The Vestige Companion module's per-campaign push token. Same shape as
  *  FamiliarConnectionRow — one secret per campaign, validated server-side. */
 export type FoundryConnectionRow = {
   /** The token belongs to a person, not a campaign — sheets land in their

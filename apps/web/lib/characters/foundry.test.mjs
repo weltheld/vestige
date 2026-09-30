@@ -527,7 +527,7 @@ assert.equal(
   assert.equal(multi.sheet.stats.proficiencyBonus, 3);
 }
 
-// --- values the vestige-foundry module computed for us ----------------------
+// --- values the Vestige Companion module computed for us ----------------------
 // dnd5e derives AC, walking speed and the rest at runtime, so an export
 // carries none of them. What the module sends from inside Foundry wins over
 // anything this parser could work out on its own.

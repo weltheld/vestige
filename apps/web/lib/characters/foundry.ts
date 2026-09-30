@@ -183,7 +183,7 @@ function str(value: unknown, fallback = ""): string {
 /**
  * A number, or null if there isn't one.
  *
- * The gate in front of everything the vestige-foundry module sends in
+ * The gate in front of everything the Vestige Companion module sends in
  * `flags.vestige.derived`. Distinguishing "absent" from 0 matters here: a
  * character can legitimately have 0 speed, and `num()` returning a fallback
  * would make that indistinguishable from a field the module didn't send.

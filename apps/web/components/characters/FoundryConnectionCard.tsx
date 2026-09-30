@@ -8,7 +8,7 @@ import type { FoundryConnection } from "@/lib/characters/foundry-link";
 import { regenerateFoundryToken } from "@/app/characters/library/actions";
 
 /**
- * Setup details for the vestige-foundry module.
+ * Setup details for the Vestige Companion module.
  *
  * Yours, not a campaign's — the token identifies the person pushing, and one
  * Foundry install serves however many campaigns they are in. Collapsed by
@@ -128,7 +128,7 @@ export function FoundryConnectionCard({ connection }: { connection: FoundryConne
         {error && <p className="font-body text-[12px] text-vote-no">{error}</p>}
 
         <p className="font-body text-[12px] italic text-ink-soft">
-          Install the <span className="font-mono not-italic">vestige-foundry</span> module in your
+          Install the <span className="font-mono not-italic">Vestige Companion</span> module in your
           world, paste both values into its settings, then use{" "}
           <em>Send to Vestige</em> on a character sheet. Sheet and artwork travel together — no
           export file, and no folder to find. Characters arrive here; put each one in a campaign

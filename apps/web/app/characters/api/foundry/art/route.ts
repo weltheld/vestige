@@ -6,7 +6,7 @@ import { authorize, corsPreflight, json } from "@/lib/characters/foundry-api";
 import { characters } from "@/lib/journal/links";
 
 /**
- * Artwork upload for the vestige-foundry module.
+ * Artwork upload for the Vestige Companion module.
  *
  * The browser flow has to ask the player to find their Foundry folder,
  * because a page on vestige can't read their disk. The module has no such
