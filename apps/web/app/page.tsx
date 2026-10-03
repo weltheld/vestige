@@ -35,10 +35,9 @@ function Hero({ next }: { next?: string }) {
         Vestige Campaign
       </h1>
       <p className="max-w-[600px] font-body text-lg leading-[1.7] text-ink-soft sm:text-xl">
-        Find the day your whole party can play, record what happens when you
-        do, and keep track of everything your campaign shares between
-        sessions — with player sheets anyone can open, even when the Foundry
-        VTT server isn&rsquo;t running.
+        Finding a day when the whole group can play took more messages than
+        the session itself. So I built a calendar for it, and then a place to
+        keep notes, recaps and character sheets.
       </p>
 
       {/* Just Join Vestige Campaign here — the header's own Sign in link
