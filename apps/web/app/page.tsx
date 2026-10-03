@@ -31,9 +31,6 @@ function Hero({ next }: { next?: string }) {
   const withNext = (href: string) => (next ? `${href}?next=${encodeURIComponent(next)}` : href);
   return (
     <section className="flex flex-col items-center gap-7 bg-parchment px-6 py-24 text-center sm:px-12">
-      <p className="font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">
-        One place for your party
-      </p>
       <h1 className="font-display text-6xl font-semibold tracking-[0.02em] text-ink sm:text-7xl">
         Vestige Campaign
       </h1>
