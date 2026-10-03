@@ -84,21 +84,23 @@ export function CalendarPanel({
 
   const viableSet = useMemo(() => new Set(viableWeekdays), [viableWeekdays]);
 
-  // The best day is the NEAREST upcoming viable day where the whole party
-  // has voted and nobody voted no — full attendance is certain, so the
-  // first such date wins (not the one with the most yes votes).
+  // The best day is the upcoming viable day with the most yes votes among
+  // days nobody has voted no on — a single no disqualifies a day outright.
+  // It doesn't wait for the whole party to vote: a day needs at least one
+  // yes (otherwise every untouched day would qualify), and ties go to the
+  // nearest date since days are chronological.
   const bestDayIso = useMemo(() => {
-    const memberIds = Object.keys(nameByUserId);
-    if (memberIds.length === 0) return null;
+    if (Object.keys(nameByUserId).length === 0) return null;
+    let best: { iso: string; yes: number } | null = null;
     for (const d of days) {
       if (!d.inCurrentMonth || d.isPast || !viableSet.has(d.weekday as Weekday)) continue;
       const dayVotes = monthVotes[d.iso] ?? [];
-      const everyoneVoted = memberIds.every((id) => dayVotes.some((v) => v.userId === id));
-      if (!everyoneVoted) continue;
       if (dayVotes.some((v) => v.value === "no")) continue;
-      return d.iso; // days are chronological — first match is the nearest
+      const yes = dayVotes.filter((v) => v.value === "yes").length;
+      if (yes === 0) continue;
+      if (!best || yes > best.yes) best = { iso: d.iso, yes };
     }
-    return null;
+    return best?.iso ?? null;
   }, [days, monthVotes, nameByUserId, viableSet]);
 
   // Surface best-day and current days to parent.
