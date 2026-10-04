@@ -60,29 +60,29 @@ function Pillars() {
   const pillars = [
     {
       Icon: Calendar,
-      title: "One shared schedule",
-      body: "The Calendar shows when everyone can play. Vote on dates and the best one floats to the top.",
+      title: "Calendar",
+      body: "Everyone marks the days they can play. The day that works for the most people shows up first, so nobody has to chase replies in a group chat.",
     },
     {
       Icon: BookOpen,
-      title: "One living journal",
-      body: "Every session is recorded the same way: summary, characters, notes. Annotated by anyone in the party.",
+      title: "Journal",
+      body: "One entry per session with a summary, who was there and notes. Anyone in the group can add to it, or let Familiar, the Discord bot, write it up for you.",
     },
     {
       Icon: Library,
-      title: "One campaign wiki",
-      body: "NPCs, places, and lore build themselves into a searchable Codex as you write your sessions.",
+      title: "Codex",
+      body: "The people, places and things your party runs into, collected from your session notes into a wiki you can search.",
     },
     {
       Icon: Users,
-      title: "Character sheets, always on",
-      body: "Push a character out of Foundry VTT and it stays readable in Vestige Campaign — even when the Foundry server isn't running.",
+      title: "Characters",
+      body: "Send a character from Foundry VTT with the Vestige Companion module, and the whole group can read the sheet, even when Foundry is off.",
     },
   ];
   return (
     <section className="flex flex-col items-center gap-12 border-y border-hairline bg-surface px-6 py-24 sm:px-12">
       <p className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
-        What Vestige Campaign offers
+        What Vestige Campaign does
       </p>
       <div className="grid w-full max-w-[1000px] grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-hairline">
         {pillars.map(({ Icon, title, body }) => (
