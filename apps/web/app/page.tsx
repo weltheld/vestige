@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Calendar, BookOpen, Library, Users } from "lucide-react";
 import { PublicHeader } from "@vestige/ui";
@@ -19,7 +20,7 @@ export default async function Landing({
       <PublicHeader next={safeNext} />
       <Hero next={safeNext} />
       <Pillars />
-      <HowItWorks />
+      <Showcase />
       <SiteFooter />
     </div>
   );
@@ -97,48 +98,58 @@ function Pillars() {
   );
 }
 
-/* -------------------------------------------------------- How It Works */
+/* ------------------------------------------------------------ Showcase */
 
-function HowItWorks() {
-  const steps = [
-    {
-      n: "01",
-      title: "Open a campaign",
-      body: "Name it, give it an image, and invite your players — one shared space across Calendar, Journal, and Codex.",
-    },
-    {
-      n: "02",
-      title: "Vote on a date",
-      body: "Fill the Calendar with your votes to find your next date — the best day for everyone floats to the top.",
-    },
-    {
-      n: "03",
-      title: "Capture the session",
-      body: "Record with Familiar, our Discord bot, or write it up yourself — either way it's saved to the Journal. The Codex builds itself into a campaign wiki from what you write.",
-    },
-  ];
+const SCREENS = [
+  {
+    src: "/images/landing/calendar.jpg",
+    alt: "The Calendar showing a month with yes and maybe votes and a best day marked",
+    title: "Find a day that works",
+    body: "Everyone marks the days they can play as yes, maybe or no. The day with the most yeses is marked as the best day, so you can stop comparing replies in a group chat.",
+  },
+  {
+    src: "/images/landing/journal.jpg",
+    alt: "A Journal entry with a session summary and the NPCs the party met",
+    title: "Keep a record of each session",
+    body: "Each session gets its own entry with a summary, who was there and your notes. Anyone in the group can add to it, or let Familiar, our Discord bot, record the session for you.",
+  },
+  {
+    src: "/images/landing/codex.jpg",
+    alt: "The Codex listing a person, a place and an item",
+    title: "Remember who and what",
+    body: "People, places and items go in one searchable list. Link them from your session notes with @, and each entry shows where it came up.",
+  },
+];
+
+function Showcase() {
   return (
-    <section className="flex flex-col items-center gap-14 bg-parchment px-6 py-28 sm:px-12">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <p className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
-          How it works
-        </p>
-        <h2 className="font-display text-3xl text-ink sm:text-4xl">
-          Three steps to a living campaign.
-        </h2>
-      </div>
-      <div className="grid w-full max-w-[1100px] gap-6 md:grid-cols-3">
-        {steps.map(({ n, title, body }) => (
-          <div key={n} className="flex flex-col gap-3.5 rounded-xl bg-cod-soft p-7">
-            <span className="font-display text-[44px] font-semibold leading-none text-gold">
-              {n}
-            </span>
-            <h3 className="font-display text-lg text-ink">{title}</h3>
-            <p className="font-body text-sm leading-[1.7] text-ink-soft">{body}</p>
+    <section className="flex flex-col items-center gap-20 bg-parchment px-6 py-28 sm:px-12">
+      <h2 className="font-display text-3xl text-ink sm:text-4xl">See it in action</h2>
+      <div className="flex w-full max-w-[1100px] flex-col gap-20">
+        {SCREENS.map(({ src, alt, title, body }, i) => (
+          <div
+            key={title}
+            className="grid items-center gap-8 md:grid-cols-[1.4fr_1fr] md:gap-12"
+          >
+            <figure className={i % 2 ? "md:order-2" : undefined}>
+              <Image
+                src={src}
+                alt={alt}
+                width={800}
+                height={506}
+                className="w-full rounded-xl border border-hairline"
+              />
+              <figcaption className="mt-3 font-body text-xs text-muted">
+                Example campaign
+              </figcaption>
+            </figure>
+            <div className="flex flex-col gap-3">
+              <h3 className="font-display text-2xl text-ink">{title}</h3>
+              <p className="font-body text-base leading-[1.7] text-ink-soft">{body}</p>
+            </div>
           </div>
         ))}
       </div>
     </section>
   );
 }
-
