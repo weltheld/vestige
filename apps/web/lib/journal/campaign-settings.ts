@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, AiProviderDb } from "@vestige/db";
 import { getOrCreateFamiliarConnection, type FamiliarConnection } from "./familiar";
+import { decryptSecret } from "@/lib/secrets";
 
 type SB = SupabaseClient<Database>;
 
@@ -150,11 +151,11 @@ export async function getCampaignSettings(
       const linked = linkedKeyId ? providerKeys.find((k) => k.id === linkedKeyId) : undefined;
       return {
         linkedKeyId: linkedKeyId ?? null,
-        preview: linked ? preview(linked.api_key) : null,
+        preview: linked ? preview(decryptSecret(linked.api_key)) : null,
         usedInOtherCampaigns: linkedKeyId ? otherCampaignNames(linkedKeyId) : [],
         options: providerKeys.map((k) => ({
           id: k.id,
-          preview: preview(k.api_key),
+          preview: preview(decryptSecret(k.api_key)),
           usedInOtherCampaigns: otherCampaignNames(k.id),
         })),
       };

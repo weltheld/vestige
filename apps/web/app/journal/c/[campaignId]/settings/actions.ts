@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@vestige/db/server";
 import type { AiProviderDb } from "@vestige/db";
 import { appHref } from "@/lib/journal/links";
+import { encryptSecret } from "@/lib/secrets";
 
 async function sb() {
   const supabase = await getServerSupabase();
@@ -133,14 +134,16 @@ async function upsertUserAiKey(
     .select("id")
     .eq("user_id", userId)
     .eq("provider", provider)
-    .eq("api_key", apiKey)
+    // Match the encrypted form, or the plaintext of a row not migrated yet.
+    .in("api_key", [encryptSecret(apiKey), apiKey])
+    .limit(1)
     .maybeSingle();
   if (readError) return { error: readError };
   if (existing) return { id: existing.id };
 
   const { data: created, error: insertError } = await supabase
     .from("user_ai_keys")
-    .insert({ user_id: userId, provider, api_key: apiKey })
+    .insert({ user_id: userId, provider, api_key: encryptSecret(apiKey) })
     .select("id")
     .single();
   if (insertError || !created) {

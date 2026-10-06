@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, NpcKindDb, AiProviderDb } from "@vestige/db";
 import { getNpcMentions } from "./npcs";
+import { decryptSecret } from "@/lib/secrets";
 
 type SB = SupabaseClient<Database>;
 
@@ -164,7 +165,7 @@ export async function resolveProvider(
       .select("api_key")
       .eq("id", activeKeyId)
       .maybeSingle();
-    if (key?.api_key) return { provider: data.provider, apiKey: key.api_key };
+    if (key?.api_key) return { provider: data.provider, apiKey: decryptSecret(key.api_key) };
   }
   if (process.env.ANTHROPIC_API_KEY) {
     return { provider: "anthropic", apiKey: process.env.ANTHROPIC_API_KEY };
