@@ -2,13 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getServerSupabase } from "@vestige/db/server";
+import { getServerSupabase, getServiceRoleSupabase } from "@vestige/db/server";
 import type { NpcKindDb, NpcRoleDb } from "@vestige/db";
 import { journal } from "@/lib/journal/links";
 import { draftEntitySummary } from "@/lib/journal/codex-summary";
 import { lookupSrd, type SrdMatch } from "@/lib/journal/open5e";
 import { lookupCriticalRole, type WikiMatch } from "@/lib/journal/criticalrole";
 import { isCampaignOwner } from "@/lib/journal/data";
+import {
+  draftMergedSummary,
+  repointCodexLinks,
+  unlinkCodexLinks,
+} from "@/lib/journal/codex-merge";
 
 export type NpcInput = {
   name: string;
@@ -179,4 +184,161 @@ export async function deleteNpc(campaignId: string, npcId: string) {
   if (error) throw error;
   revalidatePath(journal.codex(campaignId));
   redirect(journal.codex(campaignId));
+}
+
+// ---------------------------------------------------------------- merge --
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Both entries, checked to belong to this campaign and to be the same kind.
+ *  Member-scoped read via RLS, so an id from another campaign comes back
+ *  empty. */
+async function loadMergePair(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+  campaignId: string,
+  keepId: string,
+  otherId: string,
+) {
+  if (!UUID_RE.test(keepId) || !UUID_RE.test(otherId) || keepId === otherId) {
+    return { ok: false, error: "Pick two different entries." } as const;
+  }
+  const { data } = await supabase
+    .from("npcs")
+    .select("id, campaign_id, name, kind, summary, image_url")
+    .in("id", [keepId, otherId]);
+  const keep = data?.find((n) => n.id === keepId);
+  const other = data?.find((n) => n.id === otherId);
+  if (!keep || !other || keep.campaign_id !== campaignId || other.campaign_id !== campaignId) {
+    return { ok: false, error: "Entry not found." } as const;
+  }
+  if (keep.kind !== other.kind) {
+    return { ok: false, error: "Only entries of the same type can be merged." } as const;
+  }
+  return { ok: true, keep, other } as const;
+}
+
+/** Draft the merged chronicle for two entries (AI, owner only). Saves
+ *  nothing — the dialog shows it for review. */
+export async function draftMerge(
+  campaignId: string,
+  keepId: string,
+  otherId: string,
+  name: string,
+): Promise<SummarizeResult> {
+  const { supabase, userId } = await uid();
+  if (!(await isCampaignOwner(supabase, userId, campaignId))) {
+    return { ok: false, error: "Only the campaign owner can merge entries." };
+  }
+  const pair = await loadMergePair(supabase, campaignId, keepId, otherId);
+  if (!pair.ok) return { ok: false, error: pair.error };
+  const chosen = name.trim() || pair.keep.name;
+  return draftMergedSummary(supabase, campaignId, pair.keep, pair.other, chosen);
+}
+
+export type MergeResult = { ok: false; error: string };
+
+/**
+ * Merge `otherId` into `keepId`: the surviving entry takes the reviewed name
+ * and summary, inherits the other's session mentions, and every
+ * [..](codex:other) link in the campaign's session texts and codex summaries
+ * is repointed at it before the other entry is deleted. The delete is the
+ * LAST step, so a failure part-way leaves both entries intact and the merge
+ * can simply be run again.
+ *
+ * Service role for the rewrites (a member's RLS only covers their own
+ * sessions), but only after the caller is verified as the campaign's owner
+ * and every statement is scoped to this campaign.
+ */
+export async function mergeNpcs(
+  campaignId: string,
+  keepId: string,
+  otherId: string,
+  input: { name: string; summary: string | null },
+): Promise<MergeResult> {
+  const { supabase, userId } = await uid();
+  if (!(await isCampaignOwner(supabase, userId, campaignId))) {
+    return { ok: false, error: "Only the campaign owner can merge entries." };
+  }
+  const pair = await loadMergePair(supabase, campaignId, keepId, otherId);
+  if (!pair.ok) return { ok: false, error: pair.error };
+  const { keep, other } = pair;
+
+  const name = input.name.trim();
+  if (!name) return { ok: false, error: "A name is required." };
+  // The surviving entry must not link to itself or to the entry being removed.
+  const summary = unlinkCodexLinks(input.summary ?? "", [keepId, otherId]).trim() || null;
+
+  const admin = getServiceRoleSupabase();
+  try {
+    const { error: updateError } = await admin
+      .from("npcs")
+      .update({
+        name,
+        summary,
+        image_url: keep.image_url ?? other.image_url,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", keepId)
+      .eq("campaign_id", campaignId);
+    if (updateError) throw updateError;
+
+    const { data: mentions } = await admin.from("npc_mentions").select("session_id").eq("npc_id", otherId);
+    if (mentions?.length) {
+      const { error } = await admin
+        .from("npc_mentions")
+        .upsert(
+          mentions.map((m) => ({ npc_id: keepId, session_id: m.session_id })),
+          { onConflict: "npc_id,session_id", ignoreDuplicates: true },
+        );
+      if (error) throw error;
+    }
+
+    const pattern = `*codex:${otherId}*`;
+    const { data: sessions } = await admin
+      .from("journal_sessions")
+      .select("id, summary, player_characters, npcs, notes")
+      .eq("campaign_id", campaignId)
+      .or(["summary", "player_characters", "npcs", "notes"].map((f) => `${f}.ilike.${pattern}`).join(","));
+    for (const row of sessions ?? []) {
+      const patch: { summary?: string; player_characters?: string; npcs?: string; notes?: string } = {};
+      for (const f of ["summary", "player_characters", "npcs", "notes"] as const) {
+        const v = row[f];
+        if (v && v.toLowerCase().includes(`codex:${otherId.toLowerCase()}`)) {
+          patch[f] = repointCodexLinks(v, otherId, keepId);
+        }
+      }
+      if (Object.keys(patch).length) {
+        const { error } = await admin.from("journal_sessions").update(patch).eq("id", row.id).eq("campaign_id", campaignId);
+        if (error) throw error;
+      }
+    }
+
+    const { data: others } = await admin
+      .from("npcs")
+      .select("id, summary")
+      .eq("campaign_id", campaignId)
+      .not("id", "in", `(${keepId},${otherId})`)
+      .ilike("summary", `%codex:${otherId}%`);
+    for (const row of others ?? []) {
+      if (!row.summary) continue;
+      const { error } = await admin
+        .from("npcs")
+        .update({ summary: repointCodexLinks(row.summary, otherId, keepId) })
+        .eq("id", row.id)
+        .eq("campaign_id", campaignId);
+      if (error) throw error;
+    }
+
+    await syncSessionLinks(admin, keepId, summary);
+
+    const { error: deleteError } = await admin.from("npcs").delete().eq("id", otherId).eq("campaign_id", campaignId);
+    if (deleteError) throw deleteError;
+  } catch (err) {
+    console.error("[codex-merge] merge failed", err);
+    return { ok: false, error: "The merge could not be completed. Nothing was deleted — try again." };
+  }
+
+  revalidatePath(journal.codex(campaignId));
+  revalidatePath(journal.npc(campaignId, keepId));
+  redirect(journal.npc(campaignId, keepId));
 }

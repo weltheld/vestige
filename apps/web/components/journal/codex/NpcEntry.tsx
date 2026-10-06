@@ -7,6 +7,7 @@ import { ROLE_KINDS, ROLE_LABEL } from "./NpcRoleLabel";
 import { NpcForm } from "./NpcForm";
 import { DeleteNpcButton } from "./DeleteNpcButton";
 import { SummaryWithFootnotes } from "./SummaryWithFootnotes";
+import { MergeNpcPanel } from "./MergeNpcPanel";
 import type { MentionNpc } from "../session/MentionSuggestion";
 
 const KIND_LABEL: Record<NpcKindDb, string> = {
@@ -29,6 +30,7 @@ export function NpcEntry({
   npc,
   canSummarize,
   mentionTargets = [],
+  mergeCandidates = [],
 }: {
   campaignId: string;
   npc: {
@@ -42,6 +44,8 @@ export function NpcEntry({
   canSummarize: boolean;
   /** Codex entries + sessions for the summary's @-mention crosslinking. */
   mentionTargets?: MentionNpc[];
+  /** Same-kind entries this one can absorb (owner only; empty hides Merge). */
+  mergeCandidates?: { id: string; name: string }[];
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -84,14 +88,24 @@ export function NpcEntry({
             {meta}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-wine px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
-        >
-          <Pencil size={12} />
-          Edit entry
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {canSummarize && mergeCandidates.length > 0 && (
+            <MergeNpcPanel
+              campaignId={campaignId}
+              npcId={npc.id}
+              npcName={npc.name}
+              candidates={mergeCandidates}
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-wine px-4 py-2.5 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-white transition hover:brightness-110"
+          >
+            <Pencil size={12} />
+            Edit entry
+          </button>
+        </div>
       </div>
 
       {npc.image_url && (

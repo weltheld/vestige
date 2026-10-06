@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getServerSupabase } from "@vestige/db/server";
 import { getViewer, getCampaignIfMember, isCampaignOwner } from "@/lib/journal/data";
-import { getNpc, getNpcMentions } from "@/lib/journal/npcs";
+import { getNpc, getNpcMentions, getNpcs } from "@/lib/journal/npcs";
 import { getMentionTargets } from "@/lib/journal/mention-targets";
 import { appHref, journal } from "@/lib/journal/links";
 import { NpcEntry } from "@/components/journal/codex/NpcEntry";
@@ -32,11 +32,17 @@ export default async function NpcDetailPage({
   // Footnote legend from the saved summary — used to badge the sessions
   // below with the [n] their citations refer to.
   const { notes } = parseFootnotes(npc.summary);
-  const [mentions, isOwner, mentionTargets] = await Promise.all([
+  const [mentions, isOwner, mentionTargets, allNpcs] = await Promise.all([
     getNpcMentions(supabase, npcId),
     isCampaignOwner(supabase, viewer.id, campaignId),
     getMentionTargets(supabase, campaignId, npcId),
+    getNpcs(supabase, campaignId),
   ]);
+  // Merging is owner-only (it spends the AI key and deletes an entry), and
+  // only between entries of the same kind.
+  const mergeCandidates = isOwner
+    ? allNpcs.filter((n) => n.id !== npcId && n.kind === npc.kind).map((n) => ({ id: n.id, name: n.name }))
+    : [];
 
   return (
     <main className="mx-auto flex w-full max-w-[640px] flex-col gap-10 px-4 pb-16 pt-8 sm:px-8">
@@ -61,6 +67,7 @@ export default async function NpcDetailPage({
             }}
             canSummarize={isOwner}
             mentionTargets={mentionTargets}
+            mergeCandidates={mergeCandidates}
           />
         </div>
       </div>
