@@ -39,6 +39,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing bearer token." }, { status: 401 });
   }
 
+  if (Number(req.headers.get("content-length") ?? 0) > 2_000_000) {
+    return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+  }
+
   let body: Record<string, unknown>;
   try {
     body = (await req.json()) as Record<string, unknown>;

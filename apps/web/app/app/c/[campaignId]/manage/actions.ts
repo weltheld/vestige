@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getServerSupabase, getServiceRoleSupabase } from "@vestige/db/server";
+import { escapeLike } from "@/lib/escapeLike";
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? "https://vestige-web-pi.vercel.app";
 
@@ -91,6 +92,7 @@ export async function resendInvite(campaignId: string, invitationId: string): Pr
     .from("invitations")
     .select("id, email, user_id")
     .eq("id", invitationId)
+    .eq("campaign_id", campaignId)
     .maybeSingle();
   if (!invitation || !invitation.email || invitation.user_id) {
     return { ok: false, error: "This invite has no email link to resend." };
@@ -102,7 +104,7 @@ export async function resendInvite(campaignId: string, invitationId: string): Pr
   });
   if (error) return { ok: false, error: error.message };
 
-  await supabase.from("invitations").update({ status: "sent" }).eq("id", invitationId);
+  await supabase.from("invitations").update({ status: "sent" }).eq("id", invitationId).eq("campaign_id", campaignId);
   revalidatePath(`/app/c/${campaignId}/manage`);
   return { ok: true };
 }
@@ -110,7 +112,11 @@ export async function resendInvite(campaignId: string, invitationId: string): Pr
 export async function cancelInvite(campaignId: string, invitationId: string): Promise<SimpleResult> {
   const guard = await creatorGuard(campaignId);
   if (!guard.ok) return { ok: false, error: guard.error };
-  const { error } = await guard.supabase.from("invitations").delete().eq("id", invitationId);
+  const { error } = await guard.supabase
+    .from("invitations")
+    .delete()
+    .eq("id", invitationId)
+    .eq("campaign_id", campaignId);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/app/c/${campaignId}/manage`);
   return { ok: true };
@@ -174,7 +180,7 @@ export async function addExistingMember(campaignId: string, userId: string): Pro
       .from("invitations")
       .select("id")
       .in("campaign_id", myIds)
-      .ilike("email", prof.email)
+      .ilike("email", escapeLike(prof.email))
       .limit(1);
     invited = (byEmail?.length ?? 0) > 0;
   }
@@ -198,7 +204,7 @@ export async function addExistingMember(campaignId: string, userId: string): Pro
       .from("invitations")
       .update({ status: "joined", user_id: userId })
       .eq("campaign_id", campaignId)
-      .ilike("email", prof.email);
+      .ilike("email", escapeLike(prof.email));
   }
   revalidatePath(`/app/c/${campaignId}/manage`);
   return { ok: true };

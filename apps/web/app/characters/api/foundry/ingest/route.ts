@@ -48,6 +48,10 @@ export async function POST(req: Request) {
   if (!result.ok) return result.response;
   const { ownerId, importCount } = result.auth;
 
+  // Refuse on the declared size before buffering the body at all.
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_BYTES) {
+    return json({ error: "That actor export is too large to import (over 8 MB)." }, 413);
+  }
   const text = await req.text();
   if (text.length > MAX_BYTES) {
     return json({ error: "That actor export is too large to import (over 8 MB)." }, 413);

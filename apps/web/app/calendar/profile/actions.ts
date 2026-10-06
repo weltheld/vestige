@@ -6,6 +6,7 @@ import {
   getServerSupabase,
   getServiceRoleSupabase,
 } from "@vestige/db/server";
+import { allowedImageType, imageUploadError } from "@/lib/uploads";
 
 export type UploadAvatarResult =
   | { ok: true; url: string }
@@ -26,6 +27,9 @@ export async function uploadAvatarAction(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "You must be signed in." };
 
+  const invalid = imageUploadError(file);
+  if (invalid) return { ok: false, error: invalid };
+
   const admin = getServiceRoleSupabase();
   const path = `${user.id}/avatar-${Date.now()}.jpg`;
   const bytes = await file.arrayBuffer();
@@ -33,7 +37,7 @@ export async function uploadAvatarAction(
     .from("avatars")
     .upload(path, bytes, {
       upsert: true,
-      contentType: file.type || "image/jpeg",
+      contentType: allowedImageType(file) ?? "image/jpeg",
       cacheControl: "3600",
     });
   if (uploadError) return { ok: false, error: uploadError.message };

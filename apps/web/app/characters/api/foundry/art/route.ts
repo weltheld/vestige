@@ -4,6 +4,7 @@ import type { CharacterSheetData } from "@vestige/db";
 import { isImage, storageKey } from "@/lib/characters/art";
 import { authorize, corsPreflight, json } from "@/lib/characters/foundry-api";
 import { characters } from "@/lib/journal/links";
+import { allowedImageType, MAX_IMAGE_BYTES } from "@/lib/uploads";
 
 /**
  * Artwork upload for the Vestige Companion module.
@@ -88,11 +89,18 @@ export async function POST(req: Request) {
       rejected.push(field);
       continue;
     }
+    // Real size and an allowlisted type (SVG excluded) — the content-length
+    // header above is client-controlled and absent on chunked requests.
+    const contentType = allowedImageType(file);
+    if (!contentType || file.size === 0 || file.size > MAX_IMAGE_BYTES * 2) {
+      rejected.push(field);
+      continue;
+    }
 
     const key = await storageKey(ownerId, field);
     const { error } = await admin.storage.from(BUCKET).upload(key, file, {
       upsert: true,
-      contentType: file.type || undefined,
+      contentType,
       cacheControl: "31536000",
     });
     // One image failing to store (a bucket problem, a transient error)

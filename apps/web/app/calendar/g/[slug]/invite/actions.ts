@@ -7,6 +7,7 @@ import {
   getServiceRoleSupabase,
 } from "@vestige/db/server";
 import { siteUrl } from "@vestige/db";
+import { escapeLike } from "@/lib/escapeLike";
 
 export type SendInviteResult =
   | { ok: true; emailed: boolean }
@@ -117,6 +118,7 @@ export async function resendInviteAction(
     .from("invitations")
     .select("id, email, user_id")
     .eq("id", invitationId)
+    .eq("campaign_id", campaign.id)
     .maybeSingle();
   if (!invitation || !invitation.email || invitation.user_id) {
     return {
@@ -135,7 +137,8 @@ export async function resendInviteAction(
   await supabase
     .from("invitations")
     .update({ status: "sent" })
-    .eq("id", invitationId);
+    .eq("id", invitationId)
+    .eq("campaign_id", campaign.id);
 
   revalidatePath(`/calendar/g/${slug}/invite`);
   return { ok: true };
@@ -199,7 +202,7 @@ export async function addExistingMemberAction(
       .from("invitations")
       .select("id")
       .in("campaign_id", myIds)
-      .ilike("email", prof.email)
+      .ilike("email", escapeLike(prof.email))
       .limit(1);
     invitedByMe = (invByEmail?.length ?? 0) > 0;
   }
@@ -224,7 +227,7 @@ export async function addExistingMemberAction(
       .from("invitations")
       .update({ status: "joined", user_id: userId })
       .eq("campaign_id", campaign.id)
-      .ilike("email", prof.email);
+      .ilike("email", escapeLike(prof.email));
   }
 
   revalidatePath(`/calendar/g/${slug}/invite`);
@@ -238,10 +241,20 @@ export async function cancelInviteAction(slug: string, invitationId: string) {
   } = await supabase.auth.getUser();
   if (!user) redirect(`/calendar/login?next=/g/${slug}/invite`);
 
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("id, creator_id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!campaign || campaign.creator_id !== user.id) {
+    return { ok: false as const, error: "Only the creator can cancel invites." };
+  }
+
   const { error } = await supabase
     .from("invitations")
     .delete()
-    .eq("id", invitationId);
+    .eq("id", invitationId)
+    .eq("campaign_id", campaign.id);
   if (error) return { ok: false as const, error: error.message };
 
   revalidatePath(`/calendar/g/${slug}/invite`);

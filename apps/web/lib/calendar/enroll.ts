@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@vestige/db";
 import { getServiceRoleSupabase } from "@vestige/db/server";
 import { BASE_PATH, withBasePath } from "@/lib/calendar/basePath";
+import { escapeLike } from "@/lib/escapeLike";
 
 /**
  * Enrol a signed-in user into campaigns they were invited to, so following an
@@ -26,7 +27,7 @@ export async function autoEnroll(userId: string, email: string, next: string) {
       .select("id, campaign_id")
       .not("email", "is", null)
       .neq("status", "joined")
-      .ilike("email", email);
+      .ilike("email", escapeLike(email));
     for (const inv of invites ?? []) {
       await admin.from("campaign_members").upsert(
         {

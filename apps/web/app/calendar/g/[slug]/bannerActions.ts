@@ -4,6 +4,7 @@ import {
   getServerSupabase,
   getServiceRoleSupabase,
 } from "@vestige/db/server";
+import { allowedImageType, imageUploadError } from "@/lib/uploads";
 
 export type UploadBannerResult =
   | { ok: true; url: string }
@@ -39,6 +40,9 @@ export async function uploadBannerAction(
     return { ok: false, error: "Only the creator can change the banner." };
   }
 
+  const invalid = imageUploadError(file) ?? (original instanceof File ? imageUploadError(original) : null);
+  if (invalid) return { ok: false, error: invalid };
+
   const admin = getServiceRoleSupabase();
   const path = `${campaignId}/banner-${Date.now()}.jpg`;
   const bytes = await file.arrayBuffer();
@@ -46,7 +50,7 @@ export async function uploadBannerAction(
     .from("banners")
     .upload(path, bytes, {
       upsert: true,
-      contentType: file.type || "image/jpeg",
+      contentType: allowedImageType(file) ?? "image/jpeg",
       cacheControl: "3600",
     });
   if (uploadError) return { ok: false, error: uploadError.message };
@@ -59,7 +63,7 @@ export async function uploadBannerAction(
       .from("banners")
       .upload(`${campaignId}/original`, obytes, {
         upsert: true,
-        contentType: original.type || "image/jpeg",
+        contentType: allowedImageType(original) ?? "image/jpeg",
         cacheControl: "3600",
       });
   }
