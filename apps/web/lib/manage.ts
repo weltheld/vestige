@@ -55,7 +55,7 @@ function newJoinCode(): string {
 /** The campaign's join code, created on first access (idempotent — one
  *  code per campaign, creator-only per RLS). Uses the service role since
  *  `getManageData` already establishes the caller is the creator. */
-async function getOrCreateJoinCode(campaignId: string): Promise<string> {
+export async function getOrCreateJoinCode(campaignId: string): Promise<string> {
   const admin = getServiceRoleSupabase();
   const { data: existing } = await admin
     .from("campaign_join_codes")

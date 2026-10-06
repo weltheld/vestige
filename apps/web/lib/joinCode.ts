@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@vestige/db";
+import { recordJoinMiss, tooManyJoinMisses } from "@/lib/joinThrottle";
 
 export type RedeemJoinCodeResult =
   | { ok: true; campaignName: string; alreadyMember: boolean }
@@ -26,13 +27,19 @@ export async function redeemJoinCodeForUser(
 ): Promise<RedeemJoinCodeResult> {
   const code = rawCode.trim().toUpperCase();
   if (!code) return { ok: false, error: "Enter a code." };
+  if (await tooManyJoinMisses(admin, userId)) {
+    return { ok: false, error: "Too many wrong codes. Try again in a few minutes." };
+  }
 
   const { data: joinCode } = await admin
     .from("campaign_join_codes")
     .select("campaign_id")
     .eq("code", code)
     .maybeSingle();
-  if (!joinCode) return { ok: false, error: "That code doesn't match any campaign." };
+  if (!joinCode) {
+    await recordJoinMiss(admin, userId);
+    return { ok: false, error: "That code doesn't match any campaign." };
+  }
 
   const { data: campaign } = await admin
     .from("campaigns")

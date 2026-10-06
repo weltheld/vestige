@@ -5,6 +5,7 @@ import {
 } from "@vestige/db/server";
 import { InvitePageClient } from "@/app/calendar/g/[slug]/invite/InvitePageClient";
 import { Modal } from "@/components/council/Modal";
+import { getOrCreateJoinCode } from "@/lib/manage";
 
 export default async function InvitePage({
   params,
@@ -29,6 +30,7 @@ export default async function InvitePage({
     // the campaign view rather than expose a forbidden screen.
     redirect(`/calendar/g/${slug}`);
   }
+  const joinCode = await getOrCreateJoinCode(campaign.id);
 
   const [{ data: invitations }, { data: members }] = await Promise.all([
     supabase
@@ -128,6 +130,7 @@ export default async function InvitePage({
   return (
     <Modal>
       <InvitePageClient
+        joinCode={joinCode}
         slug={campaign.slug}
         name={campaign.name}
         addableUsers={addableUsers}

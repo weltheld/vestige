@@ -6,6 +6,7 @@ import {
   getServiceRoleSupabase,
 } from "@vestige/db/server";
 import { InvitePageClient } from "./InvitePageClient";
+import { getOrCreateJoinCode } from "@/lib/manage";
 
 export default async function InvitePage({
   params,
@@ -30,6 +31,7 @@ export default async function InvitePage({
     // the campaign view rather than expose a forbidden screen.
     redirect(`/calendar/g/${slug}`);
   }
+  const joinCode = await getOrCreateJoinCode(campaign.id);
 
   const [{ data: invitations }, { data: members }] = await Promise.all([
     supabase
@@ -141,6 +143,7 @@ export default async function InvitePage({
           <X className="h-5 w-5" />
         </Link>
         <InvitePageClient
+          joinCode={joinCode}
           slug={campaign.slug}
           name={campaign.name}
           addableUsers={addableUsers}

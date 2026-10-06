@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@vestige/db";
 import { getServiceRoleSupabase } from "@vestige/db/server";
 import { BASE_PATH, withBasePath } from "@/lib/calendar/basePath";
+import { recordJoinMiss, tooManyJoinMisses } from "@/lib/joinThrottle";
 import { escapeLike } from "@/lib/escapeLike";
 
 /**
@@ -52,13 +53,28 @@ export async function autoEnroll(userId: string, email: string, next: string) {
     : next;
   if (gPath.startsWith("/g/")) {
     const slug = gPath.slice(3).split(/[/?#]/)[0];
-    if (slug) {
+    // The slug alone is guessable (name + 4 hex chars), so a campaign link
+    // only joins when it also carries that campaign's join code (`?j=`).
+    // Links without one just land on the campaign page, which 404s for a
+    // non-member.
+    const query = gPath.split("#")[0].split("?")[1] ?? "";
+    const code = new URLSearchParams(query).get("j")?.trim().toUpperCase() ?? "";
+    if (slug && code && !(await tooManyJoinMisses(admin, userId))) {
       const { data: campaign } = await admin
         .from("campaigns")
         .select("id")
         .eq("slug", slug)
         .maybeSingle();
-      if (campaign) {
+      const { data: valid } = campaign
+        ? await admin
+            .from("campaign_join_codes")
+            .select("campaign_id")
+            .eq("campaign_id", campaign.id)
+            .eq("code", code)
+            .maybeSingle()
+        : { data: null };
+      if (!valid) await recordJoinMiss(admin, userId);
+      if (campaign && valid) {
         await admin.from("campaign_members").upsert(
           {
             campaign_id: campaign.id,

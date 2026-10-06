@@ -40,12 +40,14 @@ type Invitation = {
 };
 
 export function InvitePageClient({
+  joinCode,
   slug,
   name,
   members,
   invitations,
   addableUsers,
 }: {
+  joinCode: string;
   slug: string;
   name: string;
   members: Member[];
@@ -61,8 +63,11 @@ export function InvitePageClient({
 
   const inviteLink = useMemo(() => {
     if (typeof window === "undefined") return "";
-    return `${window.location.origin}${withBasePath(`/login?next=/g/${slug}`)}`;
-  }, [slug]);
+    // The code makes the link a real invite: the slug alone is guessable
+    // and no longer joins anyone.
+    const next = encodeURIComponent(`/g/${slug}?j=${joinCode}`);
+    return `${window.location.origin}${withBasePath("/login")}?next=${next}`;
+  }, [slug, joinCode]);
 
   function onSend(e: React.FormEvent) {
     e.preventDefault();
