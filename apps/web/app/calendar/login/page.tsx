@@ -24,7 +24,7 @@ export default async function LoginPage({
   } = await supabase.auth.getUser();
 
   if (user) {
-    await autoEnroll(user.id, user.email ?? "", next);
+    await autoEnroll(user.id, user.email ?? "", next, user.created_at);
     // resolveDestination returns a fully-prefixed path — use as-is.
     const target = await resolveDestination(supabase, next);
     redirect(target);

@@ -19,8 +19,35 @@ import { escapeLike } from "@/lib/escapeLike";
  * untouched — those still go through the explicit Accept/Decline flow on the
  * platform home (/app).
  */
-export async function autoEnroll(userId: string, email: string, next: string) {
+/** Accounts created before this instant predate the join-code requirement
+ *  on campaign links. They are treated as if they had already entered a
+ *  correct code, so links they were sent earlier keep working for them. */
+const LEGACY_ACCOUNT_CUTOFF = Date.parse("2026-10-06T08:30:00Z");
+
+/** Never throws: enrolment is a best-effort side effect of signing in, and a
+ *  failure here must not turn a successful login into an error page. */
+export async function autoEnroll(
+  userId: string,
+  email: string,
+  next: string,
+  accountCreatedAt?: string,
+) {
+  try {
+    await enroll(userId, email, next, accountCreatedAt);
+  } catch (err) {
+    console.error("autoEnroll failed", err);
+  }
+}
+
+async function enroll(
+  userId: string,
+  email: string,
+  next: string,
+  accountCreatedAt?: string,
+) {
   const admin = getServiceRoleSupabase();
+  const isLegacyAccount =
+    !!accountCreatedAt && Date.parse(accountCreatedAt) < LEGACY_ACCOUNT_CUTOFF;
 
   if (email) {
     const { data: invites } = await admin
@@ -53,27 +80,28 @@ export async function autoEnroll(userId: string, email: string, next: string) {
     : next;
   if (gPath.startsWith("/g/")) {
     const slug = gPath.slice(3).split(/[/?#]/)[0];
-    // The slug alone is guessable (name + 4 hex chars), so a campaign link
-    // only joins when it also carries that campaign's join code (`?j=`).
-    // Links without one just land on the campaign page, which 404s for a
-    // non-member.
+    // The slug alone is guessable (name + 4 hex chars), so for accounts
+    // created from now on a campaign link only joins when it also carries
+    // that campaign's join code (`?j=`). Without one it just lands on the
+    // campaign page, which 404s for a non-member. Accounts that already
+    // existed are treated as having entered a correct code.
     const query = gPath.split("#")[0].split("?")[1] ?? "";
     const code = new URLSearchParams(query).get("j")?.trim().toUpperCase() ?? "";
-    if (slug && code && !(await tooManyJoinMisses(admin, userId))) {
+    if (slug && (isLegacyAccount || code) && !(await tooManyJoinMisses(admin, userId))) {
       const { data: campaign } = await admin
         .from("campaigns")
         .select("id")
         .eq("slug", slug)
         .maybeSingle();
-      const { data: valid } = campaign
+      const { data: valid } = campaign && !isLegacyAccount
         ? await admin
             .from("campaign_join_codes")
             .select("campaign_id")
             .eq("campaign_id", campaign.id)
             .eq("code", code)
             .maybeSingle()
-        : { data: null };
-      if (!valid) await recordJoinMiss(admin, userId);
+        : { data: campaign ? { campaign_id: campaign.id } : null };
+      if (!valid && !isLegacyAccount) await recordJoinMiss(admin, userId);
       if (campaign && valid) {
         await admin.from("campaign_members").upsert(
           {
